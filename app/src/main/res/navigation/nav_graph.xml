@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@+id/permissions_fragment">
+
+    <fragment
+        android:id="@+id/permissions_fragment"
+        android:name="com.shahzaib.mobislp.fragments.PermissionsFragment"
+        android:label="Permissions" >
+        <action
+            android:id="@+id/action_permissions_fragment_to_appselector"
+            app:destination="@id/applicationselector_fragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/applicationselector_fragment"
+        android:name="com.shahzaib.mobislp.fragments.ApplicationSelectorFragment"
+        android:label="ApplicationSelector" >
+    </fragment>
+
+</navigation>
