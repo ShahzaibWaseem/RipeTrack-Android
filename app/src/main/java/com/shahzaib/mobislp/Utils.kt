@@ -27,7 +27,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import com.opencsv.CSVWriter
-import com.shahzaib.mobislp.Utils.MobiSLPPath
+import com.shahzaib.mobislp.Utils.appRootPath
 import com.shahzaib.mobislp.Utils.croppedImageDirectory
 import com.shahzaib.mobislp.Utils.processedImageDirectory
 import com.shahzaib.mobislp.Utils.rawImageDirectory
@@ -40,7 +40,7 @@ object Utils {
     const val torchWidth = 480
     private const val aligningFactorX = 37  //This is 37 if picture captured in portrait [35-41 if un-warped] 83 if landscape
     private const val aligningFactorY = 87  //This is 83 if picture captured in portrait [74 if un-warped] 100 if landscape
-    const val MobiSLPPath = "MobiSLP"
+    const val appRootPath = "MobiSLP"
     const val rawImageDirectory = "rawImages"
     const val croppedImageDirectory = "croppedImages"
     const val processedImageDirectory = "processedImages"
@@ -108,6 +108,7 @@ object Utils {
         return alignedImageRGB
     }
 
+    @Suppress("DEPRECATION")
     fun vibrate(context: Context) {
         val vibrator: Vibrator
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -115,7 +116,6 @@ object Utils {
             vibrator = vibratorManager.defaultVibrator
         }
         else {
-            @Suppress("DEPRECATION")
             vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
 
@@ -125,7 +125,6 @@ object Utils {
                 vibrator.vibrate(VibrationEffect.createOneShot(vibrationDuration, VibrationEffect.DEFAULT_AMPLITUDE))
             }
             else {
-                @Suppress("DEPRECATION")
                 vibrator.vibrate(vibrationDuration)
             }
         }
@@ -186,7 +185,7 @@ fun enumerateCameras(cameraManager: CameraManager): MutableList<FormatItem> {
         val isNIR = if(characteristics.get(CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT)
             == CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR) "NIR" else "RGB"
 
-        Log.i("All Cameras", "Logical: $it, Physical: ${characteristics.physicalCameraIds} RGB: $isNIR, Orientation: $orientation")
+        Log.i("All Cameras", "Orientation: $orientation,\tRGB: $isNIR,\tLogical: $it,\tPhysical: ${characteristics.physicalCameraIds}")
 
         val capabilities = characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
         capabilities?.contains(CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE) ?: false
@@ -202,10 +201,10 @@ fun enumerateCameras(cameraManager: CameraManager): MutableList<FormatItem> {
         // All cameras *must* support JPEG output so we don't need to check characteristics
         // Return cameras that support NIR Filter Arrangement
         if (isNIR == "NIR")
-            availableCameras.add(FormatItem("$orientation JPEG ($id) $isNIR", id, ImageFormat.JPEG,
+            availableCameras.add(FormatItem("$orientation, ($id), $isNIR", id, ImageFormat.JPEG,
                 orientation, CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR))
         else
-            availableCameras.add(FormatItem("$orientation JPEG ($id)", id, ImageFormat.JPEG,
+            availableCameras.add(FormatItem("$orientation, ($id), RGB", id, ImageFormat.JPEG,
                 orientation, CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGGB))
     }
 
@@ -216,7 +215,7 @@ fun makeFolderInRoot(directoryPath: String, context: Context) {
     val externalStorageDirectory = Environment.getExternalStorageDirectory().toString()
     val directory = File(externalStorageDirectory, "/$directoryPath")
 
-    csvFile = File(directory.parent, MobiSLPPath + "_Logs.csv")
+    csvFile = File(directory.parent, appRootPath + "_Logs.csv")
     if (!csvFile.exists()) {
         val header = MobiSpectralCSVFormat("Fruit ID", "Original RGB Path", "Original NIR Path",
             "Cropped RGB Path", "Cropped NIR Path",
@@ -239,14 +238,14 @@ fun makeFolderInRoot(directoryPath: String, context: Context) {
 
 fun makeDirectory(folder: String) {
     val externalStorageDirectory = Environment.getExternalStorageDirectory().toString()
-    val rootDirectory = File(externalStorageDirectory, MobiSLPPath)
+    val rootDirectory = File(externalStorageDirectory, appRootPath)
     val directory = File(rootDirectory, "/$folder")
     if (!directory.exists()) { directory.mkdirs() }
 }
 
 fun saveProcessedImages (context: Context, rgbBitmap: Bitmap, nirBitmap: Bitmap, rgbFileName: String, nirFileName: String, directory: String) {
     val externalStorageDirectory = Environment.getExternalStorageDirectory().toString()
-    val rootDirectory = File(externalStorageDirectory, MobiSLPPath)
+    val rootDirectory = File(externalStorageDirectory, appRootPath)
     val imageDirectory = File(rootDirectory, "/$directory")
 
     val rgbImage = File(imageDirectory, rgbFileName)
@@ -290,7 +289,7 @@ fun saveProcessedImages (context: Context, rgbBitmap: Bitmap, nirBitmap: Bitmap,
 @Suppress("unused")
 fun saveHypercube(hypercubeFileName: String, hypercube: FloatArray, directory: String) {
     val externalStorageDirectory = Environment.getExternalStorageDirectory().toString()
-    val rootDirectory = File(externalStorageDirectory, MobiSLPPath)
+    val rootDirectory = File(externalStorageDirectory, appRootPath)
     val imageDirectory = File(rootDirectory, "/$directory")
     val hypercubeFile = File(imageDirectory, hypercubeFileName)
     BufferedWriter(FileWriter(hypercubeFile)).use { stream ->
@@ -365,5 +364,5 @@ fun addCSVLog (context: Context) {
         MediaScannerConnection.scanFile(context, arrayOf(csvFile.absolutePath), null, null)
     }
     else
-        makeFolderInRoot(MobiSLPPath, context)
+        makeFolderInRoot(appRootPath, context)
 }

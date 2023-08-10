@@ -17,7 +17,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.withStarted
 import androidx.navigation.Navigation
-import com.shahzaib.mobislp.BuildConfig
 import com.shahzaib.mobislp.R
 import kotlinx.coroutines.launch
 
@@ -42,7 +41,7 @@ class PermissionsFragment: Fragment() {
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
             if (!Environment.isExternalStorageManager()) {
                 try {
-                    val uri = Uri.parse("package:")
+                    val uri = Uri.parse("package:" + requireContext().packageName)
                     val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri)
                     intent.addCategory("android.intent.category.DEFAULT")
                     intent.data = Uri.parse(String.format("package:%s", requireContext().packageName))

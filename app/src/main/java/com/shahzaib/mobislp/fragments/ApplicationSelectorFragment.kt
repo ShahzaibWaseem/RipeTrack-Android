@@ -74,7 +74,8 @@ class ApplicationSelectorFragment: Fragment() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onStart() {
         super.onStart()
-        val cameraIdNIR = Utils.getCameraIDs(requireContext(), MainActivity.MOBISPECTRAL_APPLICATION).second
+        MainActivity.cameraIDList = Utils.getCameraIDs(requireContext(), MainActivity.MOBISPECTRAL_APPLICATION)
+        val cameraIdNIR = MainActivity.cameraIDList.second
 
         fragmentApplicationselectorBinding.information.setOnClickListener {
             generateAlertBox(requireContext(), "Information", getString(R.string.application_selector_information_string)) { }
@@ -105,13 +106,13 @@ class ApplicationSelectorFragment: Fragment() {
             editor.putBoolean("offline_mode", offlineMode)
             Log.i("Radio Button", "$selectedApplication, $selectedOption")
             editor.apply()
-//            lifecycleScope.launch {
-//                withStarted {
-//                    navController.safeNavigate(ApplicationSelectorFragmentDirections.actionAppselectorToCameraFragment(
-//                        Utils.getCameraIDs(requireContext(), MainActivity.MOBISPECTRAL_APPLICATION).first, ImageFormat.JPEG)
-//                    )
-//                }
-//            }
+            lifecycleScope.launch {
+                withStarted {
+                    navController.safeNavigate(ApplicationSelectorFragmentDirections.actionAppselectorToCameraFragment(
+                        MainActivity.cameraIDList.first, ImageFormat.JPEG)
+                    )
+                }
+            }
 
             true
         }

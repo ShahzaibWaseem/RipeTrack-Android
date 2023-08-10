@@ -32,7 +32,6 @@
         <item name="materialAlertDialogBodyTextStyle">@style/BodyTextStyle</item>
         <item name="buttonBarPositiveButtonStyle">@style/ButtonStyle</item>
         <item name="buttonBarNegativeButtonStyle">@style/ButtonStyle</item>
-        <item name="android:fontFamily">@font/din_pro_condenced</item>
     </style>
 
     <style name="TitleTextStyle" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
@@ -41,6 +40,8 @@
     </style>
     <style name="BodyTextStyle" parent="MaterialAlertDialog.MaterialComponents.Body.Text">
         <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">@font/din_pro_condenced</item>
+        <item name="fontFamily">@font/din_pro_condenced</item>
     </style>
 
     <style name="ButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
