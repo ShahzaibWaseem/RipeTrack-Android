@@ -102,17 +102,28 @@ class ApplicationSelectorFragment: Fragment() {
             val sharedPreferences = requireActivity().getSharedPreferences("mobislp_preferences", Context.MODE_PRIVATE)
             val editor = sharedPreferences?.edit()
             editor!!.putString("application", selectedApplication)
+            editor.putString("fruit", selectedApplication)
             editor.putString("option", getString(R.string.advanced_option_string))
             editor.putBoolean("offline_mode", offlineMode)
             Log.i("Radio Button", "$selectedApplication, $selectedOption")
             editor.apply()
-            lifecycleScope.launch {
-                withStarted {
-                    navController.safeNavigate(ApplicationSelectorFragmentDirections.actionAppselectorToCameraFragment(
-                        MainActivity.cameraIDList.first, imageFormat)
-                    )
+            MainActivity.actualLabel = selectedApplication
+            if (selectedOption == getString(R.string.data_capturing_mode_string))
+                lifecycleScope.launch {
+                    withStarted {
+                        navController.safeNavigate(ApplicationSelectorFragmentDirections.actionAppselectorToDataCapturingFragment(
+                            MainActivity.cameraIDList.first, imageFormat)
+                        )
+                    }
                 }
-            }
+            else
+                lifecycleScope.launch {
+                    withStarted {
+                        navController.safeNavigate(ApplicationSelectorFragmentDirections.actionAppselectorToCameraFragment(
+                            MainActivity.cameraIDList.first, imageFormat)
+                        )
+                    }
+                }
 
             true
         }

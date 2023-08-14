@@ -68,11 +68,18 @@
         android:id="@+id/radioGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:checkedButton="@+id/offlineMode"
+        android:checkedButton="@+id/dataCapturingMode"
         app:layout_constraintTop_toBottomOf="@+id/applicationPicker"
         app:layout_constraintBottom_toTopOf="@+id/guideline2"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
+
+        <RadioButton
+            android:id="@+id/dataCapturingMode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:buttonTint="@color/background"
+            android:text="@string/data_capturing_mode_string"/>
 
         <RadioButton
             android:id="@+id/offlineMode"

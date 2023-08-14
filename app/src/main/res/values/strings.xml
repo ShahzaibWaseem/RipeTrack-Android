@@ -9,6 +9,7 @@
     <string name="choose_mode_string">Choose Mode</string>
     <string name="advanced_option_string">Detailed (Signature Analysis)</string>
     <string name="simple_option_string">Simple (Organic Identification)</string>
+    <string name="data_capturing_mode_string">Capture Data</string>
     <string name="offline_mode_string">Offline Mode</string>
     <string name="online_mode_string">Online Mode</string>
     <string name="launch_application_button">Start</string>
@@ -25,6 +26,7 @@
     <string name="classification_probabilities_string">Prob: %s</string>
 
     <string name="capture_description">Capture Image</string>
+    <string name="object_id_string">Fruit ID: %2d</string>
     <string name="tab_layout_description">Tab layout</string>
     <string name="reload_capture_fragment_string">Re-capture the images</string>
     <string name="information_button_string">Show information regarding the fragment</string>

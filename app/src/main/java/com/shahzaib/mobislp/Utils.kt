@@ -135,16 +135,14 @@ lateinit var csvFile: File
 /** Helper class used as a data holder for each selectable camera format item */
 data class FormatItem(val title: String, val cameraId: String, val format: Int, val orientation: String, val sensorArrangement: Int)
 
-data class MobiSpectralCSVFormat(val fruitID: String,
-                                 val originalImageRGB: String, val originalImageNIR: String,
-                                 val croppedImageRGB: String, val croppedImageNIR: String,
-                                 val processedImageRGB: String, val processedImageNIR: String,
-                                 val actualLabel: String, val predictedLabel: String,
-                                 val normalizationTime: String, val reconstructionTime: String,
-                                 val classificationTime: String) {
+data class MobiSLPCSVFormat(val fruitID: String,
+                            val originalImageRGB: String, val originalImageNIR: String,
+                            val croppedImageRGB: String, val croppedImageNIR: String,
+                            val processedImageRGB: String, val processedImageNIR: String,
+                            val actualLabel: String) {
     fun csvFormat(): Array<String> {
         return arrayOf(fruitID, originalImageRGB, originalImageNIR, croppedImageRGB, croppedImageNIR,
-            processedImageRGB, processedImageNIR, actualLabel, predictedLabel, normalizationTime, reconstructionTime)
+            processedImageRGB, processedImageNIR, actualLabel)
     }
 }
 
@@ -217,11 +215,10 @@ fun makeFolderInRoot(directoryPath: String, context: Context) {
 
     csvFile = File(directory.parent, appRootPath + "_Logs.csv")
     if (!csvFile.exists()) {
-        val header = MobiSpectralCSVFormat("Fruit ID", "Original RGB Path", "Original NIR Path",
+        val header = MobiSLPCSVFormat("Fruit ID", "Original RGB Path", "Original NIR Path",
             "Cropped RGB Path", "Cropped NIR Path",
             "Processed RGB Path", "Processed NIR Path",
-            "Actual Label", "Predicted Label", "Normalization Time",
-            "Reconstruction Time", "Classification Time")
+            "Actual Label")
 
         val writer = CSVWriter(
             FileWriter(csvFile, false),
@@ -346,11 +343,9 @@ suspend fun saveImage(bitmap: Bitmap, outputFile: File): File = suspendCoroutine
 
 fun addCSVLog (context: Context) {
     if (csvFile.exists()) {
-        val entry = MobiSpectralCSVFormat(MainActivity.fruitID, MainActivity.originalImageRGB, MainActivity.originalImageNIR,
+        val entry = MobiSLPCSVFormat(MainActivity.fruitID, MainActivity.originalImageRGB, MainActivity.originalImageNIR,
             MainActivity.croppedImageRGB, MainActivity.croppedImageNIR,
-            MainActivity.processedImageRGB, MainActivity.processedImageNIR,
-            MainActivity.actualLabel, MainActivity.predictedLabel,
-            MainActivity.normalizationTime, MainActivity.reconstructionTime, MainActivity.classificationTime)
+            MainActivity.processedImageRGB, MainActivity.processedImageNIR, MainActivity.actualLabel)
 
         val writer = CSVWriter(
             FileWriter(csvFile, true),
