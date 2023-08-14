@@ -13,9 +13,9 @@
     </style>
 
     <style name="TabLayoutTheme" parent="Theme.MaterialComponents.DayNight">
-        <item name="colorPrimary">@color/sfu_primary</item>
+        <item name="colorPrimary">@color/background</item>
         <item name="colorPrimaryDark">@color/sfu_dark_gray</item>
-        <item name="colorAccent">@color/sfu_red</item>
+        <item name="colorAccent">@color/background</item>
         <item name="tabIndicatorColor">@color/sfu_black</item>
         <item name="tabIndicatorHeight">4dp</item>
         <item name="tabTextAppearance">@style/TabLayoutTabTheme</item>
@@ -45,7 +45,7 @@
     </style>
 
     <style name="ButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
-        <item name="android:textColor">@color/sfu_primary</item>
-        <item name="rippleColor">@color/sfu_red</item>
+        <item name="android:textColor">@color/background</item>
+        <item name="rippleColor">@color/background</item>
     </style>
 </resources>

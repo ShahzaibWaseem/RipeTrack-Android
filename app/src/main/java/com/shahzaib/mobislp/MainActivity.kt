@@ -40,7 +40,7 @@ class MainActivity: AppCompatActivity() {
         lateinit var tempRectangle: Rect
         var cameraIDList: Pair<String, String> = Pair("", "")
 
-        fun generateAlertBox(context: Context, title: String, text: String, onPositiveButtonFunction: (() -> Unit)) {
+        fun generateAlertBox(context: Context, title: String, text: String, onPositiveButtonFunction: () -> Unit) {
             val alertDialogBuilder = MaterialAlertDialogBuilder(context, R.style.AlertDialogTheme)
             alertDialogBuilder.setMessage(text)
             alertDialogBuilder.setTitle(title)

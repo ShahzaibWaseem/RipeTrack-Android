@@ -29,6 +29,7 @@ import kotlin.coroutines.suspendCoroutine
 import com.opencsv.CSVWriter
 import com.shahzaib.mobislp.Utils.appRootPath
 import com.shahzaib.mobislp.Utils.croppedImageDirectory
+import com.shahzaib.mobislp.Utils.imageFormat
 import com.shahzaib.mobislp.Utils.processedImageDirectory
 import com.shahzaib.mobislp.Utils.rawImageDirectory
 import com.shahzaib.mobislp.Utils.torchHeight
@@ -47,6 +48,7 @@ object Utils {
     const val hypercubeDirectory = "reconstructedHypercubes"
     const val boundingBoxWidth = 32F
     const val boundingBoxHeight = 32F
+    const val imageFormat = ImageFormat.JPEG
 
     fun assetFilePath(context: Context, assetName: String): String? {
         val file = File(context.filesDir, assetName)
@@ -110,13 +112,11 @@ object Utils {
 
     @Suppress("DEPRECATION")
     fun vibrate(context: Context) {
-        val vibrator: Vibrator
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val vibrator: Vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager =  context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            vibrator = vibratorManager.defaultVibrator
-        }
-        else {
-            vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            vibratorManager.defaultVibrator
+        } else {
+            context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
 
         val vibrationDuration = 500L
@@ -163,9 +163,9 @@ fun getMobiSpectralConfigCameras(availableCameras: MutableList<FormatItem>): Mut
         if (camera.sensorArrangement == CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR) {
             val nirLensOrientation = camera.orientation
             usableCameraList.add(camera)
-            for (other_camera in availableCameras) {
-                if ((other_camera.orientation) == nirLensOrientation && other_camera.cameraId != camera.cameraId) {
-                    usableCameraList.add(other_camera)
+            for (otherCamera in availableCameras) {
+                if ((otherCamera.orientation) == nirLensOrientation && otherCamera.cameraId != camera.cameraId) {
+                    usableCameraList.add(otherCamera)
                 }
             }
         }
@@ -201,10 +201,10 @@ fun enumerateCameras(cameraManager: CameraManager): MutableList<FormatItem> {
         // All cameras *must* support JPEG output so we don't need to check characteristics
         // Return cameras that support NIR Filter Arrangement
         if (isNIR == "NIR")
-            availableCameras.add(FormatItem("$orientation, ($id), $isNIR", id, ImageFormat.JPEG,
+            availableCameras.add(FormatItem("$orientation, ($id), $isNIR", id, imageFormat,
                 orientation, CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR))
         else
-            availableCameras.add(FormatItem("$orientation, ($id), RGB", id, ImageFormat.JPEG,
+            availableCameras.add(FormatItem("$orientation, ($id), RGB", id, imageFormat,
                 orientation, CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGGB))
     }
 

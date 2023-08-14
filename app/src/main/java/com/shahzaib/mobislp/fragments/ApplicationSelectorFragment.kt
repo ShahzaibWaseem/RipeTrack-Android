@@ -2,7 +2,6 @@ package com.shahzaib.mobislp.fragments
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.ImageFormat
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -20,12 +19,13 @@ import com.shahzaib.mobislp.MainActivity
 import com.shahzaib.mobislp.MainActivity.Companion.generateAlertBox
 import com.shahzaib.mobislp.R
 import com.shahzaib.mobislp.Utils
+import com.shahzaib.mobislp.Utils.imageFormat
 import com.shahzaib.mobislp.databinding.FragmentApplicationselectorBinding
 import com.shahzaib.mobislp.makeDirectory
 import kotlinx.coroutines.launch
 
 class ApplicationSelectorFragment: Fragment() {
-    private lateinit var fragmentApplicationselectorBinding: FragmentApplicationselectorBinding
+    private lateinit var fragmentApplicationSelectorBinding: FragmentApplicationselectorBinding
     private lateinit var applicationArray: Array<String>
 
     /** Host's navigation controller */
@@ -40,8 +40,8 @@ class ApplicationSelectorFragment: Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        fragmentApplicationselectorBinding = FragmentApplicationselectorBinding.inflate(inflater, container, false)
-        val applicationPicker = fragmentApplicationselectorBinding.applicationPicker
+        fragmentApplicationSelectorBinding = FragmentApplicationselectorBinding.inflate(inflater, container, false)
+        val applicationPicker = fragmentApplicationSelectorBinding.applicationPicker
         applicationArray = arrayOf(getString(R.string.avocado_string),
             getString(R.string.pear_string) , getString(R.string.apple_string))
         applicationPicker.minValue = 0
@@ -53,22 +53,22 @@ class ApplicationSelectorFragment: Fragment() {
         makeDirectory(Utils.processedImageDirectory)
         makeDirectory(Utils.hypercubeDirectory)
 
-        return fragmentApplicationselectorBinding.root
+        return fragmentApplicationSelectorBinding.root
     }
 
     private fun disableButton(cameraIdNIR: String) {
         if (cameraIdNIR == "No NIR Camera") {
-            fragmentApplicationselectorBinding.runApplicationButton.isEnabled = false
-            fragmentApplicationselectorBinding.runApplicationButton.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.sfu_dark_gray))
-            fragmentApplicationselectorBinding.runApplicationButton.text = resources.getString(R.string.no_nir_warning)
-            fragmentApplicationselectorBinding.runApplicationButton.transformationMethod = null
+            fragmentApplicationSelectorBinding.runApplicationButton.isEnabled = false
+            fragmentApplicationSelectorBinding.runApplicationButton.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.sfu_dark_gray))
+            fragmentApplicationSelectorBinding.runApplicationButton.text = resources.getString(R.string.no_nir_warning)
+            fragmentApplicationSelectorBinding.runApplicationButton.transformationMethod = null
         }
     }
 
     private fun enableButton() {
-        fragmentApplicationselectorBinding.runApplicationButton.isEnabled = true
-        fragmentApplicationselectorBinding.runApplicationButton.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
-        fragmentApplicationselectorBinding.runApplicationButton.text = resources.getString(R.string.launch_application_button).uppercase()
+        fragmentApplicationSelectorBinding.runApplicationButton.isEnabled = true
+        fragmentApplicationSelectorBinding.runApplicationButton.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
+        fragmentApplicationSelectorBinding.runApplicationButton.text = resources.getString(R.string.launch_application_button).uppercase()
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -77,12 +77,12 @@ class ApplicationSelectorFragment: Fragment() {
         MainActivity.cameraIDList = Utils.getCameraIDs(requireContext(), MainActivity.MOBISPECTRAL_APPLICATION)
         val cameraIdNIR = MainActivity.cameraIDList.second
 
-        fragmentApplicationselectorBinding.information.setOnClickListener {
+        fragmentApplicationSelectorBinding.information.setOnClickListener {
             generateAlertBox(requireContext(), "Information", getString(R.string.application_selector_information_string)) { }
         }
 
-        fragmentApplicationselectorBinding.radioGroup.setOnCheckedChangeListener { _, _ ->
-            val selectedRadio = fragmentApplicationselectorBinding.radioGroup.checkedRadioButtonId
+        fragmentApplicationSelectorBinding.radioGroup.setOnCheckedChangeListener { _, _ ->
+            val selectedRadio = fragmentApplicationSelectorBinding.radioGroup.checkedRadioButtonId
             val selectedOption = requireView().findViewById<RadioButton>(selectedRadio).text.toString()
             if (selectedOption == getString(R.string.offline_mode_string))
                 enableButton()
@@ -91,12 +91,12 @@ class ApplicationSelectorFragment: Fragment() {
         }
 
         if (cameraIdNIR == "No NIR Camera"){
-            fragmentApplicationselectorBinding.onlineMode.isEnabled = false
+            fragmentApplicationSelectorBinding.onlineMode.isEnabled = false
         }
 
-        fragmentApplicationselectorBinding.runApplicationButton.setOnTouchListener { _, _ ->
-            val selectedApplication = applicationArray[fragmentApplicationselectorBinding.applicationPicker.value]
-            val selectedRadio = fragmentApplicationselectorBinding.radioGroup.checkedRadioButtonId
+        fragmentApplicationSelectorBinding.runApplicationButton.setOnTouchListener { _, _ ->
+            val selectedApplication = applicationArray[fragmentApplicationSelectorBinding.applicationPicker.value]
+            val selectedRadio = fragmentApplicationSelectorBinding.radioGroup.checkedRadioButtonId
             val selectedOption = requireView().findViewById<RadioButton>(selectedRadio).text.toString()
             val offlineMode = selectedOption == getString(R.string.offline_mode_string)
             val sharedPreferences = requireActivity().getSharedPreferences("mobislp_preferences", Context.MODE_PRIVATE)
@@ -109,7 +109,7 @@ class ApplicationSelectorFragment: Fragment() {
             lifecycleScope.launch {
                 withStarted {
                     navController.safeNavigate(ApplicationSelectorFragmentDirections.actionAppselectorToCameraFragment(
-                        MainActivity.cameraIDList.first, ImageFormat.JPEG)
+                        MainActivity.cameraIDList.first, imageFormat)
                     )
                 }
             }

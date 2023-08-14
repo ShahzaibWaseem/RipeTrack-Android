@@ -11,7 +11,7 @@
         android:id="@+id/Title"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="@color/sfu_red"
+        android:background="@color/background"
         android:fontFamily="@font/countach_bold"
         android:gravity="center"
         android:text="@string/app_name"
@@ -78,14 +78,14 @@
             android:id="@+id/offlineMode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:buttonTint="@color/sfu_primary"
+            android:buttonTint="@color/background"
             android:text="@string/offline_mode_string"/>
 
         <RadioButton
             android:id="@+id/onlineMode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:buttonTint="@color/sfu_primary"
+            android:buttonTint="@color/background"
             android:text="@string/online_mode_string"/>
 
     </RadioGroup>
@@ -104,7 +104,7 @@
         android:gravity="center"
         android:text="@string/launch_application_button"
         android:textSize="23sp"
-        android:backgroundTint="@color/sfu_primary"
+        android:backgroundTint="@color/background"
         app:layout_constraintTop_toBottomOf="@+id/guideline2"
         app:layout_constraintBottom_toTopOf="@+id/guideline3"
         app:layout_constraintStart_toStartOf="parent"
@@ -162,7 +162,7 @@
             android:layout_width="wrap_content"
             android:layout_height="60dp"
             android:layout_marginStart="5dp"
-            android:background="@color/sfu_red"
+            android:background="@color/sfu_dark_gray"
             android:fontFamily="@font/d_din_pro_semibold"
             android:gravity="end|bottom"
             android:paddingEnd="2.5dp"

@@ -12,4 +12,5 @@
     <color name="sfu_primary">#CC0633</color>
     <color name="sfu_dark_gray">#54585A</color>
     <color name="sfu_black">#000000</color>
+    <color name="background">#279854</color>
 </resources>

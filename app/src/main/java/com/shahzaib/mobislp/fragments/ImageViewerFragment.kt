@@ -7,7 +7,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.ImageFormat
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Rect
@@ -33,6 +32,7 @@ import com.shahzaib.mobislp.MainActivity.Companion.generateAlertBox
 import com.shahzaib.mobislp.R
 import com.shahzaib.mobislp.Utils
 import com.shahzaib.mobislp.Utils.cropImage
+import com.shahzaib.mobislp.Utils.imageFormat
 import com.shahzaib.mobislp.databinding.FragmentImageviewerBinding
 import com.shahzaib.mobislp.makeFolderInRoot
 import com.shahzaib.mobislp.saveProcessedImages
@@ -195,7 +195,7 @@ class ImageViewerFragment: Fragment() {
                 navController.navigate(
                     ImageViewerFragmentDirections
                         .actionImageViewerFragmentToCameraFragment(
-                            MainActivity.cameraIDList.first, ImageFormat.JPEG)
+                            MainActivity.cameraIDList.first, imageFormat)
                 )
             }
         }
@@ -218,7 +218,8 @@ class ImageViewerFragment: Fragment() {
             var rgbImageBitmap = decodeBitmap(bufferRGB, bufferRGB.size, true)
             var nirImageBitmap = decodeBitmap(bufferNIR, bufferNIR.size, false)
 
-            rgbImageBitmap = Utils.fixedAlignment(rgbImageBitmap)
+            if (rgbImageBitmap.width > nirImageBitmap.width && rgbImageBitmap.height > nirImageBitmap.height)
+                rgbImageBitmap = Utils.fixedAlignment(rgbImageBitmap)
 
             Log.i("Bitmap Size", "Decoded RGB: ${rgbImageBitmap.width} x ${rgbImageBitmap.height}, Decoded NIR: ${nirImageBitmap.width} x ${nirImageBitmap.height}")
 

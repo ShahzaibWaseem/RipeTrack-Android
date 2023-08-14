@@ -17,6 +17,7 @@ import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.CaptureResult
+import android.hardware.camera2.DngCreator
 import android.hardware.camera2.TotalCaptureResult
 import android.media.AudioManager
 import android.media.Image
@@ -50,6 +51,7 @@ import com.shahzaib.mobislp.MainActivity
 import com.shahzaib.mobislp.MainActivity.Companion.generateAlertBox
 import com.shahzaib.mobislp.R
 import com.shahzaib.mobislp.Utils
+import com.shahzaib.mobislp.Utils.imageFormat
 import com.shahzaib.mobislp.compressImage
 import com.shahzaib.mobislp.databinding.FragmentCameraBinding
 import com.shahzaib.mobislp.readImage
@@ -124,11 +126,13 @@ class CameraFragment: Fragment() {
     private var mobiSpectralApplicationID = 0
     private var offlineMode = false
 
+    val reloadLambda = { startMyActivityForResult() }
+
     private val myActivityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             if (result.data?.clipData == null) {
                 if (cameraIdNIR != "OnePlus") {
-                    generateAlertBox(requireContext(), "Only One Image Selected", "Cannot select 1 image, Select Two images.\nFirst image RGB, Second image NIR") { reload { startMyActivityForResult() } }
+                    generateAlertBox(requireContext(), "Only One Image Selected", "Cannot select 1 image, Select Two images.\nFirst image RGB, Second image NIR", reloadLambda)
                 }
                 else {
                     // If we have to select one image.
@@ -163,7 +167,7 @@ class CameraFragment: Fragment() {
                     rgbBitmap = compressImage(rgbBitmap)
                     nirBitmap = compressImage(nirBitmap)
 
-                    val rgbBitmapOutputFile = createFile("RGB")
+                    val rgbBitmapOutputFile = createFile("RGB", false)
                     val nirBitmapOutputFile = File(rgbBitmapOutputFile.toString().replace("RGB", "NIR"))
                     rgbAbsolutePath = rgbBitmapOutputFile.absolutePath
                     nirAbsolutePath = nirBitmapOutputFile.absolutePath
@@ -179,7 +183,7 @@ class CameraFragment: Fragment() {
                     }
                 }
                 else {
-                    generateAlertBox(requireContext(),"Number of images exceeded 2", "Cannot select more than 2 images.\nFirst image RGB, Second image NIR") { reload { startMyActivityForResult() } }
+                    generateAlertBox(requireContext(),"Number of images exceeded 2", "Cannot select more than 2 images.\nFirst image RGB, Second image NIR", reloadLambda)
                 }
             }
         }
@@ -265,6 +269,16 @@ class CameraFragment: Fragment() {
         // val size = Size(Utils.previewWidth, Utils.previewHeight)
 
         imageReader = ImageReader.newInstance(size.width, size.height, args.pixelFormat, IMAGE_BUFFER_SIZE)
+        Log.i("OutputSizes", "$camera.")
+        val streamConfigurationMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+        val formats = streamConfigurationMap?.outputFormats
+        val outSizes = streamConfigurationMap?.getOutputSizes(imageFormat)
+        for (format in formats!!) {
+            Log.i("Stream Configuration", "Format: $format")
+        }
+        for (size1 in outSizes!!) {
+            Log.i("Stream Configuration", "Size: $size1")
+        }
 
         // Creates list of Surfaces where the camera will output frames
         val targets = listOf(fragmentCameraBinding.viewFinder.holder.surface, imageReader.surface)
@@ -333,7 +347,7 @@ class CameraFragment: Fragment() {
                     if (cameraId == cameraIdRGB){
                         when (cameraIdNIR) {
                             "OnePlus" -> navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath))
-                            else -> navController.navigate(CameraFragmentDirections.actionCameraFragmentSelf(cameraIdNIR, ImageFormat.JPEG))
+                            else -> navController.navigate(CameraFragmentDirections.actionCameraFragmentSelf(cameraIdNIR, imageFormat))
                         }
                     }
                     else
@@ -342,8 +356,6 @@ class CameraFragment: Fragment() {
             }
         }
     }
-
-    fun reload(reloadFunction: () -> Unit) = reloadFunction()
 
     private fun startMyActivityForResult() {
         val galleryIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
@@ -509,6 +521,17 @@ class CameraFragment: Fragment() {
     /** Helper function used to save a [CombinedCaptureResult] into a [File] */
     private suspend fun saveResult(result: CombinedCaptureResult): File = suspendCoroutine { cont ->
         when (result.format) {
+            ImageFormat.RAW_SENSOR -> {
+                val dngCreator = DngCreator(characteristics, result.metadata)
+                try {
+                    val output = createFile("RGB", true)
+                    FileOutputStream(output).use { dngCreator.writeImage(it, result.image) }
+                    cont.resume(output)
+                } catch (exc: IOException) {
+                    Log.e(TAG, "Unable to write DNG image to file", exc)
+                    cont.resumeWithException(exc)
+                }
+            }
             // When the format is JPEG or DEPTH JPEG we can simply save the bytes as-is
             ImageFormat.JPEG, ImageFormat.DEPTH_JPEG -> {
                 val buffer = result.image.planes[0].buffer
@@ -535,9 +558,9 @@ class CameraFragment: Fragment() {
                     }
                     else {
                         fragmentCameraBinding.illumination.text = resources.getString(R.string.formatted_illumination_string, "Adequate")
-                        fragmentCameraBinding.illumination.setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.color.design_default_color_error))
+                        fragmentCameraBinding.illumination.setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.color.design_default_color_secondary))
                     }
-                    val output = createFile(nir)
+                    val output = createFile(nir, false)
                     FileOutputStream(output).use { it.write(rotatedBytes) }
                     cont.resume(output)
                     Log.i("Filename", output.toString())
@@ -594,14 +617,15 @@ class CameraFragment: Fragment() {
          *
          * @return [File] created.
          */
-        private fun createFile(nir: String): File {
+        private fun createFile(nir: String, isDng: Boolean): File {
             val externalStorageDirectory = Environment.getExternalStorageDirectory().toString()
-            val rootDirectory = File(externalStorageDirectory, "/MobiSpectral")
+            val rootDirectory = File(externalStorageDirectory, "/${Utils.appRootPath}")
             val imageDirectory = File(rootDirectory, "/${Utils.rawImageDirectory}")
 
             val sdf = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss_SSS", Locale.US)
             fileFormat = sdf.format(Date())
-            val output = File(imageDirectory, "IMG_${fileFormat}_$nir.jpg")
+            val fileExtension = if (isDng) "dng" else "jpg"
+            val output = File(imageDirectory, "IMG_${fileFormat}_$nir.$fileExtension")
             if (nir == "RGB")
                 rgbAbsolutePath = output.absolutePath
             return output
