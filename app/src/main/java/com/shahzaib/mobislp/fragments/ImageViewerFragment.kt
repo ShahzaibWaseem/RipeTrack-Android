@@ -33,6 +33,7 @@ import com.shahzaib.mobislp.R
 import com.shahzaib.mobislp.Utils
 import com.shahzaib.mobislp.Utils.cropImage
 import com.shahzaib.mobislp.Utils.imageFormat
+import com.shahzaib.mobislp.addCSVLog
 import com.shahzaib.mobislp.databinding.FragmentImageviewerBinding
 import com.shahzaib.mobislp.makeFolderInRoot
 import com.shahzaib.mobislp.saveProcessedImages
@@ -109,6 +110,9 @@ class ImageViewerFragment: Fragment() {
         LoadingDialogFragment.text = getString(R.string.normalizing_image_string)
         loadingDialogFragment.isCancelable = false
         makeFolderInRoot(Utils.appRootPath, requireContext())
+        if(MainActivity.dataCapturing)
+            addCSVLog(requireContext())
+
         var firstTap = false
 
         _fragmentImageViewerBinding = FragmentImageviewerBinding.inflate(inflater, container, false)

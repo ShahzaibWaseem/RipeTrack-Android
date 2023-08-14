@@ -27,8 +27,8 @@ class MainActivity: AppCompatActivity() {
         lateinit var originalNIRBitmap: Bitmap
         lateinit var originalImageRGB: String
         lateinit var originalImageNIR: String
-        lateinit var processedImageRGB: String
-        lateinit var processedImageNIR: String
+        var processedImageRGB = ""
+        var processedImageNIR = ""
         var croppedImageRGB: String = ""
         var croppedImageNIR: String = ""
         var actualLabel: String = ""
@@ -39,6 +39,7 @@ class MainActivity: AppCompatActivity() {
         lateinit var tempRGBBitmap: Bitmap
         lateinit var tempRectangle: Rect
         var cameraIDList: Pair<String, String> = Pair("", "")
+        var dataCapturing = false
 
         fun generateAlertBox(context: Context, title: String, text: String, onPositiveButtonFunction: () -> Unit) {
             val alertDialogBuilder = MaterialAlertDialogBuilder(context, R.style.AlertDialogTheme)

@@ -135,14 +135,9 @@ lateinit var csvFile: File
 /** Helper class used as a data holder for each selectable camera format item */
 data class FormatItem(val title: String, val cameraId: String, val format: Int, val orientation: String, val sensorArrangement: Int)
 
-data class MobiSLPCSVFormat(val fruitID: String,
-                            val originalImageRGB: String, val originalImageNIR: String,
-                            val croppedImageRGB: String, val croppedImageNIR: String,
-                            val processedImageRGB: String, val processedImageNIR: String,
-                            val actualLabel: String) {
+data class MobiSLPCSVFormat(val fruitID: String, val originalImageRGB: String, val originalImageNIR: String, val actualLabel: String) {
     fun csvFormat(): Array<String> {
-        return arrayOf(fruitID, originalImageRGB, originalImageNIR, croppedImageRGB, croppedImageNIR,
-            processedImageRGB, processedImageNIR, actualLabel)
+        return arrayOf(fruitID, originalImageRGB, originalImageNIR, actualLabel)
     }
 }
 
@@ -213,12 +208,9 @@ fun makeFolderInRoot(directoryPath: String, context: Context) {
     val externalStorageDirectory = Environment.getExternalStorageDirectory().toString()
     val directory = File(externalStorageDirectory, "/$directoryPath")
 
-    csvFile = File(directory.parent, appRootPath + "_Logs.csv")
+    csvFile = File(directory, "MobiSLP_Logs.csv")
     if (!csvFile.exists()) {
-        val header = MobiSLPCSVFormat("Fruit ID", "Original RGB Path", "Original NIR Path",
-            "Cropped RGB Path", "Cropped NIR Path",
-            "Processed RGB Path", "Processed NIR Path",
-            "Actual Label")
+        val header = MobiSLPCSVFormat("Fruit ID", "Original RGB Path", "Original NIR Path", "Actual Label")
 
         val writer = CSVWriter(
             FileWriter(csvFile, false),
@@ -343,9 +335,7 @@ suspend fun saveImage(bitmap: Bitmap, outputFile: File): File = suspendCoroutine
 
 fun addCSVLog (context: Context) {
     if (csvFile.exists()) {
-        val entry = MobiSLPCSVFormat(MainActivity.fruitID, MainActivity.originalImageRGB, MainActivity.originalImageNIR,
-            MainActivity.croppedImageRGB, MainActivity.croppedImageNIR,
-            MainActivity.processedImageRGB, MainActivity.processedImageNIR, MainActivity.actualLabel)
+        val entry = MobiSLPCSVFormat(MainActivity.fruitID, MainActivity.originalImageRGB, MainActivity.originalImageNIR, MainActivity.actualLabel)
 
         val writer = CSVWriter(
             FileWriter(csvFile, true),

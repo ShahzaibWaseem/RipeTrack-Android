@@ -45,7 +45,9 @@ import com.shahzaib.mobislp.MainActivity
 import com.shahzaib.mobislp.R
 import com.shahzaib.mobislp.Utils
 import com.shahzaib.mobislp.Utils.imageFormat
+import com.shahzaib.mobislp.addCSVLog
 import com.shahzaib.mobislp.databinding.FragmentDatacaptureBinding
+import com.shahzaib.mobislp.makeFolderInRoot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -149,6 +151,8 @@ class DataCaptureFragment: Fragment() {
         cameraIdRGB = MainActivity.cameraIDList.first
         cameraIdNIR = MainActivity.cameraIDList.second
         _fragmentDataCaptureBinding!!.fruitIDTextView.text = getString(R.string.object_id_string, fruitID)
+        MainActivity.dataCapturing = true
+        MainActivity.fruitID = fruitID.toString()
 
         Log.i("Camera IDs", "RGB: $cameraIdRGB, NIR: $cameraIdNIR")
         return fragmentDataCaptureBinding.root
@@ -275,6 +279,8 @@ class DataCaptureFragment: Fragment() {
 
                 // Save the result to disk
                 val output = saveResult(result)
+                MainActivity.originalImageRGB = rgbAbsolutePath
+                MainActivity.originalImageNIR = output.absolutePath
                 lifecycleScope.launch(Dispatchers.Main) {
                     if (cameraId == cameraIdRGB){
                         when (cameraIdNIR) {
