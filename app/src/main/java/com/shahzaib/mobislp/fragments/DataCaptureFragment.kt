@@ -45,9 +45,7 @@ import com.shahzaib.mobislp.MainActivity
 import com.shahzaib.mobislp.R
 import com.shahzaib.mobislp.Utils
 import com.shahzaib.mobislp.Utils.imageFormat
-import com.shahzaib.mobislp.addCSVLog
 import com.shahzaib.mobislp.databinding.FragmentDatacaptureBinding
-import com.shahzaib.mobislp.makeFolderInRoot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
