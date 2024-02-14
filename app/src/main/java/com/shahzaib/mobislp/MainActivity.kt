@@ -31,6 +31,8 @@ class MainActivity: AppCompatActivity() {
         var processedImageNIR = ""
         var croppedImageRGB: String = ""
         var croppedImageNIR: String = ""
+        var minMaxRGB = Pair(1000, -1000)
+        var minMaxNIR = Pair(1000, -1000)
         var actualLabel: String = ""
         var predictedLabel: String = ""
         var normalizationTime: String = " s"

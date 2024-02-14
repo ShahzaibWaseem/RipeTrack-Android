@@ -46,8 +46,8 @@ object Utils {
     const val croppedImageDirectory = "croppedImages"
     const val processedImageDirectory = "processedImages"
     const val hypercubeDirectory = "reconstructedHypercubes"
-    const val boundingBoxWidth = 32F
-    const val boundingBoxHeight = 32F
+    const val boundingBoxWidth = 22.5F
+    const val boundingBoxHeight = 22.5F
     const val imageFormat = ImageFormat.JPEG
 
     fun assetFilePath(context: Context, assetName: String): String? {

@@ -127,4 +127,13 @@
             app:destination="@+id/camera_fragment"/>
     </fragment>
 
+    <fragment
+        android:id="@+id/reconstruction_fragment"
+        android:name="com.shahzaib.mobislp.fragments.ReconstructionFragment"
+        android:label="ReconstructionFragment">
+        <action
+            android:id="@+id/action_reconstruction_fragment_to_application_title"
+            app:destination="@+id/applicationselector_fragment"/>
+    </fragment>
+
 </navigation>

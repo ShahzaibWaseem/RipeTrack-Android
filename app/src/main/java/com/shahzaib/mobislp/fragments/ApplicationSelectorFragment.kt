@@ -67,7 +67,7 @@ class ApplicationSelectorFragment: Fragment() {
 
     private fun enableButton() {
         fragmentApplicationSelectorBinding.runApplicationButton.isEnabled = true
-        fragmentApplicationSelectorBinding.runApplicationButton.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
+        fragmentApplicationSelectorBinding.runApplicationButton.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.background))
         fragmentApplicationSelectorBinding.runApplicationButton.text = resources.getString(R.string.launch_application_button).uppercase()
     }
 
