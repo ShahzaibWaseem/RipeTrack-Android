@@ -1,69 +1,69 @@
 plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
-    id 'androidx.navigation.safeargs'
+	id 'com.android.application'
+	id 'org.jetbrains.kotlin.android'
+	id 'androidx.navigation.safeargs'
 }
 
 android {
-    namespace 'com.shahzaib.mobislp'
-    compileSdk 34
+	namespace 'com.shahzaib.mobislp'
+	compileSdk 34
 
-    defaultConfig {
-        applicationId "com.shahzaib.mobislp"
-        minSdk 24
-        targetSdk 34
-        versionCode 1
-        versionName "1.0"
+	defaultConfig {
+		applicationId "com.shahzaib.mobislp"
+		minSdk 24
+		targetSdk 34
+		versionCode 1
+		versionName "1.0"
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    }
+		testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+	}
 
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
-    buildFeatures {
-        viewBinding true
-    }
+	buildTypes {
+		release {
+			minifyEnabled false
+			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+		}
+	}
+	buildFeatures {
+		viewBinding true
+	}
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
+	compileOptions {
+		sourceCompatibility JavaVersion.VERSION_1_8
+		targetCompatibility JavaVersion.VERSION_1_8
+	}
+	kotlinOptions {
+		jvmTarget = '1.8'
+	}
 }
 
 dependencies {
-    implementation project(':utils')
+	implementation project(':utils')
 
-    implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+	implementation 'androidx.core:core-ktx:1.12.0'
+	implementation 'androidx.appcompat:appcompat:1.6.1'
+	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
 
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+	testImplementation 'junit:junit:4.13.2'
+	androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+	androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
-    // Navigation library
-    implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
-    implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
+	// Navigation library
+	implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
+	implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
 
-    implementation 'com.google.android.material:material:1.11.0'
+	implementation 'com.google.android.material:material:1.11.0'
 
-    // Glide
-    implementation 'com.github.bumptech.glide:glide:4.11.0'
+	// Glide
+	implementation 'com.github.bumptech.glide:glide:4.11.0'
 
-    // Library for CSV
-    implementation 'com.opencsv:opencsv:4.6'
+	// Library for CSV
+	implementation 'com.opencsv:opencsv:4.6'
 
-    // PyTorch
-    implementation 'org.pytorch:pytorch_android:1.8.0'
-    implementation 'org.pytorch:pytorch_android_torchvision:1.8.0'
+	// PyTorch
+	implementation 'org.pytorch:pytorch_android:1.8.0'
+	implementation 'org.pytorch:pytorch_android_torchvision:1.8.0'
 
-    // Library for graphs
-    implementation "com.jjoe64:graphview:4.2.2"
+	// Library for graphs
+	implementation "com.jjoe64:graphview:4.2.2"
 }

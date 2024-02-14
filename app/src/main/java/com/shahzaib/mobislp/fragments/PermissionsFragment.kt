@@ -21,60 +21,60 @@ import com.shahzaib.mobislp.R
 import kotlinx.coroutines.launch
 
 class PermissionsFragment: Fragment() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        if (hasPermissions(requireContext())) {
-            // If permissions have already been granted, proceed
-            launchFragments()
-        } else {
-            // Request permissions
-            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-                permissions.entries.forEach {
-                    val isGranted = it.value
-                    if (!isGranted)
-                        Toast.makeText(context, "Permission request denied", Toast.LENGTH_LONG).show()
-                }
-                if (hasPermissions(requireContext()))
-                    launchFragments()
-            }.launch(arrayOf(Manifest.permission.CAMERA))
-        }
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
-            if (!Environment.isExternalStorageManager()) {
-                try {
-                    val uri = Uri.parse("package:" + requireContext().packageName)
-                    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri)
-                    intent.addCategory("android.intent.category.DEFAULT")
-                    intent.data = Uri.parse(String.format("package:%s", requireContext().packageName))
-                    startActivity(intent)
-                } catch (ex: Exception) {
-                    val intent = Intent()
-                    intent.action = Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
-                    startActivity(intent)
-                }
-            }
-        } else {
-            if (ActivityCompat.checkSelfPermission(requireContext(),
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(requireActivity(),
-                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 100)
-            }
-        }
-    }
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		if (hasPermissions(requireContext())) {
+			// If permissions have already been granted, proceed
+			launchFragments()
+		} else {
+			// Request permissions
+			registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+				permissions.entries.forEach {
+					val isGranted = it.value
+					if (!isGranted)
+						Toast.makeText(context, "Permission request denied", Toast.LENGTH_LONG).show()
+				}
+				if (hasPermissions(requireContext()))
+					launchFragments()
+			}.launch(arrayOf(Manifest.permission.CAMERA))
+		}
+		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+			if (!Environment.isExternalStorageManager()) {
+				try {
+					val uri = Uri.parse("package:" + requireContext().packageName)
+					val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri)
+					intent.addCategory("android.intent.category.DEFAULT")
+					intent.data = Uri.parse(String.format("package:%s", requireContext().packageName))
+					startActivity(intent)
+				} catch (ex: Exception) {
+					val intent = Intent()
+					intent.action = Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION
+					startActivity(intent)
+				}
+			}
+		} else {
+			if (ActivityCompat.checkSelfPermission(requireContext(),
+					Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+				ActivityCompat.requestPermissions(requireActivity(),
+					arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 100)
+			}
+		}
+	}
 
-    private fun launchFragments() {
-        lifecycleScope.launch {
-            withStarted {
-                Navigation.findNavController(requireActivity(), R.id.fragment_container)
-                    .navigate(PermissionsFragmentDirections.actionPermissionsFragmentToAppselector())
-            }
-        }
-    }
+	private fun launchFragments() {
+		lifecycleScope.launch {
+			withStarted {
+				Navigation.findNavController(requireActivity(), R.id.fragment_container)
+					.navigate(PermissionsFragmentDirections.actionPermissionsFragmentToAppselector())
+			}
+		}
+	}
 
-    companion object {
-        private val PERMISSIONS_REQUIRED = arrayOf(Manifest.permission.CAMERA)
-        /** Convenience method used to check if all permissions required by this app are granted */
-        fun hasPermissions(context: Context) = PERMISSIONS_REQUIRED.all {
-            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-        }
-    }
+	companion object {
+		private val PERMISSIONS_REQUIRED = arrayOf(Manifest.permission.CAMERA)
+		/** Convenience method used to check if all permissions required by this app are granted */
+		fun hasPermissions(context: Context) = PERMISSIONS_REQUIRED.all {
+			ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+		}
+	}
 }
