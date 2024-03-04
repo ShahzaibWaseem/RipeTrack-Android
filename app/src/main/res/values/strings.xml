@@ -5,6 +5,7 @@
     <string name="application_picker_string">Choose Fruit</string>
     <string name="avocado_string">Avocado</string>
     <string name="pear_string">Pear</string>
+    <string name="banana_string">Banana</string>
     <string name="apple_string">Apple</string>
     <string name="choose_mode_string">Choose Mode</string>
     <string name="advanced_option_string">Detailed (Signature Analysis)</string>

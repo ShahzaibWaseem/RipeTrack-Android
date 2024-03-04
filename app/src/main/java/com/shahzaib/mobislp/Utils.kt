@@ -9,6 +9,7 @@ import android.graphics.Matrix
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
+import android.media.Image
 import android.media.MediaScannerConnection
 import android.os.Build
 import android.os.Environment
@@ -49,6 +50,7 @@ object Utils {
 	const val boundingBoxWidth = 22.5F
 	const val boundingBoxHeight = 22.5F
 	const val imageFormat = ImageFormat.JPEG
+	const val rawImageFormat = ImageFormat.RAW_SENSOR
 
 	fun assetFilePath(context: Context, assetName: String): String? {
 		val file = File(context.filesDir, assetName)

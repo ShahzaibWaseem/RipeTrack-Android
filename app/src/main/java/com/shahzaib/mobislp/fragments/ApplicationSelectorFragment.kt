@@ -43,7 +43,7 @@ class ApplicationSelectorFragment: Fragment() {
 		fragmentApplicationSelectorBinding = FragmentApplicationselectorBinding.inflate(inflater, container, false)
 		val applicationPicker = fragmentApplicationSelectorBinding.applicationPicker
 		applicationArray = arrayOf(getString(R.string.avocado_string),
-			getString(R.string.pear_string) , getString(R.string.apple_string))
+			getString(R.string.pear_string) , getString(R.string.banana_string))
 		applicationPicker.minValue = 0
 		applicationPicker.maxValue = applicationArray.size-1
 		applicationPicker.displayedValues = applicationArray
@@ -76,7 +76,10 @@ class ApplicationSelectorFragment: Fragment() {
 		super.onStart()
 		MainActivity.cameraIDList = Utils.getCameraIDs(requireContext(), MainActivity.MOBISPECTRAL_APPLICATION)
 		val cameraIdNIR = MainActivity.cameraIDList.second
+		val sharedPreferences = requireActivity().getSharedPreferences("mobislp_preferences", Context.MODE_PRIVATE)
+		val editor = sharedPreferences?.edit()
 
+		fragmentApplicationSelectorBinding.applicationPicker.value = applicationArray.indexOf(sharedPreferences.getString("fruit", "Avocado"))
 		fragmentApplicationSelectorBinding.information.setOnClickListener {
 			generateAlertBox(requireContext(), "Information", getString(R.string.application_selector_information_string)) { }
 		}
@@ -99,8 +102,7 @@ class ApplicationSelectorFragment: Fragment() {
 			val selectedRadio = fragmentApplicationSelectorBinding.radioGroup.checkedRadioButtonId
 			val selectedOption = requireView().findViewById<RadioButton>(selectedRadio).text.toString()
 			val offlineMode = selectedOption == getString(R.string.offline_mode_string)
-			val sharedPreferences = requireActivity().getSharedPreferences("mobislp_preferences", Context.MODE_PRIVATE)
-			val editor = sharedPreferences?.edit()
+
 			editor!!.putString("application", selectedApplication)
 			editor.putString("fruit", selectedApplication)
 			editor.putString("option", getString(R.string.advanced_option_string))

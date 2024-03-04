@@ -23,6 +23,7 @@ class MainActivity: AppCompatActivity() {
 	companion object {
 		const val MOBISPECTRAL_APPLICATION = 0
 		lateinit var fruitID: String
+		lateinit var fruitName: String
 		lateinit var originalRGBBitmap: Bitmap
 		lateinit var originalNIRBitmap: Bitmap
 		lateinit var originalImageRGB: String

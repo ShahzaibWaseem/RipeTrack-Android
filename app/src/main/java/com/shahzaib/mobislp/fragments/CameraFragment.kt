@@ -583,6 +583,16 @@ class CameraFragment: Fragment() {
 					Log.e(TAG, "Unable to write JPEG image to file", exc)
 					cont.resumeWithException(exc)
 				}
+
+				val dngCreator = DngCreator(characteristics, result.metadata)
+				try {
+					val output = createFile("RGB", "lossless")
+					FileOutputStream(output).use { dngCreator.writeImage(it, result.image) }
+					cont.resume(output)
+				} catch (exc: IOException) {
+					Log.e(TAG, "Unable to write DNG image to file", exc)
+					cont.resumeWithException(exc)
+				}
 			}
 
 			// No other formats are supported by this sample

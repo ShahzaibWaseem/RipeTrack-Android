@@ -45,6 +45,7 @@ import com.shahzaib.mobislp.MainActivity
 import com.shahzaib.mobislp.R
 import com.shahzaib.mobislp.Utils
 import com.shahzaib.mobislp.Utils.imageFormat
+import com.shahzaib.mobislp.Utils.rawImageFormat
 import com.shahzaib.mobislp.databinding.FragmentDatacaptureBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -116,6 +117,7 @@ class DataCaptureFragment: Fragment() {
 	private var mobiSpectralApplicationID = 0
 	private var fruitApplication = ""
 	private var fruitID = 0
+	private var fruitName = 0
 	private var offlineMode = false
 
 	private val cameraSurfaceHolderCallback = object: SurfaceHolder.Callback {
@@ -144,6 +146,7 @@ class DataCaptureFragment: Fragment() {
 			else -> MainActivity.MOBISPECTRAL_APPLICATION
 		}
 		fruitID = sharedPreferences.getInt("fruitID", 0)
+		fruitName = sharedPreferences.getInt("fruitName", 0)
 		offlineMode = sharedPreferences.getBoolean("offline_mode", false)
 		fruitApplication = sharedPreferences.getString("fruit", "Avocado")!!
 		cameraIdRGB = MainActivity.cameraIDList.first
@@ -281,10 +284,13 @@ class DataCaptureFragment: Fragment() {
 				MainActivity.originalImageNIR = output.absolutePath
 				lifecycleScope.launch(Dispatchers.Main) {
 					if (cameraId == cameraIdRGB){
+//						cameraIdNIR = if (!isRawCaptured) "RAW" else cameraIdNIR
 						when (cameraIdNIR) {
 							"OnePlus" -> navController.navigate(DataCaptureFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath))
+//							"RAW" -> navController.navigate(DataCaptureFragmentDirections.actionDataCaptureFragmentSelf(cameraIdRGB, rawImageFormat))
 							else -> navController.navigate(DataCaptureFragmentDirections.actionDataCaptureFragmentSelf(cameraIdNIR, imageFormat))
 						}
+//						isRawCaptured = true
 					}
 					else
 						navController.navigate(DataCaptureFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, output.absolutePath))
@@ -442,7 +448,7 @@ class DataCaptureFragment: Fragment() {
 			ImageFormat.RAW_SENSOR -> {
 				val dngCreator = DngCreator(characteristics, result.metadata)
 				try {
-					val output = createFile("RGB", fruitApplication, fruitID,"lossless")
+					val output = createFile("RGB", fruitApplication, fruitID,"RAW")
 					FileOutputStream(output).use { dngCreator.writeImage(it, result.image) }
 					cont.resume(output)
 				} catch (exc: IOException) {
@@ -532,6 +538,7 @@ class DataCaptureFragment: Fragment() {
 		private lateinit var fileFormat: String
 		lateinit var rgbAbsolutePath: String
 		lateinit var nirAbsolutePath: String
+		var isRawCaptured = false
 
 		/** Maximum number of images that will be held in the reader's buffer */
 		private const val IMAGE_BUFFER_SIZE: Int = 3
