@@ -56,6 +56,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
+import java.util.Collections
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ArrayBlockingQueue
@@ -162,6 +163,7 @@ class DataCaptureFragment: Fragment() {
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 		fragmentDataCaptureBinding.viewFinder.holder.addCallback(cameraSurfaceHolderCallback)
+		Log.i("Arguments", "${args.cameraId}, ${args.pixelFormat}")
 
 		fragmentDataCaptureBinding.Title.setOnClickListener {
 			lifecycleScope.launch(Dispatchers.Main) {
@@ -183,7 +185,6 @@ class DataCaptureFragment: Fragment() {
 			editor!!.putInt("fruitID", fruitID)
 			editor.apply()
 		}
-
 	}
 
 	override fun onResume() {
@@ -203,18 +204,18 @@ class DataCaptureFragment: Fragment() {
 		camera = openCamera(cameraManager, args.cameraId, cameraHandler)
 
 		val size = if (cameraIdNIR == "OnePlus") Size(Utils.torchHeight, Utils.torchWidth) else Size(Utils.previewWidth, Utils.previewHeight)
+
 		// val size = Size(Utils.previewWidth, Utils.previewHeight)
 
 		imageReader = ImageReader.newInstance(size.width, size.height, args.pixelFormat, IMAGE_BUFFER_SIZE)
-		Log.i("OutputSizes", "$camera.")
 		val streamConfigurationMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
 		val formats = streamConfigurationMap?.outputFormats
 		val outSizes = streamConfigurationMap?.getOutputSizes(imageFormat)
 		for (format in formats!!) {
-			Log.i("Stream Configuration", "Format: $format")
+			Log.i("Stream Configuration", "Camera ID: ${args.cameraId}, Format: $format")
 		}
 		for (size1 in outSizes!!) {
-			Log.i("Stream Configuration", "Size: $size1")
+			Log.i("Stream Configuration", "Camera ID: ${args.cameraId}, Size: $size1")
 		}
 
 		// Creates list of Surfaces where the camera will output frames
@@ -284,13 +285,15 @@ class DataCaptureFragment: Fragment() {
 				MainActivity.originalImageNIR = output.absolutePath
 				lifecycleScope.launch(Dispatchers.Main) {
 					if (cameraId == cameraIdRGB){
-//						cameraIdNIR = if (!isRawCaptured) "RAW" else cameraIdNIR
+						if (!isRawCaptured) {
+							Log.i("RAW", "Running Raw Image Capturing conditional")
+							navController.navigate(DataCaptureFragmentDirections.actionDataCaptureFragmentSelf(cameraIdRGB, rawImageFormat))
+							isRawCaptured = true
+						}
 						when (cameraIdNIR) {
 							"OnePlus" -> navController.navigate(DataCaptureFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath))
-//							"RAW" -> navController.navigate(DataCaptureFragmentDirections.actionDataCaptureFragmentSelf(cameraIdRGB, rawImageFormat))
 							else -> navController.navigate(DataCaptureFragmentDirections.actionDataCaptureFragmentSelf(cameraIdNIR, imageFormat))
 						}
-//						isRawCaptured = true
 					}
 					else
 						navController.navigate(DataCaptureFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, output.absolutePath))
@@ -445,7 +448,8 @@ class DataCaptureFragment: Fragment() {
 	/** Helper function used to save a [CombinedCaptureResult] into a [File] */
 	private suspend fun saveResult(result: CombinedCaptureResult): File = suspendCoroutine { cont ->
 		when (result.format) {
-			ImageFormat.RAW_SENSOR -> {
+			ImageFormat.RAW_SENSOR, ImageFormat.RAW_PRIVATE, ImageFormat.RAW10 -> {
+				Log.i("RAW", "Capturing Raw Image")
 				val dngCreator = DngCreator(characteristics, result.metadata)
 				try {
 					val output = createFile("RGB", fruitApplication, fruitID,"RAW")
@@ -508,7 +512,6 @@ class DataCaptureFragment: Fragment() {
 					cont.resumeWithException(exc)
 				}
 			}
-
 			// No other formats are supported by this sample
 			else -> {
 				val exc = RuntimeException("Unknown image format: ${result.image.format}")
@@ -534,7 +537,7 @@ class DataCaptureFragment: Fragment() {
 	}
 
 	companion object {
-		private val TAG = CameraFragment::class.java.simpleName
+		private val TAG = DataCaptureFragment::class.java.simpleName
 		private lateinit var fileFormat: String
 		lateinit var rgbAbsolutePath: String
 		lateinit var nirAbsolutePath: String
