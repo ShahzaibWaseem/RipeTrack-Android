@@ -94,7 +94,6 @@
             android:layout_height="wrap_content"
             android:buttonTint="@color/background"
             android:text="@string/online_mode_string"/>
-
     </RadioGroup>
 
     <androidx.constraintlayout.widget.Guideline

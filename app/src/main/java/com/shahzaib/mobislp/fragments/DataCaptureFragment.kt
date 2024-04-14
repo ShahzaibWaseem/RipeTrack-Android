@@ -33,6 +33,7 @@ import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.View
 import android.view.ViewGroup
+import android.widget.RadioButton
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -184,6 +185,15 @@ class DataCaptureFragment: Fragment() {
 			fragmentDataCaptureBinding.fruitIDTextView.text = getString(R.string.object_id_string, fruitID)
 			editor!!.putInt("fruitID", fruitID)
 			editor.apply()
+		}
+	}
+
+	override fun onStart() {
+		super.onStart()
+		fragmentDataCaptureBinding.illuminationRadioGroup.setOnCheckedChangeListener { _, _ ->
+			val selectedRadio = fragmentDataCaptureBinding.illuminationRadioGroup.checkedRadioButtonId
+			val selectedOption = requireView().findViewById<RadioButton>(selectedRadio).text.toString()
+			MainActivity.illuminationOption = selectedOption
 		}
 	}
 
@@ -452,7 +462,7 @@ class DataCaptureFragment: Fragment() {
 				Log.i("RAW", "Capturing Raw Image")
 				val dngCreator = DngCreator(characteristics, result.metadata)
 				try {
-					val output = createFile("RGB", fruitApplication, fruitID,"RAW")
+					val output = createFile("RGB", fruitApplication, fruitID, MainActivity.illuminationOption, "RAW")
 					FileOutputStream(output).use { dngCreator.writeImage(it, result.image) }
 					cont.resume(output)
 				} catch (exc: IOException) {
@@ -503,7 +513,7 @@ class DataCaptureFragment: Fragment() {
 						fragmentDataCaptureBinding.illumination.text = resources.getString(R.string.formatted_illumination_string, "Adequate")
 						fragmentDataCaptureBinding.illumination.setTextColor(ContextCompat.getColor(requireContext(), com.google.android.material.R.color.design_default_color_secondary))
 					}
-					val output = createFile(nir, fruitApplication, fruitID, "lossless")
+					val output = createFile(nir, fruitApplication, fruitID, MainActivity.illuminationOption, "lossless")
 					FileOutputStream(output).use { it.write(rotatedBytes) }
 					cont.resume(output)
 					Log.i("Filename", output.toString())
@@ -561,7 +571,7 @@ class DataCaptureFragment: Fragment() {
 		 * @return [File] created.
 		 */
 		@Suppress("SameParameterValue")
-		private fun createFile(nir: String, fruitApplication: String, fruitID: Int, compressionLevel: String): File {
+		private fun createFile(nir: String, fruitApplication: String, fruitID: Int, illuminationOption: String, compressionLevel: String): File {
 			val externalStorageDirectory = Environment.getExternalStorageDirectory().toString()
 			val rootDirectory = File(externalStorageDirectory, "/${Utils.appRootPath}")
 			val imageDirectory = File(rootDirectory, "/${Utils.rawImageDirectory}")
@@ -574,7 +584,7 @@ class DataCaptureFragment: Fragment() {
 				"lossy" -> "jpg"
 				else -> "jpg"
 			}
-			val output = File(imageDirectory, "IMG_${fileFormat}_${nir}_(${fruitApplication.first()}${fruitApplication.last()}_ID_$fruitID).$fileExtension")
+			val output = File(imageDirectory, "IMG_${fileFormat}_${nir}(${fruitApplication.first()}${fruitApplication.last()}_ID_$fruitID)[${illuminationOption.first()}].$fileExtension")
 			if (nir == "RGB")
 				rgbAbsolutePath = output.absolutePath
 			return output

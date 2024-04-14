@@ -7,6 +7,8 @@
     <string name="pear_string">Pear</string>
     <string name="banana_string">Banana</string>
     <string name="apple_string">Apple</string>
+    <string name="mango_string">Mango</string>
+    <string name="nectarine_string">Nectarine</string>
     <string name="choose_mode_string">Choose Mode</string>
     <string name="advanced_option_string">Detailed (Signature Analysis)</string>
     <string name="simple_option_string">Simple (Organic Identification)</string>
@@ -26,6 +28,12 @@
     <string name="simple_mode_signature_string">"Cropped Box - Center: (x: %1d, y: %2d)"</string>
     <string name="classification_probabilities_string">Prob: %s</string>
 
+    <string name="halogen_string">Halogen</string>
+    <string name="led_string">LED</string>
+    <string name="cfl_string">CFL</string>
+    <string name="arbitrary_string">Mix</string>
+    <string name="plus_string">+</string>
+    <string name="minus_string">-</string>
     <string name="capture_description">Capture Image</string>
     <string name="object_id_string">Fruit ID: %2d</string>
     <string name="tab_layout_description">Tab layout</string>
