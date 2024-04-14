@@ -42,7 +42,7 @@ class ApplicationSelectorFragment: Fragment() {
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		fragmentApplicationSelectorBinding = FragmentApplicationselectorBinding.inflate(inflater, container, false)
 		val applicationPicker = fragmentApplicationSelectorBinding.applicationPicker
-		applicationArray = arrayOf(getString(R.string.pear_string) , getString(R.string.banana_string), getString(R.string.mango_string), getString(R.string.nectarine_string))
+		applicationArray = arrayOf(getString(R.string.pear_string), getString(R.string.banana_string), getString(R.string.mango_string), getString(R.string.nectarine_string))
 		applicationPicker.minValue = 0
 		applicationPicker.maxValue = applicationArray.size-1
 		applicationPicker.displayedValues = applicationArray

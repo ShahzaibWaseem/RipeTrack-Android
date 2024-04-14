@@ -147,15 +147,21 @@ class DataCaptureFragment: Fragment() {
 		mobiSpectralApplicationID = when(sharedPreferences.getString("application", "Organic Identification")!!) {
 			else -> MainActivity.MOBISPECTRAL_APPLICATION
 		}
+		val possibleIlluminations = arrayOf(getString(R.string.halogen_string), getString(R.string.led_string), getString(R.string.cfl_string), getString(R.string.arbitrary_string))
 		fruitID = sharedPreferences.getInt("fruitID", 0)
 		fruitName = sharedPreferences.getInt("fruitName", 0)
 		offlineMode = sharedPreferences.getBoolean("offline_mode", false)
 		fruitApplication = sharedPreferences.getString("fruit", "Avocado")!!
+		MainActivity.illuminationOption = sharedPreferences.getString("illumination", "Halogen")!!
 		cameraIdRGB = MainActivity.cameraIDList.first
 		cameraIdNIR = MainActivity.cameraIDList.second
 		_fragmentDataCaptureBinding!!.fruitIDTextView.text = getString(R.string.object_id_string, fruitID)
 		MainActivity.dataCapturing = true
 		MainActivity.fruitID = fruitID.toString()
+
+		val radioGroupId = possibleIlluminations.indexOf(MainActivity.illuminationOption)
+		Log.i("Radio Group", "${MainActivity.illuminationOption}, $radioGroupId")
+		_fragmentDataCaptureBinding!!.illuminationRadioGroup.check(_fragmentDataCaptureBinding!!.illuminationRadioGroup.getChildAt(radioGroupId).id)
 
 		Log.i("Camera IDs", "RGB: $cameraIdRGB, NIR: $cameraIdNIR")
 		return fragmentDataCaptureBinding.root
@@ -190,10 +196,13 @@ class DataCaptureFragment: Fragment() {
 
 	override fun onStart() {
 		super.onStart()
+		val editor = sharedPreferences.edit()
 		fragmentDataCaptureBinding.illuminationRadioGroup.setOnCheckedChangeListener { _, _ ->
 			val selectedRadio = fragmentDataCaptureBinding.illuminationRadioGroup.checkedRadioButtonId
 			val selectedOption = requireView().findViewById<RadioButton>(selectedRadio).text.toString()
 			MainActivity.illuminationOption = selectedOption
+			editor!!.putString("illumination", MainActivity.illuminationOption)
+			editor.apply()
 		}
 	}
 
