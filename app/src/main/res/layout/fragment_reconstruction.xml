@@ -45,17 +45,33 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.70" />
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:visibility="invisible"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:indeterminate="false"
+        android:minWidth="200dp"
+        android:minHeight="50dp"
+        app:layout_constraintEnd_toEndOf="@id/viewpager"
+        android:layout_marginTop="400dp"
+        app:layout_constraintStart_toStartOf="@id/viewpager"
+        android:max="100"
+        app:layout_constraintTop_toTopOf="@id/viewpager" />
+
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:theme="@style/TabLayoutTheme"
         android:contentDescription="@string/tab_layout_description"
-        app:tabTextAppearance="@style/TabLayoutTabTheme"
-        app:tabGravity="center"
-        app:layout_constraintStart_toStartOf="parent"
+        android:theme="@style/TabLayoutTheme"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/guideline2"/>
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/guideline2"
+        app:tabGravity="center"
+        app:tabTextAppearance="@style/TabLayoutTabTheme" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/textConstraintView"

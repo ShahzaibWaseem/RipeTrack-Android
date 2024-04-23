@@ -5,11 +5,13 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.*
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -68,6 +70,8 @@ class ReconstructionFragment: Fragment() {
 	private var alreadyMultiLabelInferred = false
 	private var applyOffset = false
 
+	private var handler: Handler? = null
+
 	private fun imageViewFactory() = ImageView(requireContext()).apply {
 		layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
 	}
@@ -100,6 +104,7 @@ class ReconstructionFragment: Fragment() {
 			// fragmentReconstructionBinding.textViewReconTime.visibility = View.INVISIBLE
 			// fragmentReconstructionBinding.textViewClassTime.visibility = View.INVISIBLE
 		}
+
 		return fragmentReconstructionBinding.root
 	}
 	val reloadLambda = {}
@@ -227,6 +232,25 @@ class ReconstructionFragment: Fragment() {
 			fragmentReconstructionBinding.graphView.visibility = View.VISIBLE
 		}
 		loadingDialogFragment.show(childFragmentManager, LoadingDialogFragment.TAG)
+
+		// set up the progress bar growth
+		val progressBar = requireView().findViewById<ProgressBar>(R.id.progressBar)
+		progressBar.progress = 0
+
+		handler = Handler(
+			Handler.Callback {
+//				Thread.sleep(50000)
+				progressBar.visibility = View.VISIBLE
+				progressBar.progress++
+				//textViewHorizontalProgress.text = "${progressStatus}/${progressBarHorizontal.max}"
+				if (progressBar.progress < 75)
+				handler?.sendEmptyMessageDelayed(0, 50)
+
+				true
+			}
+		)
+		// start up the progress bar (10-second delay before starting)
+		handler!!.sendEmptyMessageDelayed(0, 10000)
 	}
 
 	override fun onStart() {
