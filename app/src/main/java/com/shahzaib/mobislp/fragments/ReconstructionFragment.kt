@@ -213,6 +213,7 @@ class ReconstructionFragment: Fragment() {
 				Glide.with(view).load(item).into(view)
 			}
 		}
+
 		val editor = sharedPreferences.edit()
 		MainActivity.fruitID = sharedPreferences.getString("fruitID", "0").toString()
 		MainActivity.fruitID = (MainActivity.fruitID.toInt() + 1).toString()
@@ -233,13 +234,13 @@ class ReconstructionFragment: Fragment() {
 		}
 		loadingDialogFragment.show(childFragmentManager, LoadingDialogFragment.TAG)
 
+
 		// set up the progress bar growth
 		val progressBar = requireView().findViewById<ProgressBar>(R.id.progressBar)
 		progressBar.progress = 0
 
 		handler = Handler(
 			Handler.Callback {
-//				Thread.sleep(50000)
 				progressBar.visibility = View.VISIBLE
 				progressBar.progress++
 				//textViewHorizontalProgress.text = "${progressStatus}/${progressBarHorizontal.max}"
@@ -249,8 +250,6 @@ class ReconstructionFragment: Fragment() {
 				true
 			}
 		)
-		// start up the progress bar (10-second delay before starting)
-		handler!!.sendEmptyMessageDelayed(0, 10000)
 	}
 
 	override fun onStart() {
@@ -309,6 +308,9 @@ class ReconstructionFragment: Fragment() {
 			addItemToViewPager(fragmentReconstructionBinding.viewpager, MainActivity.tempRGBBitmap, 5)
 			// fragmentReconstructionBinding.viewpager.currentItem = fragmentReconstructionBinding.viewpager.adapter!!.itemCount - 1
 			loadingDialogFragment.dismissDialog()
+
+			// start up the progress bar (10-second delay before starting)
+			handler!!.sendEmptyMessage(0)
 		}
 	}
 
