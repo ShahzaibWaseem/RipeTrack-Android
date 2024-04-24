@@ -45,6 +45,16 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.70" />
 
+    <TextView
+        android:id="@+id/progressText"
+        android:visibility="invisible"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="375dp"
+        app:layout_constraintEnd_toEndOf="@id/viewpager"
+        app:layout_constraintTop_toTopOf="@id/viewpager"
+        app:layout_constraintStart_toStartOf="@id/viewpager" />
+
     <ProgressBar
         android:id="@+id/progressBar"
         android:visibility="invisible"

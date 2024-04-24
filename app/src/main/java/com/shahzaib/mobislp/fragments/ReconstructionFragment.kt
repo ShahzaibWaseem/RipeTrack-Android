@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -71,6 +72,10 @@ class ReconstructionFragment: Fragment() {
 	private var applyOffset = false
 
 	private var handler: Handler? = null
+	// fake lifetime classifier -- will be replaced by actual classification later
+	private val lifetimeClassification = Random().nextInt(11)
+	// 0, 1, or 2
+	//	private var ripenessClassification: Int? = null
 
 	private fun imageViewFactory() = ImageView(requireContext()).apply {
 		layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
@@ -241,11 +246,19 @@ class ReconstructionFragment: Fragment() {
 
 		handler = Handler(
 			Handler.Callback {
-				progressBar.visibility = View.VISIBLE
-				progressBar.progress++
+				if (progressBar.visibility != View.VISIBLE)
+					progressBar.visibility = View.VISIBLE
+
 				//textViewHorizontalProgress.text = "${progressStatus}/${progressBarHorizontal.max}"
-				if (progressBar.progress < 75)
-				handler?.sendEmptyMessageDelayed(0, 50)
+				if (progressBar.progress < lifetimeClassification * 10) {
+					progressBar.progress++
+					handler?.sendEmptyMessageDelayed(0, 50)
+				}
+				else {
+					val progressText = requireView().findViewById<TextView>(R.id.progressText)
+					progressText.visibility = View.VISIBLE
+					progressText.text = "${progressBar.progress}% Remaining Lifetime"
+				}
 
 				true
 			}
