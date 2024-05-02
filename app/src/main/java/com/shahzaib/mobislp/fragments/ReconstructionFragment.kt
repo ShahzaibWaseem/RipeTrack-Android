@@ -3,6 +3,7 @@ package com.shahzaib.mobislp.fragments
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.res.ColorStateList
 import android.graphics.*
 import android.os.Bundle
 import android.os.Handler
@@ -13,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -251,13 +253,26 @@ class ReconstructionFragment: Fragment() {
 
 				//textViewHorizontalProgress.text = "${progressStatus}/${progressBarHorizontal.max}"
 				if (progressBar.progress < lifetimeClassification * 10) {
-					progressBar.progress++
+					progressBar.incrementProgressBy(1)
 					handler?.sendEmptyMessageDelayed(0, 50)
 				}
 				else {
 					val progressText = requireView().findViewById<TextView>(R.id.progressText)
 					progressText.visibility = View.VISIBLE
 					progressText.text = "${progressBar.progress}% Remaining Lifetime"
+
+					// change color of progressbar
+					progressBar.progressTintList = ( when (progressBar.progress) {
+						in 1..39 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_red))
+						in 40..69 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_yellow))
+						else -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_green))
+					} )
+
+					// change color of accompanying text
+					/*
+					progressText.setTextColor(
+						progressBar.progressTintList
+					)*/
 				}
 
 				true

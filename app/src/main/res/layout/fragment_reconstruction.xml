@@ -51,23 +51,26 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="375dp"
+        android:textSize="24sp"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="@id/viewpager"
         app:layout_constraintTop_toTopOf="@id/viewpager"
         app:layout_constraintStart_toStartOf="@id/viewpager" />
 
     <ProgressBar
         android:id="@+id/progressBar"
-        android:visibility="invisible"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="400dp"
         android:indeterminate="false"
+        android:max="100"
         android:minWidth="200dp"
         android:minHeight="50dp"
+        android:scaleY="3"
+        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="@id/viewpager"
-        android:layout_marginTop="400dp"
         app:layout_constraintStart_toStartOf="@id/viewpager"
-        android:max="100"
         app:layout_constraintTop_toTopOf="@id/viewpager" />
 
     <com.google.android.material.tabs.TabLayout
