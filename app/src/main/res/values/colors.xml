@@ -13,8 +13,5 @@
     <color name="sfu_dark_gray">#54585A</color>
     <color name="sfu_black">#000000</color>
     <color name="background">#279854</color>
-
-    <color name="progress_green">#8fb935</color>
     <color name="progress_yellow">#e6e22e</color>
-    <color name="progress_red">#e64747</color>
 </resources>

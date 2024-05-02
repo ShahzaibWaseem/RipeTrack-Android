@@ -100,7 +100,7 @@ class ReconstructionFragment: Fragment() {
 			else -> true
 		}
 
-		fragmentReconstructionBinding.textViewClass.text = mobiSpectralApplication
+//		fragmentReconstructionBinding.textViewClass.text = mobiSpectralApplication
 
 		if (!advancedControlOption) {
 			fragmentReconstructionBinding.analysisButton.visibility = View.INVISIBLE
@@ -263,9 +263,9 @@ class ReconstructionFragment: Fragment() {
 
 					// change color of progressbar
 					progressBar.progressTintList = ( when (progressBar.progress) {
-						in 1..39 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_red))
+						in 1..39 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
 						in 40..69 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_yellow))
-						else -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_green))
+						else -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.background))
 					} )
 
 					// change color of accompanying text
@@ -388,7 +388,7 @@ class ReconstructionFragment: Fragment() {
 			val maxLabel = finalFrequencies.maxBy { it.value }
 //            fragmentReconstructionBinding.textViewClassTime.text = frequenciesString
 			fragmentReconstructionBinding.textViewClassTime.visibility = View.VISIBLE
-			fragmentReconstructionBinding.textViewClass.text = classificationLabels[Pair(mobiSpectralApplication, maxLabel.key)]
+//			fragmentReconstructionBinding.textViewClass.text = classificationLabels[Pair(mobiSpectralApplication, maxLabel.key)]
 			MainActivity.predictedLabel = frequenciesString
 		}
 		if (advancedControlOption){
