@@ -146,6 +146,7 @@
 
         <TextView
             android:id="@+id/labTextView"
+            android:visibility="invisible"
             android:layout_width="wrap_content"
             android:layout_height="60dp"
             android:text="@string/lab_string"
@@ -164,6 +165,7 @@
             app:layout_constraintGuide_percent="0.5" />
 
         <TextView
+            android:visibility="invisible"
             android:id="@+id/sfuTextView"
             android:layout_width="wrap_content"
             android:layout_height="60dp"

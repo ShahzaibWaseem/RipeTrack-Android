@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 import java.util.*
 import kotlin.concurrent.schedule
-import kotlin.math.roundToInt
+import kotlin.math.round
 import kotlin.properties.Delegates
 
 class ReconstructionFragment: Fragment() {
@@ -314,20 +314,30 @@ class ReconstructionFragment: Fragment() {
 				false
 			}
 
+			val selectedIndices = listOf(0, 12, 23, 34, 45, 56, 67)
 			val viewpagerThread = Thread {
-				for (i in 0 until numberOfBands) {
-					if (i % 16 > 0) continue
-					Log.i("Bands Chosen", "$i")
+				for (i in selectedIndices)
+				{
 					bandsChosen.add(i)
 					addItemToViewPager(fragmentReconstructionBinding.viewpager, getBand(predictedHS, i), i)
 				}
+
+/*				for (i in 0 until numberOfBands) {
+					if (i % 16 > 0) continue
+					bandsChosen.add(i)
+					addItemToViewPager(fragmentReconstructionBinding.viewpager, getBand(predictedHS, i), i)
+				}*/
 			}
 			TabLayoutMediator(fragmentReconstructionBinding.tabLayout,
 				fragmentReconstructionBinding.viewpager) { tab, position ->
-				if (position == 5)
+				Log.i("Position", "$position")
+				if (position == selectedIndices.size)
 					tab.text = "RGB"
 				else
-					tab.text = ACTUAL_BAND_WAVELENGTHS[bandsChosen[position] * bandSpacing].roundToInt().toString() + " nm"
+//					tab.text = ACTUAL_BAND_WAVELENGTHS[bandsChosen[position] * bandSpacing].roundToInt().toString()
+					tab.text = (round(
+						ACTUAL_BAND_WAVELENGTHS[bandsChosen[position] * bandSpacing] / 100
+					) * 100).toInt().toString()
 			}.attach()
 
 			viewpagerThread.start()
@@ -387,7 +397,7 @@ class ReconstructionFragment: Fragment() {
 			Log.i("Frequency String", frequenciesString)
 			val maxLabel = finalFrequencies.maxBy { it.value }
 //            fragmentReconstructionBinding.textViewClassTime.text = frequenciesString
-			fragmentReconstructionBinding.textViewClassTime.visibility = View.VISIBLE
+//			fragmentReconstructionBinding.textViewClassTime.visibility = View.VISIBLE
 //			fragmentReconstructionBinding.textViewClass.text = classificationLabels[Pair(mobiSpectralApplication, maxLabel.key)]
 			MainActivity.predictedLabel = frequenciesString
 		}

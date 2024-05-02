@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MobiSLP</string>
+    <string name="app_name">RipeTrack</string>
     <string name="formatted_illumination_string">%s Illumination</string>
 
     <string name="application_picker_string">Choose Fruit</string>
