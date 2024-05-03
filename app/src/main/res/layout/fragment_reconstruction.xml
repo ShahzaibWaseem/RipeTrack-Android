@@ -123,17 +123,52 @@
             app:layout_constraintBottom_toTopOf="@+id/textViewReconTime"
             tools:layout_editor_absoluteX="0dp" />-->
 
-        <TextView
-            android:id="@+id/progressText"
-            android:visibility="invisible"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="50dp"
-            android:textSize="24sp"
-            android:textColor="@color/black"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toTopOf="@id/analysisConstraint"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:id="@+id/toggleBtnConstraint"
+            android:layout_marginTop="50dp"
+            android:visibility="invisible"
+            >
+
+            <ToggleButton
+                android:id="@+id/unripeBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textOff="Unripe"
+                android:textOn="Unripe"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                android:clickable="false"
+                />
+
+            <ToggleButton
+                android:id="@+id/ripeBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textOff="Ripe"
+                android:textOn="Ripe"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@id/unripeBtn"
+                android:clickable="false"
+                />
+
+            <ToggleButton
+                android:id="@+id/expiredBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textOff="Expired"
+                android:textOn="Expired"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@id/ripeBtn"
+                android:clickable="false"
+                />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
 
         <ProgressBar
             android:id="@+id/progressBar"
@@ -148,7 +183,7 @@
             android:visibility="invisible"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/progressText"
+            app:layout_constraintTop_toBottomOf="@id/toggleBtnConstraint"
             />
 
         <TextView
@@ -161,7 +196,7 @@
             android:textSize="25sp"
             app:layout_constraintBottom_toTopOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/progressBar"
-            app:layout_constraintVertical_bias="0.0"
+            app:layout_constraintVertical_bias="0.044"
             tools:layout_editor_absoluteX="0dp" />
 
         <!--        <TextView

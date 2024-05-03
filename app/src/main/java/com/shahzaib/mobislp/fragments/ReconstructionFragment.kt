@@ -13,7 +13,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.ProgressBar
-import android.widget.TextView
+import android.widget.ToggleButton
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -246,10 +247,19 @@ class ReconstructionFragment: Fragment() {
 		val progressBar = requireView().findViewById<ProgressBar>(R.id.progressBar)
 		progressBar.progress = 0
 
+		// toggle button constraint
+		val toggleBtnConstraint = requireView().findViewById<ConstraintLayout>(R.id.toggleBtnConstraint)
+
+
+
 		handler = Handler(
 			Handler.Callback {
-				if (progressBar.visibility != View.VISIBLE)
+				// make progress bar & toggle buttons visible
+				if (progressBar.visibility != View.VISIBLE && toggleBtnConstraint.visibility != View.VISIBLE) {
 					progressBar.visibility = View.VISIBLE
+					toggleBtnConstraint.visibility = View.VISIBLE
+				}
+
 
 				//textViewHorizontalProgress.text = "${progressStatus}/${progressBarHorizontal.max}"
 				if (progressBar.progress < lifetimeClassification * 10) {
@@ -257,16 +267,39 @@ class ReconstructionFragment: Fragment() {
 					handler?.sendEmptyMessageDelayed(0, 50)
 				}
 				else {
-					val progressText = requireView().findViewById<TextView>(R.id.progressText)
-					progressText.visibility = View.VISIBLE
-					progressText.text = "${progressBar.progress}% Remaining Lifetime"
+//					val progressText = requireView().findViewById<TextView>(R.id.progressText)
+//					progressText.visibility = View.VISIBLE
+//					progressText.text = "${progressBar.progress}% Remaining Lifetime"
 
 					// change color of progressbar
 					progressBar.progressTintList = ( when (progressBar.progress) {
+						// expired
 						in 1..39 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
+						// unripe
 						in 40..69 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_yellow))
+						// ripe
 						else -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.background))
 					} )
+
+					// light up the correct toggle button to show ripeness classification
+					when (progressBar.progress)
+					{
+						in 1..39 -> {
+							val expiredBtn = requireView().findViewById<ToggleButton>(R.id.expiredBtn)
+							expiredBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
+							expiredBtn.setTextColor(Color.WHITE)
+						}
+						in 40..69 -> {
+							val ripeBtn = requireView().findViewById<ToggleButton>(R.id.ripeBtn)
+							ripeBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_yellow))
+							ripeBtn.setTextColor(Color.WHITE)
+						}
+						else -> {
+							val unripeBtn = requireView().findViewById<ToggleButton>(R.id.unripeBtn)
+							unripeBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_green))
+							unripeBtn.setTextColor(Color.WHITE)
+						}
+					}
 
 					// change color of accompanying text
 					/*
@@ -405,7 +438,7 @@ class ReconstructionFragment: Fragment() {
 			val inputSignature = getSignature(predictedHS, clickedY.toInt(), clickedX.toInt())
 			MainActivity.predictedLabel = outputLabelString
 //            fragmentReconstructionBinding.textViewClass.text = outputLabelString
-			fragmentReconstructionBinding.graphView.title = "$outputLabelString Signature at (x: ${clickedX.toInt()}, y: ${clickedY.toInt()})"
+//			fragmentReconstructionBinding.graphView.title = "$outputLabelString Signature at (x: ${clickedX.toInt()}, y: ${clickedY.toInt()})"
 		}
 //        addCSVLog(requireContext())
 	}
@@ -431,7 +464,7 @@ class ReconstructionFragment: Fragment() {
 		if (advancedControlOption) {
 			val graphView = fragmentReconstructionBinding.graphView
 			// graphView.removeAllSeries()         // remove all previous series
-			graphView.title = "$outputLabelString Signature at (x: $SignatureX, y: $SignatureY)"
+//			graphView.title = "$outputLabelString Signature at (x: $SignatureX, y: $SignatureY)"
 			graphView.gridLabelRenderer.padding = 50
 			graphView.gridLabelRenderer.textSize = 50F
 			series.dataPointsRadius = 20F

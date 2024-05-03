@@ -48,4 +48,8 @@
     <string name="reconstruction_analysis_information_string">Swipe through the reconstructed Hypercube bands.\nTap on the \"Analysis\" button to show the signature at a particular pixel.\nWhile on the \"Analysis\" page <b>Long Tap</b> on the GraphView to go back to the original page.\n<b>Tap</b> anywhere on any pixel to get its signature to be run through the classifier.\n<b>Tap and Hold</b> to show a new signature and delete all other persistent signature analysis.</string>
     <string name="reconstruction_analysis_information_simple_string">Swipe through the reconstructed Hypercube bands.\nIn the simple mode, the application just checks the signature of the middle pixel.</string>
 
+    <string name="ripeness_unripe">Unripe</string>
+    <string name="ripeness_ripe">Ripe</string>
+    <string name="ripeness_expired">Expired</string>
+
 </resources>
