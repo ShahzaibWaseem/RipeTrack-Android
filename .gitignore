@@ -31,3 +31,9 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# .DS_Store files
+**/.DS_Store
+
+# classification model (file too big)
+app/src/main/assets/RipeTrack_classification_mobile.pt

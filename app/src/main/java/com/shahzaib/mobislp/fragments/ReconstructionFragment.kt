@@ -39,9 +39,10 @@ import kotlin.properties.Delegates
 
 class ReconstructionFragment: Fragment() {
 	private lateinit var predictedHS: FloatArray
+	private lateinit var classificationPair: Pair<Int, Int>
 	private val bandsHS: MutableList<Bitmap> = mutableListOf()
 	private var reconstructionDuration = 0F
-	private var classificationDuration = 0L
+	private var classificationDuration = 0F
 	private val numberOfBands = 68
 	private val bandSpacing = 204 / numberOfBands
 	private var outputLabelString: String = ""
@@ -62,8 +63,8 @@ class ReconstructionFragment: Fragment() {
 
 	private lateinit var sharedPreferences: SharedPreferences
 	private lateinit var mobiSpectralApplication: String
-	private var reconstructionFile: String = "mobile_mst_68.pt"
-	private var classificationFile by Delegates.notNull<Int>()
+	private var reconstructionFile: String = "RipeTrack_reconstruction_mobile_68.pt"
+	private var classificationFile: String = "RipeTrack_classification_mobile.pt"
 	private lateinit var mobiSpectralControlOption: String
 	private var advancedControlOption by Delegates.notNull<Boolean>()
 
@@ -76,7 +77,7 @@ class ReconstructionFragment: Fragment() {
 
 	private var handler: Handler? = null
 	// fake lifetime classifier -- will be replaced by actual classification later
-	private val lifetimeClassification = Random().nextInt(11)
+//	private val lifetimeClassification = Random().nextInt(11)
 	// 0, 1, or 2
 	//	private var ripenessClassification: Int? = null
 
@@ -194,7 +195,6 @@ class ReconstructionFragment: Fragment() {
 						view.setImageBitmap(bitmapOverlay)
 						applyOffset = true
 						try {
-							inference()
 							MainActivity.actualLabel = ""
 //                                addCSVLog(requireContext())
 						} catch (e: NullPointerException) {
@@ -254,6 +254,10 @@ class ReconstructionFragment: Fragment() {
 
 		handler = Handler(
 			Handler.Callback {
+
+				// lifetime classification (in percentages) to be used by handler to grow progress bar
+				val remainingLifetimePct = classificationPair.first * 10
+
 				// make progress bar & toggle buttons visible
 				if (progressBar.visibility != View.VISIBLE && toggleBtnConstraint.visibility != View.VISIBLE) {
 					progressBar.visibility = View.VISIBLE
@@ -262,7 +266,7 @@ class ReconstructionFragment: Fragment() {
 
 
 				//textViewHorizontalProgress.text = "${progressStatus}/${progressBarHorizontal.max}"
-				if (progressBar.progress < lifetimeClassification * 10) {
+				if (progressBar.progress < remainingLifetimePct) {
 					progressBar.incrementProgressBy(1)
 					handler?.sendEmptyMessageDelayed(0, 50)
 				}
@@ -272,19 +276,33 @@ class ReconstructionFragment: Fragment() {
 //					progressText.text = "${progressBar.progress}% Remaining Lifetime"
 
 					// change color of progressbar
-					progressBar.progressTintList = ( when (progressBar.progress) {
+/*					progressBar.progressTintList = ( when (progressBar.progress) {
 						// expired
-						in 1..39 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
+						in 1..39 -> colorstatelist.valueof(contextcompat.getcolor(requirecontext(), r.color.sfu_primary))
 						// unripe
-						in 40..69 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_yellow))
+						in 40..69 -> colorstatelist.valueof(contextcompat.getcolor(requirecontext(), r.color.progress_yellow))
 						// ripe
-						else -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.background))
-					} )
+						else -> colorstatelist.valueof(contextcompat.getcolor(requirecontext(), r.color.background))
+					} )*/
+
+					val ripeness = classificationPair.second
+					// change color of progressbar
+					progressBar.progressTintList = (
+							when (ripeness) {
+								// unripe
+								0 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_green))
+								// ripe
+								1 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_yellow))
+								// expired
+								else -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
+							}
+							)
+
 
 					// light up the correct toggle button to show ripeness classification
-					when (progressBar.progress)
+/*					when (progressBar.progress)
 					{
-						in 1..39 -> {
+						in 0..39 -> {
 							val expiredBtn = requireView().findViewById<ToggleButton>(R.id.expiredBtn)
 							expiredBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
 							expiredBtn.setTextColor(Color.WHITE)
@@ -299,7 +317,26 @@ class ReconstructionFragment: Fragment() {
 							unripeBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_green))
 							unripeBtn.setTextColor(Color.WHITE)
 						}
+					}*/
+					when (ripeness)
+					{
+						0 -> {
+							val unripeBtn = requireView().findViewById<ToggleButton>(R.id.unripeBtn)
+							unripeBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_green))
+							unripeBtn.setTextColor(Color.WHITE)
+						}
+						1 -> {
+							val ripeBtn = requireView().findViewById<ToggleButton>(R.id.ripeBtn)
+							ripeBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_yellow))
+							ripeBtn.setTextColor(Color.WHITE)
+						}
+						else -> {
+							val expiredBtn = requireView().findViewById<ToggleButton>(R.id.expiredBtn)
+							expiredBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
+							expiredBtn.setTextColor(Color.WHITE)
+						}
 					}
+
 
 					// change color of accompanying text
 					/*
@@ -380,9 +417,39 @@ class ReconstructionFragment: Fragment() {
 			// fragmentReconstructionBinding.viewpager.currentItem = fragmentReconstructionBinding.viewpager.adapter!!.itemCount - 1
 			loadingDialogFragment.dismissDialog()
 
-			// start up the progress bar (10-second delay before starting)
+			/* Perform Classification */
+			val classificationThread = Thread {
+				classifyFruit()
+			}
+			classificationThread.start()
+			try { classificationThread.join() }
+			catch (exception: InterruptedException) { exception.printStackTrace() }
+
+			// start up the lifetime progress bar (10-second delay before starting)
 			handler!!.sendEmptyMessage(0)
 		}
+	}
+
+	private fun classifyFruit()
+	{
+		val classificationModel = context?.let { Classification(it, classificationFile) }!!
+//		val rgbBitmap = MainActivity.originalRGBBitmap
+//		val nirBitmap = MainActivity.originalNIRBitmap
+//		bitmapsWidth = rgbBitmap.width
+//		bitmapsHeight = rgbBitmap.height
+
+		val startTime = System.currentTimeMillis()
+		classificationPair = classificationModel.predict(predictedHS, 68, 64, 64)
+
+		Log.i("Classification Pair.first", "${classificationPair.first}")
+		Log.i("Classification Pair.second", "${classificationPair.second}")
+
+		val endTime = System.currentTimeMillis()
+		classificationDuration = (endTime - startTime).toFloat() / 1000.0F
+		Log.i("Classification Duration", "$classificationDuration")
+//		println(getString(R.string.reconstruction_time_string, reconstructionDuration))
+//		MainActivity.reconstructionTime = "$reconstructionDuration s"
+//		fragmentReconstructionBinding.textViewReconTime.text = getString(R.string.reconstruction_time_string, reconstructionDuration)
 	}
 
 	private fun inference() {

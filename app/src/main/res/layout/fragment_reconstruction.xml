@@ -138,33 +138,36 @@
                 android:id="@+id/unripeBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textOff="Unripe"
-                android:textOn="Unripe"
+                android:textOff="@string/ripeness_unripe"
+                android:textOn="@string/ripeness_unripe"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 android:clickable="false"
+                android:enabled="false"
                 />
 
             <ToggleButton
                 android:id="@+id/ripeBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textOff="Ripe"
-                android:textOn="Ripe"
+                android:textOff="@string/ripeness_ripe"
+                android:textOn="@string/ripeness_ripe"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toEndOf="@id/unripeBtn"
                 android:clickable="false"
+                android:enabled="false"
                 />
 
             <ToggleButton
                 android:id="@+id/expiredBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textOff="Expired"
-                android:textOn="Expired"
+                android:textOff="@string/ripeness_expired"
+                android:textOn="@string/ripeness_expired"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toEndOf="@id/ripeBtn"
                 android:clickable="false"
+                android:enabled="false"
                 />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
