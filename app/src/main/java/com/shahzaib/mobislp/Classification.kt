@@ -27,7 +27,7 @@ class Classification(context: Context, modelPath: String) {
         Log.i("Classification Output", "${outputs.size}")
         val ripeness = outputs[0].toTensor().dataAsFloatArray.toList()
         val remainingLife = outputs[1].toTensor().dataAsFloatArray.toList()
-        /*for (f1 in ripeness)
+/*        for (f1 in ripeness)
             Log.i("Ripeness value", "$f1")
         for (f2 in remainingLife)
             Log.i("Remaining Life value", "$f2")*/

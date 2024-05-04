@@ -52,4 +52,6 @@
     <string name="ripeness_ripe">Ripe</string>
     <string name="ripeness_expired">Expired</string>
 
+    <string name="remaining_lifetime_placeholder">000% Remaining Lifetime</string>
+
 </resources>

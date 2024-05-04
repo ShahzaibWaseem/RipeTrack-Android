@@ -11,9 +11,10 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.ProgressBar
-import android.widget.ToggleButton
+import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -161,7 +162,8 @@ class ReconstructionFragment: Fragment() {
 							canvas.drawCircle(clickedX, clickedY, 5F, paint)
 							view.setImageBitmap(bitmapOverlay)
 							try {
-								inference()
+								//inference()
+								val inputSignature = getSignature(predictedHS, clickedY.toInt(), clickedX.toInt())
 								MainActivity.actualLabel = ""
 //                                addCSVLog(requireContext())
 							} catch (e: NullPointerException) {
@@ -194,6 +196,7 @@ class ReconstructionFragment: Fragment() {
 						canvas.drawRect(leftCrop-2.5F, topCrop-2.5F, rightCrop+2.5F, bottomCrop+2.5F, paint)
 						view.setImageBitmap(bitmapOverlay)
 						applyOffset = true
+						classifyFruit()
 						try {
 							MainActivity.actualLabel = ""
 //                                addCSVLog(requireContext())
@@ -215,7 +218,7 @@ class ReconstructionFragment: Fragment() {
 					paint.style = Paint.Style.STROKE
 					canvas.drawCircle(Utils.torchWidth/2F, Utils.torchHeight/2F, 10F, paint)
 					view.setImageBitmap(bitmapOverlay)
-					inference()
+					//inference()
 //                    addCSVLog(requireContext())
 				}
 				Glide.with(view).load(item).into(view)
@@ -243,49 +246,43 @@ class ReconstructionFragment: Fragment() {
 		loadingDialogFragment.show(childFragmentManager, LoadingDialogFragment.TAG)
 
 
-		// set up the progress bar growth
+		// set up the progress bar & progress text for growth
 		val progressBar = requireView().findViewById<ProgressBar>(R.id.progressBar)
 		progressBar.progress = 0
 
-		// toggle button constraint
-		val toggleBtnConstraint = requireView().findViewById<ConstraintLayout>(R.id.toggleBtnConstraint)
+		val progresText = requireView().findViewById<TextView>(R.id.progressText)
+		var pTextValue = 0
+
+		progresText.text = "$pTextValue% Remaining Lifetime"
 
 
+		// ripenss buttons' constraint
+		val ripenessBtnConstraint = requireView().findViewById<ConstraintLayout>(R.id.ripenessBtnConstraint)
 
 		handler = Handler(
 			Handler.Callback {
 
 				// lifetime classification (in percentages) to be used by handler to grow progress bar
-				val remainingLifetimePct = classificationPair.first * 10
+				val remainingLifetimePct = 100 - classificationPair.second * 10
 
-				// make progress bar & toggle buttons visible
-				if (progressBar.visibility != View.VISIBLE && toggleBtnConstraint.visibility != View.VISIBLE) {
+				// make progress bar, progress text, & ripeness buttons visible
+				if (progressBar.visibility != View.VISIBLE && ripenessBtnConstraint.visibility != View.VISIBLE) {
 					progressBar.visibility = View.VISIBLE
-					toggleBtnConstraint.visibility = View.VISIBLE
+					ripenessBtnConstraint.visibility = View.VISIBLE
+					progresText.visibility = View.VISIBLE
 				}
-
 
 				//textViewHorizontalProgress.text = "${progressStatus}/${progressBarHorizontal.max}"
 				if (progressBar.progress < remainingLifetimePct) {
 					progressBar.incrementProgressBy(1)
+					pTextValue++
+					progresText.text = "$pTextValue% Remaining Lifetime"
 					handler?.sendEmptyMessageDelayed(0, 50)
 				}
 				else {
-//					val progressText = requireView().findViewById<TextView>(R.id.progressText)
-//					progressText.visibility = View.VISIBLE
-//					progressText.text = "${progressBar.progress}% Remaining Lifetime"
 
-					// change color of progressbar
-/*					progressBar.progressTintList = ( when (progressBar.progress) {
-						// expired
-						in 1..39 -> colorstatelist.valueof(contextcompat.getcolor(requirecontext(), r.color.sfu_primary))
-						// unripe
-						in 40..69 -> colorstatelist.valueof(contextcompat.getcolor(requirecontext(), r.color.progress_yellow))
-						// ripe
-						else -> colorstatelist.valueof(contextcompat.getcolor(requirecontext(), r.color.background))
-					} )*/
+					val ripeness = classificationPair.first
 
-					val ripeness = classificationPair.second
 					// change color of progressbar
 					progressBar.progressTintList = (
 							when (ripeness) {
@@ -298,51 +295,25 @@ class ReconstructionFragment: Fragment() {
 							}
 							)
 
-
-					// light up the correct toggle button to show ripeness classification
-/*					when (progressBar.progress)
-					{
-						in 0..39 -> {
-							val expiredBtn = requireView().findViewById<ToggleButton>(R.id.expiredBtn)
-							expiredBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
-							expiredBtn.setTextColor(Color.WHITE)
-						}
-						in 40..69 -> {
-							val ripeBtn = requireView().findViewById<ToggleButton>(R.id.ripeBtn)
-							ripeBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_yellow))
-							ripeBtn.setTextColor(Color.WHITE)
-						}
-						else -> {
-							val unripeBtn = requireView().findViewById<ToggleButton>(R.id.unripeBtn)
-							unripeBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_green))
-							unripeBtn.setTextColor(Color.WHITE)
-						}
-					}*/
 					when (ripeness)
 					{
 						0 -> {
-							val unripeBtn = requireView().findViewById<ToggleButton>(R.id.unripeBtn)
+							val unripeBtn = requireView().findViewById<Button>(R.id.unripeBtn)
 							unripeBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_green))
 							unripeBtn.setTextColor(Color.WHITE)
 						}
 						1 -> {
-							val ripeBtn = requireView().findViewById<ToggleButton>(R.id.ripeBtn)
+							val ripeBtn = requireView().findViewById<Button>(R.id.ripeBtn)
 							ripeBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_yellow))
 							ripeBtn.setTextColor(Color.WHITE)
 						}
 						else -> {
-							val expiredBtn = requireView().findViewById<ToggleButton>(R.id.expiredBtn)
+							val expiredBtn = requireView().findViewById<Button>(R.id.expiredBtn)
 							expiredBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
 							expiredBtn.setTextColor(Color.WHITE)
 						}
 					}
 
-
-					// change color of accompanying text
-					/*
-					progressText.setTextColor(
-						progressBar.progressTintList
-					)*/
 				}
 
 				true
@@ -418,12 +389,15 @@ class ReconstructionFragment: Fragment() {
 			loadingDialogFragment.dismissDialog()
 
 			/* Perform Classification */
+			//if bitmapsHeight 64 64
 			val classificationThread = Thread {
 				classifyFruit()
 			}
 			classificationThread.start()
 			try { classificationThread.join() }
 			catch (exception: InterruptedException) { exception.printStackTrace() }
+
+
 
 			// start up the lifetime progress bar (10-second delay before starting)
 			handler!!.sendEmptyMessage(0)
@@ -433,23 +407,13 @@ class ReconstructionFragment: Fragment() {
 	private fun classifyFruit()
 	{
 		val classificationModel = context?.let { Classification(it, classificationFile) }!!
-//		val rgbBitmap = MainActivity.originalRGBBitmap
-//		val nirBitmap = MainActivity.originalNIRBitmap
-//		bitmapsWidth = rgbBitmap.width
-//		bitmapsHeight = rgbBitmap.height
 
 		val startTime = System.currentTimeMillis()
-		classificationPair = classificationModel.predict(predictedHS, 68, 64, 64)
 
-		Log.i("Classification Pair.first", "${classificationPair.first}")
-		Log.i("Classification Pair.second", "${classificationPair.second}")
+		classificationPair = classificationModel.predict(predictedHS, 68, 64, 64)
 
 		val endTime = System.currentTimeMillis()
 		classificationDuration = (endTime - startTime).toFloat() / 1000.0F
-		Log.i("Classification Duration", "$classificationDuration")
-//		println(getString(R.string.reconstruction_time_string, reconstructionDuration))
-//		MainActivity.reconstructionTime = "$reconstructionDuration s"
-//		fragmentReconstructionBinding.textViewReconTime.text = getString(R.string.reconstruction_time_string, reconstructionDuration)
 	}
 
 	private fun inference() {
@@ -460,6 +424,7 @@ class ReconstructionFragment: Fragment() {
 		val finalResults = ArrayList<Long> ()
 
 		if (applyOffset && !alreadyMultiLabelInferred) {
+
 			val multiClassificationThread = Thread {
 				val zoneHeight = 8
 				val zoneWidth = 8
@@ -481,6 +446,7 @@ class ReconstructionFragment: Fragment() {
 			multiClassificationThread.start()
 			try { multiClassificationThread.join() }
 			catch (exception: InterruptedException) { exception.printStackTrace() }
+
 			alreadyMultiLabelInferred = true
 
 			val finalFrequencies = finalResults.groupingBy { it }.eachCount()
@@ -496,10 +462,14 @@ class ReconstructionFragment: Fragment() {
 			}
 			Log.i("Frequency String", frequenciesString)
 			val maxLabel = finalFrequencies.maxBy { it.value }
+
+
 //            fragmentReconstructionBinding.textViewClassTime.text = frequenciesString
 //			fragmentReconstructionBinding.textViewClassTime.visibility = View.VISIBLE
 //			fragmentReconstructionBinding.textViewClass.text = classificationLabels[Pair(mobiSpectralApplication, maxLabel.key)]
 			MainActivity.predictedLabel = frequenciesString
+
+
 		}
 		if (advancedControlOption){
 			val inputSignature = getSignature(predictedHS, clickedY.toInt(), clickedX.toInt())
@@ -599,10 +569,10 @@ class ReconstructionFragment: Fragment() {
 		bandsHS.add(item)
 		view.adapter!!.notifyItemChanged(position)
 		Timer().schedule(1000) {
-			if (bandsHS.size == bandsChosen.size && !advancedControlOption) {
-				inference()
+/*			if (bandsHS.size == bandsChosen.size && !advancedControlOption) {
+				//inference()
 //                addCSVLog(requireContext())
-			}
+			}*/
 		}
 	}
 

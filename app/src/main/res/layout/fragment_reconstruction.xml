@@ -129,43 +129,41 @@
             app:layout_constraintTop_toTopOf="@id/analysisConstraint"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:id="@+id/toggleBtnConstraint"
-            android:layout_marginTop="50dp"
+            android:id="@+id/ripenessBtnConstraint"
             android:visibility="invisible"
+            android:layout_marginTop="50dp"
             >
 
-            <ToggleButton
+            <Button
                 android:id="@+id/unripeBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textOff="@string/ripeness_unripe"
-                android:textOn="@string/ripeness_unripe"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
                 android:clickable="false"
                 android:enabled="false"
-                />
+                android:text="@string/ripeness_unripe"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-            <ToggleButton
+            <Button
                 android:id="@+id/ripeBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textOff="@string/ripeness_ripe"
-                android:textOn="@string/ripeness_ripe"
+                android:text="@string/ripeness_ripe"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toEndOf="@id/unripeBtn"
+                android:layout_marginStart="10dp"
                 android:clickable="false"
                 android:enabled="false"
                 />
 
-            <ToggleButton
+            <Button
                 android:id="@+id/expiredBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textOff="@string/ripeness_expired"
-                android:textOn="@string/ripeness_expired"
+                android:text="@string/ripeness_expired"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toEndOf="@id/ripeBtn"
+                android:layout_marginStart="10dp"
                 android:clickable="false"
                 android:enabled="false"
                 />
@@ -173,20 +171,50 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
+<!--        <Button
+            android:id="@+id/progressText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:backgroundTint="@color/black"
+            android:textColor="@color/white"
+            android:clickable="false"
+            android:text="@string/remaining_lifetime_placeholder"
+            android:visibility="invisible"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/progressBar" />-->
+
+
         <ProgressBar
             android:id="@+id/progressBar"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:indeterminate="false"
             android:max="100"
             android:minWidth="200dp"
             android:minHeight="50dp"
-            android:scaleY="3"
+            android:scaleY="7"
+            android:scaleX="1.5"
             android:visibility="invisible"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.502"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/toggleBtnConstraint"
+            app:layout_constraintTop_toBottomOf="@id/ripenessBtnConstraint" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/progressText"
+            android:textColor="@color/black"
+            android:layout_marginTop="15dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/progressBar"
+            android:textSize="16sp"
+            android:visibility="invisible"
+
             />
 
         <TextView
