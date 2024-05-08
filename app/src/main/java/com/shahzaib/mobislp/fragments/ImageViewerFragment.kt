@@ -84,8 +84,8 @@ class ImageViewerFragment: Fragment() {
 	private fun boundingBox(left: Float, right: Float, top: Float, bottom: Float,
 							canvas: Canvas, view: ImageView, bitmapOverlay: Bitmap, position: Int) {
 		val paint = Paint()
-		paint.color = Color.argb(255, 0, 0, 0)
-		paint.strokeWidth = 2.5F
+		paint.color = Color.argb(255, 253,250,114)
+		paint.strokeWidth = 5F
 		paint.style = Paint.Style.STROKE
 
 		Log.i("Crop Location", "L: $left, R: $right, T: $top, B: $bottom")
@@ -227,6 +227,10 @@ class ImageViewerFragment: Fragment() {
 
 			saveMinMax(rgbImageBitmap, isRGB=true)
 			saveMinMax(nirImageBitmap, isRGB=false)
+			Log.i("MinMax values", "${MainActivity.minMaxRGB}, ${MainActivity.minMaxNIR}")
+
+
+
 
 			Log.i("Bitmap Size", "Decoded RGB: ${rgbImageBitmap.width} x ${rgbImageBitmap.height}, Decoded NIR: ${nirImageBitmap.width} x ${nirImageBitmap.height}")
 
@@ -252,6 +256,7 @@ class ImageViewerFragment: Fragment() {
 			saveProcessedImages(requireContext(), rgbImageBitmap, nirImageBitmap, rgbImageFileName, nirImageFileName, Utils.processedImageDirectory)
 
 			fragmentImageViewerBinding.button.setOnClickListener {
+				val cropTime = System.currentTimeMillis()
 				// if crop isn't initialized for simple mode
 				if (leftCrop == -1F && topCrop == -1F && !advancedControlOption) {
 					leftCrop = rgbImageBitmap.width/2 - Utils.boundingBoxWidth
@@ -266,6 +271,7 @@ class ImageViewerFragment: Fragment() {
 					Log.i("Cropped Image", "${nirImageBitmap.width} ${nirImageBitmap.height}")
 					saveProcessedImages(requireContext(), rgbImageBitmap, nirImageBitmap, rgbImageFileName, nirImageFileName, Utils.croppedImageDirectory)
 				}
+				MainActivity.executionTime += System.currentTimeMillis() - cropTime
 
 				// addItemToViewPager(fragmentImageViewerBinding.viewpager, rgbImageBitmap, 2)
 				// addItemToViewPager(fragmentImageViewerBinding.viewpager, nirImageBitmap, 3)

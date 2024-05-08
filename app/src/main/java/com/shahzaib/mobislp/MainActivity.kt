@@ -44,7 +44,7 @@ class MainActivity: AppCompatActivity() {
 		var cameraIDList: Pair<String, String> = Pair("", "")
 		var dataCapturing = false
 		var illuminationOption = "Halogen"
-
+		var executionTime = 0L
 
 		fun generateAlertBox(context: Context, title: String, text: String, onPositiveButtonFunction: () -> Unit) {
 			val alertDialogBuilder = MaterialAlertDialogBuilder(context, R.style.AlertDialogTheme)

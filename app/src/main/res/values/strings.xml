@@ -20,6 +20,7 @@
     <string name="school_string">SFU</string>
     <string name="get_hypercube_string">Get Hypercube</string>
     <string name="analysis_button_text">Analysis</string>
+    <string name="classify_button_text">Classify</string>
     <string name="classify_text">Click on the image to classify</string>
     <string name="normalizing_image_string">Normalizing Image…</string>
     <string name="reconstructing_hypercube_string">Reconstructing Hypercube…</string>
@@ -52,6 +53,7 @@
     <string name="ripeness_ripe">Ripe</string>
     <string name="ripeness_expired">Expired</string>
 
-    <string name="remaining_lifetime_placeholder">000% Remaining Lifetime</string>
+    <string name="remaining_lifetime_placeholder">%d Remaining Lifetime</string>
+
 
 </resources>

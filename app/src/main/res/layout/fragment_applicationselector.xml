@@ -16,7 +16,7 @@
         android:gravity="center"
         android:text="@string/app_name"
         android:textColor="@color/white"
-        android:textSize="70sp"
+        android:textSize="55sp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/guideline"
         app:layout_constraintStart_toStartOf="parent"
@@ -35,22 +35,23 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="@string/application_picker_string"
-        android:textSize="20sp"
-        app:layout_constraintTop_toBottomOf="@+id/guideline"
+        android:textSize="48sp"
+        android:textColor="@color/black"
         app:layout_constraintBottom_toTopOf="@+id/applicationPicker"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/guideline" />
 
     <NumberPicker
         android:id="@+id/applicationPicker"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="15sp"
         android:descendantFocusability="blocksDescendants"
-        app:layout_constraintTop_toBottomOf="@+id/applicationPickerTitle"
+        android:textSize="30sp"
         app:layout_constraintBottom_toTopOf="@+id/chooseModeTextView"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/applicationPickerTitle" />
 
     <TextView
         android:id="@+id/chooseModeTextView"
@@ -58,42 +59,47 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="@string/choose_mode_string"
-        android:textSize="20sp"
-        app:layout_constraintTop_toBottomOf="@+id/applicationPicker"
+        android:textSize="48sp"
+        android:textColor="@color/black"
         app:layout_constraintBottom_toTopOf="@+id/radioGroup"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/applicationPicker" />
 
     <RadioGroup
         android:id="@+id/radioGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:checkedButton="@+id/dataCapturingMode"
-        app:layout_constraintTop_toBottomOf="@+id/applicationPicker"
+        android:layout_marginTop="70dp"
+        android:checkedButton="@+id/offlineMode"
         app:layout_constraintBottom_toTopOf="@+id/guideline2"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/applicationPicker">
 
         <RadioButton
             android:id="@+id/dataCapturingMode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:buttonTint="@color/background"
-            android:text="@string/data_capturing_mode_string"/>
+            android:text="@string/data_capturing_mode_string"
+            android:visibility="gone" />
 
         <RadioButton
             android:id="@+id/offlineMode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:buttonTint="@color/background"
-            android:text="@string/offline_mode_string"/>
+            android:text="@string/offline_mode_string"
+            android:textSize="34sp" />
 
         <RadioButton
             android:id="@+id/onlineMode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:buttonTint="@color/background"
-            android:text="@string/online_mode_string"/>
+            android:text="@string/online_mode_string"
+            android:textSize="34sp" />
     </RadioGroup>
 
     <androidx.constraintlayout.widget.Guideline
@@ -107,14 +113,14 @@
         android:id="@+id/runApplicationButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:backgroundTint="@color/background"
         android:gravity="center"
         android:text="@string/launch_application_button"
-        android:textSize="23sp"
-        android:backgroundTint="@color/background"
-        app:layout_constraintTop_toBottomOf="@+id/guideline2"
+        android:textSize="51sp"
         app:layout_constraintBottom_toTopOf="@+id/guideline3"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/guideline2" />
 
     <ImageButton
         android:id="@+id/information"
@@ -134,6 +140,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:visibility="gone"
         app:layout_constraintGuide_percent="0.75" />
 
     <androidx.constraintlayout.widget.ConstraintLayout

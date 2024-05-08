@@ -2,12 +2,14 @@ package com.shahzaib.mobislp.fragments
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RadioButton
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -39,10 +41,12 @@ class ApplicationSelectorFragment: Fragment() {
 		}
 	}
 
+	@RequiresApi(Build.VERSION_CODES.Q)
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		fragmentApplicationSelectorBinding = FragmentApplicationselectorBinding.inflate(inflater, container, false)
 		val applicationPicker = fragmentApplicationSelectorBinding.applicationPicker
-		applicationArray = arrayOf(getString(R.string.pear_string), getString(R.string.banana_string), getString(R.string.mango_string), getString(R.string.nectarine_string))
+		applicationArray = arrayOf(getString(R.string.pear_string), getString(R.string.avocado_string), getString(R.string.banana_string), getString(R.string.mango_string), getString(R.string.nectarine_string))
+		applicationPicker.textSize = 80F
 		applicationPicker.minValue = 0
 		applicationPicker.maxValue = applicationArray.size-1
 		applicationPicker.displayedValues = applicationArray

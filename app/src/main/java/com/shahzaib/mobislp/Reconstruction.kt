@@ -26,8 +26,8 @@ class Reconstruction(context: Context, modelPath: String) {
 		val pixels = IntArray(pixelCount)
 		bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
 
-		var min: Int
-		var max: Int
+		var min = 1000
+		var max = -1000
 
 		if (isRGB) {
 			min = MainActivity.minMaxRGB.first
@@ -95,7 +95,8 @@ class Reconstruction(context: Context, modelPath: String) {
 
 		val outputs: Tensor = model?.forward(inputs)?.toTensor()!!
 		Log.i("Reconstruction Tensors", "RGB ${rgbBitmapTensor.shape().toList()} + NIR ${nirTensor.shape().toList()} = Concat ${imageTensor.shape().toList()} -> [Reconstruction] -> ${outputs.shape().toList()}")
-
+		val hypercubeFloat = outputs.dataAsFloatArray
+		Log.i("Float", "${hypercubeFloat[0]}")
 		//saveHypercube("Output.txt", outputs.dataAsFloatArray, Utils.hypercubeDirectory)
 		return outputs.dataAsFloatArray
 	}

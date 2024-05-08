@@ -9,6 +9,8 @@ import org.pytorch.Tensor
 
 class Classification(context: Context, modelPath: String) {
     private var model: Module? = null
+    private val min=0.0F
+    private val max=1.0F
 
     init {
         Log.i("Classification Model Load", Utils.assetFilePath(context, modelPath).toString())
@@ -27,10 +29,12 @@ class Classification(context: Context, modelPath: String) {
         Log.i("Classification Output", "${outputs.size}")
         val ripeness = outputs[0].toTensor().dataAsFloatArray.toList()
         val remainingLife = outputs[1].toTensor().dataAsFloatArray.toList()
+
 /*        for (f1 in ripeness)
             Log.i("Ripeness value", "$f1")
         for (f2 in remainingLife)
             Log.i("Remaining Life value", "$f2")*/
+
         val ripenessArgmax = ripeness.argmax()
         val remainingLifeArgmax = remainingLife.argmax()
 

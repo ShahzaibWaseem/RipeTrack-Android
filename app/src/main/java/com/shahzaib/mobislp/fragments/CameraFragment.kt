@@ -343,8 +343,10 @@ class CameraFragment: Fragment() {
 
 				// Save the result to disk
 				val output = saveResult(result)
+				Log.i("CameraIDs RGB", "$cameraId $cameraIdRGB $cameraIdNIR")
 				lifecycleScope.launch(Dispatchers.Main) {
 					if (cameraId == cameraIdRGB){
+						Log.i("Camera ID NIR", "$cameraIdNIR")
 						when (cameraIdNIR) {
 							"OnePlus" -> navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath))
 							else -> navController.navigate(CameraFragmentDirections.actionCameraFragmentSelf(cameraIdNIR, imageFormat))
@@ -521,7 +523,8 @@ class CameraFragment: Fragment() {
 	/** Helper function used to save a [CombinedCaptureResult] into a [File] */
 	private suspend fun saveResult(result: CombinedCaptureResult): File = suspendCoroutine { cont ->
 		when (result.format) {
-			ImageFormat.RAW_SENSOR -> {
+			ImageFormat.RAW_SENSOR, ImageFormat.RAW_PRIVATE, ImageFormat.RAW10 -> {
+				Log.i("RAW", "Capturing Raw Image")
 				val dngCreator = DngCreator(characteristics, result.metadata)
 				try {
 					val output = createFile("RGB", "lossless")
@@ -583,18 +586,7 @@ class CameraFragment: Fragment() {
 					Log.e(TAG, "Unable to write JPEG image to file", exc)
 					cont.resumeWithException(exc)
 				}
-
-				val dngCreator = DngCreator(characteristics, result.metadata)
-				try {
-					val output = createFile("RGB", "lossless")
-					FileOutputStream(output).use { dngCreator.writeImage(it, result.image) }
-					cont.resume(output)
-				} catch (exc: IOException) {
-					Log.e(TAG, "Unable to write DNG image to file", exc)
-					cont.resumeWithException(exc)
-				}
 			}
-
 			// No other formats are supported by this sample
 			else -> {
 				val exc = RuntimeException("Unknown image format: ${result.image.format}")
@@ -603,7 +595,6 @@ class CameraFragment: Fragment() {
 			}
 		}
 	}
-
 	override fun onStop() {
 		super.onStop()
 		try {
