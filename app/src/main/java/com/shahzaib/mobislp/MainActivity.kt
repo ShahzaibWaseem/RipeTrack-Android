@@ -51,7 +51,8 @@ class MainActivity: AppCompatActivity() {
 			alertDialogBuilder.setMessage(text)
 			alertDialogBuilder.setTitle(title)
 			alertDialogBuilder.setCancelable(false)
-			if (title == "Information")
+//			if (title == "Information")
+			if (title == "Information" || title.isEmpty())
 				alertDialogBuilder.setPositiveButton("Okay") { dialog, _ -> dialog?.cancel() }
 			else
 				alertDialogBuilder.setPositiveButton("Reload") { _, _ -> onPositiveButtonFunction() }

@@ -35,8 +35,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="@string/application_picker_string"
-        android:textSize="48sp"
-        android:textColor="@color/black"
+        android:textSize="40sp"
+        android:textColor="@color/blue"
         app:layout_constraintBottom_toTopOf="@+id/applicationPicker"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -59,8 +59,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="@string/choose_mode_string"
-        android:textSize="48sp"
-        android:textColor="@color/black"
+        android:textSize="40sp"
+        android:textColor="@color/blue"
         app:layout_constraintBottom_toTopOf="@+id/radioGroup"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -91,7 +91,7 @@
             android:layout_height="wrap_content"
             android:buttonTint="@color/background"
             android:text="@string/offline_mode_string"
-            android:textSize="34sp" />
+            android:textSize="30sp" />
 
         <RadioButton
             android:id="@+id/onlineMode"
@@ -99,7 +99,7 @@
             android:layout_height="wrap_content"
             android:buttonTint="@color/background"
             android:text="@string/online_mode_string"
-            android:textSize="34sp" />
+            android:textSize="30sp" />
     </RadioGroup>
 
     <androidx.constraintlayout.widget.Guideline
@@ -107,7 +107,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.65" />
+        app:layout_constraintGuide_percent="0.7" />
 
     <Button
         android:id="@+id/runApplicationButton"
@@ -141,7 +141,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:visibility="gone"
-        app:layout_constraintGuide_percent="0.75" />
+        app:layout_constraintGuide_percent="0.9" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="0dp"

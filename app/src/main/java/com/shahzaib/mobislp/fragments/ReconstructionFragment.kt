@@ -26,6 +26,7 @@ import androidx.navigation.Navigation
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.example.android.camera.utils.GenericListAdapter
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.tabs.TabLayoutMediator
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
@@ -33,6 +34,7 @@ import com.shahzaib.mobislp.*
 import com.shahzaib.mobislp.MainActivity.Companion.generateAlertBox
 import com.shahzaib.mobislp.databinding.FragmentReconstructionBinding
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 import java.util.*
@@ -79,7 +81,7 @@ class ReconstructionFragment: Fragment() {
 	private var alreadyMultiLabelInferred = false
 	private var applyOffset = false
 
-	private var handler: Handler? = null
+//	private var handler: Handler? = null
 	// fake lifetime classifier -- will be replaced by actual classification later
 //	private val lifetimeClassification = Random().nextInt(11)
 	// 0, 1, or 2
@@ -89,11 +91,103 @@ class ReconstructionFragment: Fragment() {
 		layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
 	}
 
+	// set up the progress bar & progress text for classification
+	private lateinit var progressBar: ProgressBar
+	private lateinit var progressText: TextView
+//	private var pTextValue = 0
+	// ripeness buttons' constraint
+	private lateinit var ripenessBtnConstraint: ConstraintLayout
+
 	// classification thread
-	private val classificationThread = Thread {
+/*	private val classificationThread = Thread {
 		classifyFruit()
 		// start up the lifetime progress bar (10-second delay before starting)
 		handler!!.sendEmptyMessage(0)
+	}*/
+
+	private suspend fun displayClassification()
+	{
+		// delay the function to give a "growth" effect to the progress bar
+		delay(50L)
+
+		if (!boundedAnalysis) {
+			val classifyBtn = requireView().findViewById<Button>(R.id.classifyButton)
+			classifyBtn.visibility = View.INVISIBLE
+			val classificationConstraint =
+				requireView().findViewById<ConstraintLayout>(R.id.classificationConstraint)
+			classificationConstraint.visibility = View.VISIBLE
+		}
+
+		// lifetime classification (in percentages) to be used by handler to grow progress bar
+		val remainingLifetimePct = 100 - classificationPair.second * 10
+
+		// make progress bar, progress text, & ripeness buttons visible
+		if (progressBar.visibility != View.VISIBLE && ripenessBtnConstraint.visibility != View.VISIBLE) {
+			progressBar.visibility = View.VISIBLE
+			ripenessBtnConstraint.visibility = View.VISIBLE
+			progressText.visibility = View.VISIBLE
+
+		}
+
+		//textViewHorizontalProgress.text = "${progressStatus}/${progressBarHorizontal.max}"
+		if (progressBar.progress < remainingLifetimePct) {
+			progressBar.incrementProgressBy(1)
+			//pTextValue++
+			progressText.text = getString(R.string.remaining_lifetime_placeholder, progressBar.progress)
+			displayClassification()
+		}
+		else {
+
+			val ripeness = classificationPair.first
+
+			// change color of progressbar
+			progressBar.progressTintList = (
+					when (ripeness) {
+						// unripe
+						0 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_green))
+						// ripe
+						1 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_orange))
+						// expired
+						else -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
+					}
+					)
+
+			when (ripeness)
+			{
+				0 -> {
+					val unripeBtn = requireView().findViewById<MaterialButton>(R.id.unripeBtn)
+					unripeBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_green))
+					unripeBtn.setTextColor(Color.WHITE)
+					unripeBtn.strokeWidth = 8
+					unripeBtn.strokeColor = ColorStateList.valueOf(Color.BLACK)
+				}
+				1 -> {
+					val ripeBtn = requireView().findViewById<MaterialButton>(R.id.ripeBtn)
+					ripeBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_orange))
+					ripeBtn.setTextColor(Color.WHITE)
+					ripeBtn.strokeWidth = 8
+					ripeBtn.strokeColor = ColorStateList.valueOf(Color.BLACK)
+				}
+				else -> {
+					val expiredBtn = requireView().findViewById<MaterialButton>(R.id.expiredBtn)
+					expiredBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
+					expiredBtn.setTextColor(Color.WHITE)
+					expiredBtn.strokeWidth = 8
+					expiredBtn.strokeColor = ColorStateList.valueOf(Color.BLACK)
+				}
+			}
+
+		}
+	}
+	private fun performClassification()
+	{
+		lifecycleScope.launch(Dispatchers.Main)
+		{
+			// reset progress value
+			classifyFruit()
+			displayClassification()
+
+		}
 	}
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -133,10 +227,14 @@ class ReconstructionFragment: Fragment() {
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 		fragmentReconstructionBinding.information.setOnClickListener {
-			if (!advancedControlOption)
+/*			if (!advancedControlOption)
 				generateAlertBox(requireContext(), "Information", resources.getString(R.string.reconstruction_analysis_information_simple_string), reloadLambda)
 			else
-				generateAlertBox(requireContext(),"Information", resources.getString(R.string.reconstruction_analysis_information_string), reloadLambda)
+				generateAlertBox(requireContext(),"Information", resources.getString(R.string.reconstruction_analysis_information_string), reloadLambda)*/
+			if (!advancedControlOption)
+				generateAlertBox(requireContext(), "", resources.getString(R.string.reconstruction_analysis_information_simple_string), reloadLambda)
+			else
+				generateAlertBox(requireContext(),"", resources.getString(R.string.reconstruction_analysis_information_string), reloadLambda)
 		}
 
 
@@ -197,6 +295,10 @@ class ReconstructionFragment: Fragment() {
 						val rightCrop = item.width/2 + Utils.boundingBoxWidth
 						val bottomCrop = item.height/2 + Utils.boundingBoxHeight
 
+						// default coordinates for classifying a 64x64 region
+						clickedX = 240F
+						clickedY = 320F
+
 						val paint = Paint()
 						paint.color = Color.argb(255, 0, 0, 0)
 						paint.strokeWidth = 2.5F
@@ -209,14 +311,13 @@ class ReconstructionFragment: Fragment() {
 						applyOffset = true
 
 						// start up classification thread
-/*						if (::predictedHS.isInitialized) {
-							lifecycleScope.launch(Dispatchers.Main)
-							{
-								classificationThread.start()
-								try { classificationThread.join() }
-								catch (exception: InterruptedException) { exception.printStackTrace() }
-							}
-						}*/
+						if (::predictedHS.isInitialized) {
+/*							classificationThread.start()
+							try { classificationThread.join() }
+							catch (exception: InterruptedException) { exception.printStackTrace() }
+ */
+							performClassification()
+						}
 
 						try {
 							MainActivity.actualLabel = ""
@@ -266,22 +367,22 @@ class ReconstructionFragment: Fragment() {
 		}
 		loadingDialogFragment.show(childFragmentManager, LoadingDialogFragment.TAG)
 
-
-		// set up the progress bar & progress text for growth
-		val progressBar = requireView().findViewById<ProgressBar>(R.id.progressBar)
+		// initialize these variables for the classification step
+		progressBar = requireView().findViewById<ProgressBar>(R.id.progressBar)
 		progressBar.progress = 0
+		progressText = requireView().findViewById<TextView>(R.id.progressText)
+		progressText.text = getString(R.string.remaining_lifetime_placeholder, progressBar.progress)
+		ripenessBtnConstraint = requireView().findViewById<ConstraintLayout>(R.id.ripenessBtnConstraint)
 
-		val progresText = requireView().findViewById<TextView>(R.id.progressText)
-		var pTextValue = 0
-
-		progresText.text = getString(R.string.remaining_lifetime_placeholder, pTextValue)
-
-
-		// ripenss buttons' constraint
-		val ripenessBtnConstraint = requireView().findViewById<ConstraintLayout>(R.id.ripenessBtnConstraint)
-
-		handler = Handler(
+/*		handler = Handler(
 			Handler.Callback {
+				if (!boundedAnalysis) {
+					val classifyBtn = requireView().findViewById<Button>(R.id.classifyButton)
+					classifyBtn.visibility = View.INVISIBLE
+					val classificationConstraint =
+						requireView().findViewById<ConstraintLayout>(R.id.classificationConstraint)
+					classificationConstraint.visibility = View.VISIBLE
+				}
 
 				// lifetime classification (in percentages) to be used by handler to grow progress bar
 				val remainingLifetimePct = 100 - classificationPair.second * 10
@@ -290,14 +391,15 @@ class ReconstructionFragment: Fragment() {
 				if (progressBar.visibility != View.VISIBLE && ripenessBtnConstraint.visibility != View.VISIBLE) {
 					progressBar.visibility = View.VISIBLE
 					ripenessBtnConstraint.visibility = View.VISIBLE
-					progresText.visibility = View.VISIBLE
+					progressText.visibility = View.VISIBLE
+
 				}
 
 				//textViewHorizontalProgress.text = "${progressStatus}/${progressBarHorizontal.max}"
 				if (progressBar.progress < remainingLifetimePct) {
 					progressBar.incrementProgressBy(1)
 					pTextValue++
-					progresText.text = getString(R.string.remaining_lifetime_placeholder, pTextValue)
+					progressText.text = getString(R.string.remaining_lifetime_placeholder, pTextValue)
 					handler?.sendEmptyMessageDelayed(0, 50)
 				}
 				else {
@@ -339,7 +441,7 @@ class ReconstructionFragment: Fragment() {
 
 				true
 			}
-		)
+		)*/
 	}
 
 	override fun onStart() {
@@ -382,7 +484,7 @@ class ReconstructionFragment: Fragment() {
 				{
 					bandsChosen.add(i)
 					val band = getBand(predictedHS, i)
-						addItemToViewPager(fragmentReconstructionBinding.viewpager, getBand(predictedHS, i), i)
+					addItemToViewPager(fragmentReconstructionBinding.viewpager, getBand(predictedHS, i), i)
 				}
 
 /*				for (i in 0 until numberOfBands) {
@@ -415,28 +517,29 @@ class ReconstructionFragment: Fragment() {
 			/* Perform Classification */
 			if (boundedAnalysis)
 			{
-				classificationThread.start()
+/*				classificationThread.start()
 				try { classificationThread.join() }
 				catch (exception: InterruptedException) { exception.printStackTrace() }
+ */
+				performClassification()
 				lifecycleScope.launch(Dispatchers.Main) {
 					Toast.makeText(requireContext(), "Total Execution Time: ${MainActivity.executionTime} ms", LENGTH_LONG).show()
 					MainActivity.executionTime = 0L
-
 				}
 
 			} else
 			{
 				// modify viewmodel in main (UI) thread to prevent data race
-/*				lifecycleScope.launch(Dispatchers.Main)
+				lifecycleScope.launch(Dispatchers.Main)
 				{
 					val classificationConstraint = requireView().findViewById<ConstraintLayout>(R.id.classificationConstraint)
 					classificationConstraint.visibility = View.INVISIBLE
 					val classifyBtn = requireView().findViewById<Button>(R.id.classifyButton)
 					classifyBtn.visibility = View.VISIBLE
 					classifyBtn.setClickable(true)
-				}*/
+				}
 
-/*				fragmentReconstructionBinding.classifyButton.setOnClickListener {
+				/*fragmentReconstructionBinding.classifyButton.setOnClickListener {
 					classificationThread.start()
 					try {
 						classificationThread.join()
@@ -455,7 +558,38 @@ class ReconstructionFragment: Fragment() {
 
 		val startTime = System.currentTimeMillis()
 
-		classificationPair = classificationModel.predict(predictedHS, 68, 64, 64)
+		if (boundedAnalysis)
+			classificationPair = classificationModel.predict(predictedHS, 68, 64, 64)
+		else
+		{
+			val targetX = clickedX.toInt()
+			val targetY = clickedY.toInt()
+			// traverse the 68 hyperspectral bands and pick out the selected region from all of them
+			val predictedHSRegion: ArrayList<Float> = arrayListOf()
+			for (i in 0 until numberOfBands)
+			{
+/*				val topLeftIdx = i * (640*targetX + targetY)
+				for (j in 0 until 64)
+				{
+					for (k in 0 until 64)
+					{
+						predictedHSRegion.add(predictedHS[topLeftIdx + j*640 + k*480])
+					}
+				}*/
+				val topLeftIdx = i * 640 * 480 + (640*targetY + targetX)
+				// here (j,k) is the relative coordinates of a point on the selected boundary region
+				for (j in 0 until 64)
+				{
+					for (k in 0 until 64)
+					{
+						predictedHSRegion.add(
+							predictedHS[topLeftIdx + 64*k + j]
+						)
+					}
+				}
+			}
+			classificationPair = classificationModel.predict(predictedHSRegion.toFloatArray(), 68, 64, 64)
+		}
 
 		val endTime = System.currentTimeMillis()
 

@@ -10,4 +10,5 @@
     android:keepScreenOn="true"
     app:defaultNavHost="true"
     app:navGraph="@navigation/nav_graph"
+    android:background="@color/yellow_bg"
     tools:context=".MainActivity" />

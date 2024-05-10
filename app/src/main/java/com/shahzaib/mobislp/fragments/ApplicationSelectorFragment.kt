@@ -46,7 +46,7 @@ class ApplicationSelectorFragment: Fragment() {
 		fragmentApplicationSelectorBinding = FragmentApplicationselectorBinding.inflate(inflater, container, false)
 		val applicationPicker = fragmentApplicationSelectorBinding.applicationPicker
 		applicationArray = arrayOf(getString(R.string.pear_string), getString(R.string.avocado_string), getString(R.string.banana_string), getString(R.string.mango_string), getString(R.string.nectarine_string))
-		applicationPicker.textSize = 80F
+		applicationPicker.textSize = 65F
 		applicationPicker.minValue = 0
 		applicationPicker.maxValue = applicationArray.size-1
 		applicationPicker.displayedValues = applicationArray
@@ -84,7 +84,7 @@ class ApplicationSelectorFragment: Fragment() {
 
 		fragmentApplicationSelectorBinding.applicationPicker.value = applicationArray.indexOf(sharedPreferences.getString("fruit", "Pear"))
 		fragmentApplicationSelectorBinding.information.setOnClickListener {
-			generateAlertBox(requireContext(), "Information", getString(R.string.application_selector_information_string)) { }
+			generateAlertBox(requireContext(), "", getString(R.string.application_selector_information_string)) { }
 		}
 
 		fragmentApplicationSelectorBinding.radioGroup.setOnCheckedChangeListener { _, _ ->

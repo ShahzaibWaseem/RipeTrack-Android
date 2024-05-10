@@ -53,6 +53,8 @@
         android:layout_height="wrap_content"
         android:contentDescription="@string/tab_layout_description"
         android:theme="@style/TabLayoutTheme"
+        app:tabTextColor="@color/black"
+        app:tabRippleColor="@color/yellow_bg"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -142,12 +144,12 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:visibility="invisible"
             android:id="@+id/ripenessBtnConstraint"
             android:layout_marginTop="60dp"
+            android:visibility="invisible"
             >
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/unripeBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -155,10 +157,12 @@
                 android:enabled="false"
                 android:text="@string/ripeness_unripe"
                 android:textSize="30sp"
+                android:textColor="@color/black"
+                android:backgroundTint="@color/gray_bg"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/ripeBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -167,10 +171,12 @@
                 android:enabled="false"
                 android:text="@string/ripeness_ripe"
                 android:textSize="30sp"
+                android:backgroundTint="@color/gray_bg"
+                android:textColor="@color/black"
                 app:layout_constraintStart_toEndOf="@id/unripeBtn"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/expiredBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -179,6 +185,8 @@
                 android:enabled="false"
                 android:text="@string/ripeness_expired"
                 android:textSize="30sp"
+                android:backgroundTint="@color/gray_bg"
+                android:textColor="@color/black"
                 app:layout_constraintStart_toEndOf="@id/ripeBtn"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -233,7 +241,7 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-<!--        <Button
+        <Button
             android:id="@+id/classifyButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -245,7 +253,7 @@
             android:layout_marginTop="20dp"
             android:visibility="invisible"
             android:clickable="false"
-            />-->
+            />
 
 <!--        <TextView
             android:id="@+id/textViewReconTime"

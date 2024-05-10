@@ -182,6 +182,10 @@ class CameraFragment: Fragment() {
 						)
 					}
 				}
+				else if (result.data?.clipData?.itemCount == 1)
+				{
+					generateAlertBox(requireContext(), "Only One Image Selected", "Cannot select 1 image, Select Two images.\nFirst image RGB, Second image NIR", reloadLambda)
+				}
 				else {
 					generateAlertBox(requireContext(),"Number of images exceeded 2", "Cannot select more than 2 images.\nFirst image RGB, Second image NIR", reloadLambda)
 				}

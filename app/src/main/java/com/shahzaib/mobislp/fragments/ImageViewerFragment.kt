@@ -205,7 +205,8 @@ class ImageViewerFragment: Fragment() {
 		}
 
 		fragmentImageViewerBinding.information.setOnClickListener {
-			generateAlertBox(requireContext(), "Information", getString(R.string.image_viewer_information_string)) {}
+//			generateAlertBox(requireContext(), "Information", getString(R.string.image_viewer_information_string)) {}
+			generateAlertBox(requireContext(), "", getString(R.string.image_viewer_information_string)) {}
 		}
 
 		loadingDialogFragment.show(childFragmentManager, LoadingDialogFragment.TAG)
@@ -258,6 +259,7 @@ class ImageViewerFragment: Fragment() {
 			fragmentImageViewerBinding.button.setOnClickListener {
 				val cropTime = System.currentTimeMillis()
 				// if crop isn't initialized for simple mode
+				Log.i("Cropped Image (before change)", "$leftCrop $topCrop")
 				if (leftCrop == -1F && topCrop == -1F && !advancedControlOption) {
 					leftCrop = rgbImageBitmap.width/2 - Utils.boundingBoxWidth
 					topCrop = rgbImageBitmap.height/2 - Utils.boundingBoxWidth
@@ -269,6 +271,7 @@ class ImageViewerFragment: Fragment() {
 					nirImageBitmap = cropImage(nirImageBitmap, leftCrop, topCrop)
 					Log.i("Cropped Image", "${rgbImageBitmap.width} ${rgbImageBitmap.height}")
 					Log.i("Cropped Image", "${nirImageBitmap.width} ${nirImageBitmap.height}")
+//					Log.i("Bitmap dimensions", "(${rgbImageBitmap.width},${rgbImageBitmap.height})")
 					saveProcessedImages(requireContext(), rgbImageBitmap, nirImageBitmap, rgbImageFileName, nirImageFileName, Utils.croppedImageDirectory)
 				}
 				MainActivity.executionTime += System.currentTimeMillis() - cropTime
