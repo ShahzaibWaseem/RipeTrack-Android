@@ -13,11 +13,10 @@
     </style>
 
     <style name="TabLayoutTheme" parent="Theme.MaterialComponents.DayNight">
-        <item name="android:background">@drawable/tab_background_selector</item>
         <item name="colorPrimary">@color/black</item>
-        <item name="colorPrimaryDark">@color/sfu_dark_gray</item>
         <item name="colorAccent">@color/background</item>
-        <item name="tabIndicatorColor">@color/sfu_black</item>
+        <item name="android:backgroundTint">@color/yellow_bg</item>
+        <item name="tabIndicatorColor">@color/black</item>
         <item name="tabIndicatorHeight">4dp</item>
         <item name="tabTextAppearance">@style/TabLayoutTabTheme</item>
     </style>
@@ -40,6 +39,7 @@
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">20sp</item>
     </style>
+
     <style name="BodyTextStyle" parent="MaterialAlertDialog.MaterialComponents.Body.Text">
         <item name="android:textSize">14sp</item>
         <item name="android:textColor">@color/black</item>

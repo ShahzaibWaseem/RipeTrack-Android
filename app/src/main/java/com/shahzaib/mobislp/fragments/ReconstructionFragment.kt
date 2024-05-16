@@ -6,12 +6,10 @@ import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.graphics.*
 import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -31,7 +29,6 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
 import com.shahzaib.mobislp.*
-import com.shahzaib.mobislp.MainActivity.Companion.generateAlertBox
 import com.shahzaib.mobislp.databinding.FragmentReconstructionBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -45,7 +42,7 @@ import kotlin.properties.Delegates
 class ReconstructionFragment: Fragment() {
 	private lateinit var predictedHS: FloatArray
 	private lateinit var classificationPair: Pair<Int, Int>
-	private val bandsHS: MutableList<Bitmap> = mutableListOf()
+	private var bandsHS: MutableList<Bitmap> = mutableListOf()
 	private var reconstructionDuration = 0F
 	private var classificationDuration = 0F
 	private val numberOfBands = 68
@@ -69,8 +66,10 @@ class ReconstructionFragment: Fragment() {
 
 	private lateinit var sharedPreferences: SharedPreferences
 	private lateinit var mobiSpectralApplication: String
-	private var reconstructionFile: String = "RipeTrack_reconstruction_mobile_68.pt"
-	private var classificationFile: String = "RipeTrack_classification_mobile.pt"
+	private lateinit var reconstructionFile: String
+	private lateinit var classificationFile: String
+	private var reconstructionFiles = arrayOf("RipeTrack_reconstruction_mobile_pa_68.pt", "RipeTrack_reconstruction_mobile_bmn_68.pt")
+	private var classificationFiles = arrayOf("RipeTrack_classification_mobile_pa.pt", "RipeTrack_classification_mobile_bmn.pt")
 	private lateinit var mobiSpectralControlOption: String
 	private var advancedControlOption by Delegates.notNull<Boolean>()
 
@@ -81,29 +80,20 @@ class ReconstructionFragment: Fragment() {
 	private var alreadyMultiLabelInferred = false
 	private var applyOffset = false
 
-//	private var handler: Handler? = null
-	// fake lifetime classifier -- will be replaced by actual classification later
-//	private val lifetimeClassification = Random().nextInt(11)
-	// 0, 1, or 2
-	//	private var ripenessClassification: Int? = null
-
 	private fun imageViewFactory() = ImageView(requireContext()).apply {
 		layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
 	}
 
-	// set up the progress bar & progress text for classification
+	// set up the progress bar, progress text, & ripeness buttons' constraint for classification
 	private lateinit var progressBar: ProgressBar
 	private lateinit var progressText: TextView
-//	private var pTextValue = 0
-	// ripeness buttons' constraint
 	private lateinit var ripenessBtnConstraint: ConstraintLayout
 
-	// classification thread
-/*	private val classificationThread = Thread {
-		classifyFruit()
-		// start up the lifetime progress bar (10-second delay before starting)
-		handler!!.sendEmptyMessage(0)
-	}*/
+	// flag for analysis
+	private var analyze = false
+
+	// views for toggling graph visibility
+	private lateinit var toggleVisibilityViews: Array<View>
 
 	private suspend fun displayClassification()
 	{
@@ -111,14 +101,14 @@ class ReconstructionFragment: Fragment() {
 		delay(50L)
 
 		if (!boundedAnalysis) {
-			val classifyBtn = requireView().findViewById<Button>(R.id.classifyButton)
-			classifyBtn.visibility = View.INVISIBLE
+//			val classifyBtn = requireView().findViewById<Button>(R.id.classifyButton)
+//			classifyBtn.visibility = View.INVISIBLE
 			val classificationConstraint =
 				requireView().findViewById<ConstraintLayout>(R.id.classificationConstraint)
 			classificationConstraint.visibility = View.VISIBLE
 		}
 
-		// lifetime classification (in percentages) to be used by handler to grow progress bar
+		// lifetime classification (in percentages) to be used to grow progress bar
 		val remainingLifetimePct = 100 - classificationPair.second * 10
 
 		// make progress bar, progress text, & ripeness buttons visible
@@ -129,10 +119,8 @@ class ReconstructionFragment: Fragment() {
 
 		}
 
-		//textViewHorizontalProgress.text = "${progressStatus}/${progressBarHorizontal.max}"
 		if (progressBar.progress < remainingLifetimePct) {
 			progressBar.incrementProgressBy(1)
-			//pTextValue++
 			progressText.text = getString(R.string.remaining_lifetime_placeholder, progressBar.progress)
 			displayClassification()
 		}
@@ -183,7 +171,10 @@ class ReconstructionFragment: Fragment() {
 	{
 		lifecycleScope.launch(Dispatchers.Main)
 		{
-			// reset progress value
+			// (initialize or reset) progress value on both bar & progress text
+			progressBar.progress = 0
+			progressText.text = getString(R.string.remaining_lifetime_placeholder, progressBar.progress)
+
 			classifyFruit()
 			displayClassification()
 
@@ -201,6 +192,22 @@ class ReconstructionFragment: Fragment() {
 		mobiSpectralApplication = sharedPreferences.getString("application", getString(R.string.apple_string))!!
 		mobiSpectralControlOption = sharedPreferences.getString("option", getString(R.string.advanced_option_string))!!
 
+		// set reconstruction & classification file options based on fruit
+		val fruit = sharedPreferences.getString("fruit", null)
+
+//		Log.i("Shared Preferences (Fruit Selected)", "$fruit")
+
+		if (fruit.equals("Pear") || fruit.equals("Avocado"))
+		{
+			reconstructionFile = reconstructionFiles[0]
+			classificationFile = classificationFiles[0]
+		}
+		else
+		{
+			reconstructionFile = reconstructionFiles[1]
+			classificationFile = classificationFiles[1]
+		}
+
 		advancedControlOption = when (mobiSpectralControlOption) {
 			getString(R.string.advanced_option_string) -> true
 			getString(R.string.simple_option_string) -> false
@@ -209,12 +216,20 @@ class ReconstructionFragment: Fragment() {
 
 //		fragmentReconstructionBinding.textViewClass.text = mobiSpectralApplication
 
+		toggleVisibilityViews = arrayOf(
+			fragmentReconstructionBinding.graphView,
+			fragmentReconstructionBinding.informationText,
+			fragmentReconstructionBinding.classificationConstraint,
+			fragmentReconstructionBinding.progressConstraint,
+			fragmentReconstructionBinding.analyzeButton
+		)
+
 		if (!advancedControlOption) {
 			fragmentReconstructionBinding.analysisButton.visibility = View.INVISIBLE
 //			fragmentReconstructionBinding.simpleModeSignaturePositionTextView.visibility = View.VISIBLE
 			fragmentReconstructionBinding.graphView.visibility = View.INVISIBLE
 			// fragmentReconstructionBinding.textViewClassTime.text = ""
-			fragmentReconstructionBinding.simpleModeSignaturePositionTextView.text = getString(R.string.simple_mode_signature_string, MainActivity.tempRectangle.centerX(), MainActivity.tempRectangle.centerY())
+//			fragmentReconstructionBinding.simpleModeSignaturePositionTextView.text = getString(R.string.simple_mode_signature_string, MainActivity.tempRectangle.centerX(), MainActivity.tempRectangle.centerY())
 			// fragmentReconstructionBinding.textViewReconTime.visibility = View.INVISIBLE
 			// fragmentReconstructionBinding.textViewClassTime.visibility = View.INVISIBLE
 		}
@@ -226,6 +241,7 @@ class ReconstructionFragment: Fragment() {
 	@SuppressLint("ClickableViewAccessibility")
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
+		/*
 		fragmentReconstructionBinding.information.setOnClickListener {
 /*			if (!advancedControlOption)
 				generateAlertBox(requireContext(), "Information", resources.getString(R.string.reconstruction_analysis_information_simple_string), reloadLambda)
@@ -236,6 +252,7 @@ class ReconstructionFragment: Fragment() {
 			else
 				generateAlertBox(requireContext(),"", resources.getString(R.string.reconstruction_analysis_information_string), reloadLambda)
 		}
+		 */
 
 
 
@@ -254,81 +271,94 @@ class ReconstructionFragment: Fragment() {
 
 				if (advancedControlOption) {
 					view.setOnTouchListener { v, event ->
-						clickedX = (event!!.x / v!!.width) * bitmapsWidth
-						clickedY = (event.y / v.height) * bitmapsHeight
-						if (!itemTouched) {
-							savedClickedX = clickedX
-							savedClickedY = clickedY
-							itemTouched = true
-							Log.i("Pixel Clicked", "X: ${clickedX.toInt()} ($bitmapsWidth), Y: ${clickedY.toInt()} ($bitmapsHeight)")
-							color = Color.argb(255, randomColor.nextInt(256), randomColor.nextInt(256), randomColor.nextInt(256))
+						if (analyze)
+						{
+							clickedX = (event!!.x / v!!.width) * bitmapsWidth
+							clickedY = (event.y / v.height) * bitmapsHeight
+							if (!itemTouched) {
+								savedClickedX = clickedX
+								savedClickedY = clickedY
+								itemTouched = true
+								Log.i("Pixel Clicked", "X: ${clickedX.toInt()} ($bitmapsWidth), Y: ${clickedY.toInt()} ($bitmapsHeight)")
+								color = Color.argb(255, randomColor.nextInt(256), randomColor.nextInt(256), randomColor.nextInt(256))
 
-							val paint = Paint()
-							paint.color = color
-							paint.style = Paint.Style.STROKE
-							paint.strokeWidth = 2.5F
+								val paint = Paint()
+								paint.color = color
+								paint.style = Paint.Style.STROKE
+								paint.strokeWidth = 2.5F
 
-							canvas.drawCircle(clickedX, clickedY, 5F, paint)
-							view.setImageBitmap(bitmapOverlay)
-							try {
-								//inference()
-								val inputSignature = getSignature(predictedHS, clickedY.toInt(), clickedX.toInt())
-								MainActivity.actualLabel = ""
+								canvas.drawCircle(clickedX, clickedY, 5F, paint)
+								view.setImageBitmap(bitmapOverlay)
+								try {
+									//inference()
+									val inputSignature = getSignature(predictedHS, clickedY.toInt(), clickedX.toInt())
+									MainActivity.actualLabel = ""
 //                                addCSVLog(requireContext())
-							} catch (e: NullPointerException) {
-								e.printStackTrace()
+								} catch (e: NullPointerException) {
+									e.printStackTrace()
+								}
 							}
+							if (itemTouched && savedClickedX != clickedX && savedClickedY != clickedY)
+								itemTouched = false
 						}
-						if (itemTouched && savedClickedX != clickedX && savedClickedY != clickedY)
-							itemTouched = false
+
+
 						false
 					}
+
 					view.setOnLongClickListener {
+
 						bitmapOverlay = Bitmap.createBitmap(item.width, item.height, item.config)
 						canvas = Canvas(bitmapOverlay)
 						canvas.drawBitmap(item, Matrix(), null)
 						view.setImageBitmap(bitmapOverlay)
 						fragmentReconstructionBinding.graphView.removeAllSeries()         // remove all previous series
 
-						val leftCrop = item.width/2 - Utils.boundingBoxWidth
-						val topCrop = item.height/2 - Utils.boundingBoxHeight
-						val rightCrop = item.width/2 + Utils.boundingBoxWidth
-						val bottomCrop = item.height/2 + Utils.boundingBoxHeight
 
-						// default coordinates for classifying a 64x64 region
-						clickedX = 240F
-						clickedY = 320F
 
-						val paint = Paint()
-						paint.color = Color.argb(255, 0, 0, 0)
-						paint.strokeWidth = 2.5F
-						paint.style = Paint.Style.STROKE
+						/*
 
-						Log.i("Crop Location", "L: $leftCrop, R: $rightCrop, T: $topCrop, B: $bottomCrop")
+							val leftCrop = item.width/2 - Utils.boundingBoxWidth
+							val topCrop = item.height/2 - Utils.boundingBoxHeight
+							val rightCrop = item.width/2 + Utils.boundingBoxWidth
+							val bottomCrop = item.height/2 + Utils.boundingBoxHeight
 
-						canvas.drawRect(leftCrop-2.5F, topCrop-2.5F, rightCrop+2.5F, bottomCrop+2.5F, paint)
-						view.setImageBitmap(bitmapOverlay)
-						applyOffset = true
 
-						// start up classification thread
-						if (::predictedHS.isInitialized) {
-/*							classificationThread.start()
-							try { classificationThread.join() }
-							catch (exception: InterruptedException) { exception.printStackTrace() }
- */
-							performClassification()
-						}
 
-						try {
-							MainActivity.actualLabel = ""
+							val paint = Paint()
+							paint.color = Color.argb(255, 0, 0, 0)
+							paint.strokeWidth = 2.5F
+							paint.style = Paint.Style.STROKE
+
+							Log.i("Crop Location", "L: $leftCrop, R: $rightCrop, T: $topCrop, B: $bottomCrop")
+
+							canvas.drawRect(leftCrop-2.5F, topCrop-2.5F, rightCrop+2.5F, bottomCrop+2.5F, paint)
+							view.setImageBitmap(bitmapOverlay)
+							applyOffset = true
+
+							// default coordinates for classifying a 64x64 region
+							clickedX = 239F
+							clickedY = 319F
+
+							// start up classification thread
+							if (::predictedHS.isInitialized) {
+								performClassification()
+							}
+
+
+							try {
+								MainActivity.actualLabel = ""
 //                                addCSVLog(requireContext())
-						} catch (e: NullPointerException) {
-							e.printStackTrace()
-						}
+							} catch (e: NullPointerException) {
+								e.printStackTrace()
+							}
+							*/
+
 						false
 					}
 				}
 				else {
+
 					color = Color.argb(
 						255,
 						randomColor.nextInt(256),
@@ -342,6 +372,7 @@ class ReconstructionFragment: Fragment() {
 					view.setImageBitmap(bitmapOverlay)
 					//inference()
 //                    addCSVLog(requireContext())
+
 				}
 				Glide.with(view).load(item).into(view)
 			}
@@ -369,79 +400,27 @@ class ReconstructionFragment: Fragment() {
 
 		// initialize these variables for the classification step
 		progressBar = requireView().findViewById<ProgressBar>(R.id.progressBar)
-		progressBar.progress = 0
 		progressText = requireView().findViewById<TextView>(R.id.progressText)
-		progressText.text = getString(R.string.remaining_lifetime_placeholder, progressBar.progress)
 		ripenessBtnConstraint = requireView().findViewById<ConstraintLayout>(R.id.ripenessBtnConstraint)
 
-/*		handler = Handler(
-			Handler.Callback {
-				if (!boundedAnalysis) {
-					val classifyBtn = requireView().findViewById<Button>(R.id.classifyButton)
-					classifyBtn.visibility = View.INVISIBLE
-					val classificationConstraint =
-						requireView().findViewById<ConstraintLayout>(R.id.classificationConstraint)
-					classificationConstraint.visibility = View.VISIBLE
-				}
+	}
 
-				// lifetime classification (in percentages) to be used by handler to grow progress bar
-				val remainingLifetimePct = 100 - classificationPair.second * 10
-
-				// make progress bar, progress text, & ripeness buttons visible
-				if (progressBar.visibility != View.VISIBLE && ripenessBtnConstraint.visibility != View.VISIBLE) {
-					progressBar.visibility = View.VISIBLE
-					ripenessBtnConstraint.visibility = View.VISIBLE
-					progressText.visibility = View.VISIBLE
-
-				}
-
-				//textViewHorizontalProgress.text = "${progressStatus}/${progressBarHorizontal.max}"
-				if (progressBar.progress < remainingLifetimePct) {
-					progressBar.incrementProgressBy(1)
-					pTextValue++
-					progressText.text = getString(R.string.remaining_lifetime_placeholder, pTextValue)
-					handler?.sendEmptyMessageDelayed(0, 50)
+	private fun toggleGraphVisibility()
+	{
+		// safety check, should be initialized by then
+		if (::toggleVisibilityViews.isInitialized)
+		{
+			toggleVisibilityViews.forEach {
+				if (it.visibility == View.VISIBLE)
+				{
+					it.visibility = View.INVISIBLE
 				}
 				else {
-
-					val ripeness = classificationPair.first
-
-					// change color of progressbar
-					progressBar.progressTintList = (
-							when (ripeness) {
-								// unripe
-								0 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_green))
-								// ripe
-								1 -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_orange))
-								// expired
-								else -> ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
-							}
-							)
-
-					when (ripeness)
-					{
-						0 -> {
-							val unripeBtn = requireView().findViewById<Button>(R.id.unripeBtn)
-							unripeBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_green))
-							unripeBtn.setTextColor(Color.WHITE)
-						}
-						1 -> {
-							val ripeBtn = requireView().findViewById<Button>(R.id.ripeBtn)
-							ripeBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.progress_orange))
-							ripeBtn.setTextColor(Color.WHITE)
-						}
-						else -> {
-							val expiredBtn = requireView().findViewById<Button>(R.id.expiredBtn)
-							expiredBtn.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.sfu_primary))
-							expiredBtn.setTextColor(Color.WHITE)
-						}
-					}
-
+					it.visibility = View.VISIBLE
 				}
-
-				true
 			}
-		)*/
+		}
+
 	}
 
 	override fun onStart() {
@@ -472,81 +451,129 @@ class ReconstructionFragment: Fragment() {
 			graphView.viewport.setMaxY(1.0)
 			graphView.gridLabelRenderer.setHumanRounding(true)
 
+			/*
 			graphView.setOnLongClickListener{
 				fragmentReconstructionBinding.textConstraintView.visibility = View.VISIBLE
 				fragmentReconstructionBinding.graphView.visibility = View.INVISIBLE
 				false
 			}
+			 */
 
-			val selectedIndices = listOf(0, 12, 23, 34, 45, 56, 67)
-			val viewpagerThread = Thread {
-				for (i in selectedIndices)
-				{
-					bandsChosen.add(i)
-					val band = getBand(predictedHS, i)
-					addItemToViewPager(fragmentReconstructionBinding.viewpager, getBand(predictedHS, i), i)
+			fragmentReconstructionBinding.analyzeButton.setOnClickListener {
+
+				analyze = !analyze
+
+				// clear the viewpager first
+				fragmentReconstructionBinding.viewpager.post {
+					bandsHS.clear()
+					fragmentReconstructionBinding.viewpager.adapter!!.notifyDataSetChanged()
 				}
 
-/*				for (i in 0 until numberOfBands) {
-					if (i % 16 > 0) continue
-					bandsChosen.add(i)
-					addItemToViewPager(fragmentReconstructionBinding.viewpager, getBand(predictedHS, i), i)
-				}*/
+				// make the reconstructed bands & their wavelengths visible
+				val selectedIndices = listOf(0, 12, 23, 34, 45, 56, 67)
+				val viewpagerThread = Thread {
+					for (i in selectedIndices)
+					{
+						bandsChosen.add(i)
+						addItemToViewPager(fragmentReconstructionBinding.viewpager, getBand(predictedHS, i), selectedIndices.indexOf(i))
+					}
+				}
+
+				viewpagerThread.start()
+				try { viewpagerThread.join() }
+				catch (exception: InterruptedException) { exception.printStackTrace() }
+
+				// show the graph
+				toggleGraphVisibility()
 			}
+
+
+
 			TabLayoutMediator(fragmentReconstructionBinding.tabLayout,
 				fragmentReconstructionBinding.viewpager) { tab, position ->
 				Log.i("Position", "$position")
-				if (position == selectedIndices.size)
-					tab.text = "RGB"
-				else
-//					tab.text = ACTUAL_BAND_WAVELENGTHS[bandsChosen[position] * bandSpacing].roundToInt().toString()
+				if (analyze)
+				{
 					tab.text = (round(
-						ACTUAL_BAND_WAVELENGTHS[bandsChosen[position] * bandSpacing] / 100
-					) * 100).toInt().toString()
+							ACTUAL_BAND_WAVELENGTHS[bandsChosen[position] * bandSpacing] / 100
+						) * 100).toInt().toString()
+				}
+				else
+				{
+
+					when (position) {
+						0 -> tab.text = "RGB"
+						1 -> tab.text = "NIR"
+					}
+				}
 			}.attach()
 
-			viewpagerThread.start()
-			try { viewpagerThread.join() }
-			catch (exception: InterruptedException) { exception.printStackTrace() }
-			addItemToViewPager(fragmentReconstructionBinding.viewpager, MainActivity.tempRGBBitmap, 5)
+			val reloadBtn = fragmentReconstructionBinding.reloadButton
+			reloadBtn.setOnClickListener {
+				if (analyze)
+				{
+					// go back to classification page
+					analyze = !analyze
+					// hide the graph
+					toggleGraphVisibility()
+
+
+					// clear the viewpager first
+					fragmentReconstructionBinding.viewpager.post {
+						bandsHS.clear()
+						fragmentReconstructionBinding.viewpager.adapter!!.notifyDataSetChanged()
+					}
+					addItemToViewPager(fragmentReconstructionBinding.viewpager, MainActivity.tempRGBBitmap, 0)
+					addItemToViewPager(fragmentReconstructionBinding.viewpager, MainActivity.tempNIRBitmap, 1)
+				}
+				else
+				{
+					// navigate back to the imageviewerfragment
+					lifecycleScope.launch(Dispatchers.Main) {
+						navController.navigate(
+							ReconstructionFragmentDirections.actionReconstructionFragmentToImageViewerFragment(MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath)
+						)
+					}
+				}
+			}
+
+
+
+//			addItemToViewPager(fragmentReconstructionBinding.viewpager, MainActivity.tempRGBBitmap, 7)
+
+			addItemToViewPager(fragmentReconstructionBinding.viewpager, MainActivity.tempRGBBitmap, 0)
+			addItemToViewPager(fragmentReconstructionBinding.viewpager, MainActivity.tempNIRBitmap, 1)
+
 			// fragmentReconstructionBinding.viewpager.currentItem = fragmentReconstructionBinding.viewpager.adapter!!.itemCount - 1
 			loadingDialogFragment.dismissDialog()
 
+		}
+	}
 
+	override fun onResume()
+	{
+		super.onResume()
 
-			/* Perform Classification */
-			if (boundedAnalysis)
+		/* Perform Classification */
+		// putting it here instead of onStart() prevents classification from happening multiple times when you move back & forth between the classification & analysis pages
+		if (boundedAnalysis)
+		{
+			performClassification()
+			lifecycleScope.launch(Dispatchers.Main) {
+				Toast.makeText(requireContext(), "Total Execution Time: ${MainActivity.executionTime} ms", LENGTH_LONG).show()
+				MainActivity.executionTime = 0L
+			}
+
+		} else
+		{
+			// modify viewmodel in main (UI) thread to prevent data race
+			lifecycleScope.launch(Dispatchers.Main)
 			{
-/*				classificationThread.start()
-				try { classificationThread.join() }
-				catch (exception: InterruptedException) { exception.printStackTrace() }
- */
-				performClassification()
-				lifecycleScope.launch(Dispatchers.Main) {
-					Toast.makeText(requireContext(), "Total Execution Time: ${MainActivity.executionTime} ms", LENGTH_LONG).show()
-					MainActivity.executionTime = 0L
-				}
-
-			} else
-			{
-				// modify viewmodel in main (UI) thread to prevent data race
-				lifecycleScope.launch(Dispatchers.Main)
-				{
-					val classificationConstraint = requireView().findViewById<ConstraintLayout>(R.id.classificationConstraint)
-					classificationConstraint.visibility = View.INVISIBLE
-					val classifyBtn = requireView().findViewById<Button>(R.id.classifyButton)
-					classifyBtn.visibility = View.VISIBLE
-					classifyBtn.setClickable(true)
-				}
-
-				/*fragmentReconstructionBinding.classifyButton.setOnClickListener {
-					classificationThread.start()
-					try {
-						classificationThread.join()
-					} catch (exception: InterruptedException) {
-						exception.printStackTrace()
-					}
-				}*/
+				val classificationConstraint = requireView().findViewById<ConstraintLayout>(R.id.classificationConstraint)
+				classificationConstraint.visibility = View.INVISIBLE
+//					val classifyBtn = requireView().findViewById<Button>(R.id.classifyButton)
+//					classifyBtn.visibility = View.VISIBLE
+//					classifyBtn.setClickable(true)
 			}
 
 		}
@@ -562,25 +589,18 @@ class ReconstructionFragment: Fragment() {
 			classificationPair = classificationModel.predict(predictedHS, 68, 64, 64)
 		else
 		{
-			val targetX = clickedX.toInt()
+/*			val targetX = clickedX.toInt()
 			val targetY = clickedY.toInt()
 			// traverse the 68 hyperspectral bands and pick out the selected region from all of them
 			val predictedHSRegion: ArrayList<Float> = arrayListOf()
 			for (i in 0 until numberOfBands)
 			{
-/*				val topLeftIdx = i * (640*targetX + targetY)
-				for (j in 0 until 64)
-				{
-					for (k in 0 until 64)
-					{
-						predictedHSRegion.add(predictedHS[topLeftIdx + j*640 + k*480])
-					}
-				}*/
-				val topLeftIdx = i * 640 * 480 + (640*targetY + targetX)
+//				val topLeftIdx = i * 640 * 480 + (640*targetY + targetX)
+				val topLeftIdx = i * 640 * 480 + (480*targetY + targetX)
 				// here (j,k) is the relative coordinates of a point on the selected boundary region
-				for (j in 0 until 64)
+				for (k in 0 until 64)
 				{
-					for (k in 0 until 64)
+					for (j in 0 until 64)
 					{
 						predictedHSRegion.add(
 							predictedHS[topLeftIdx + 64*k + j]
@@ -588,7 +608,26 @@ class ReconstructionFragment: Fragment() {
 					}
 				}
 			}
+			val startX = clickedX.toInt() - 32
+			val startY = clickedY.toInt() - 32
+			val endX = startX + 64
+			val endY = startY + 64
+			val predictedHSRegion: ArrayList<Float> = arrayListOf()
+			for (i in 0 until numberOfBands)
+			{
+				for (x in startX until endX)
+				{
+					for (y in startY until endY)
+					{
+						val idx = i*640*480 + (480*y+x)
+						predictedHSRegion.add(
+							predictedHS[idx]
+						)
+					}
+				}
+			}
 			classificationPair = classificationModel.predict(predictedHSRegion.toFloatArray(), 68, 64, 64)
+ */
 		}
 
 		val endTime = System.currentTimeMillis()
@@ -706,6 +745,7 @@ class ReconstructionFragment: Fragment() {
 
 	private fun generateHypercube() {
 		val reconstructionModel = context?.let { Reconstruction(it, reconstructionFile) }!!
+
 		val rgbBitmap = MainActivity.originalRGBBitmap
 		val nirBitmap = MainActivity.originalNIRBitmap
 		bitmapsWidth = rgbBitmap.width
@@ -766,12 +806,6 @@ class ReconstructionFragment: Fragment() {
 	private fun addItemToViewPager(view: ViewPager2, item: Bitmap, position: Int) = view.post {
 		bandsHS.add(item)
 		view.adapter!!.notifyItemChanged(position)
-/*		Timer().schedule(1000) {
-			if (bandsHS.size == bandsChosen.size && !advancedControlOption) {
-				//inference()
-//                addCSVLog(requireContext())
-			}
-		}*/
 	}
 
 	companion object {

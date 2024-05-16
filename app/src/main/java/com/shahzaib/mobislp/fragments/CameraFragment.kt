@@ -137,8 +137,12 @@ class CameraFragment: Fragment() {
 				else {
 					// If we have to select one image.
 					val nirUri: Uri? = result.data!!.data
+					MainActivity.nirAbsolutePath = nirUri?.let { getRealPathFromURI(it) }.toString()
+					Log.i("Images Opened Path", "NIR Path: ${MainActivity.nirAbsolutePath}")
+					/*
 					nirAbsolutePath = nirUri?.let { getRealPathFromURI(it) }.toString()
 					Log.i("Images Opened Path", "NIR Path: $nirAbsolutePath")
+					 */
 				}
 			}
 			else {
@@ -169,16 +173,18 @@ class CameraFragment: Fragment() {
 
 					val rgbBitmapOutputFile = createFile("RGB", "lossless")
 					val nirBitmapOutputFile = File(rgbBitmapOutputFile.toString().replace("RGB", "NIR"))
-					rgbAbsolutePath = rgbBitmapOutputFile.absolutePath
-					nirAbsolutePath = nirBitmapOutputFile.absolutePath
-					Log.i("Images Opened Path", "RGB Path: $rgbAbsolutePath, NIR Path: $nirAbsolutePath")
+					MainActivity.rgbAbsolutePath = rgbBitmapOutputFile.absolutePath
+					MainActivity.nirAbsolutePath = nirBitmapOutputFile.absolutePath
+					Log.i("Images Opened Path", "RGB Path: ${MainActivity.rgbAbsolutePath}, NIR Path: ${MainActivity.nirAbsolutePath}")
+//					Log.i("Images Opened Path", "RGB Path: $rgbAbsolutePath, NIR Path: $nirAbsolutePath")
 
 					lifecycleScope.launch {
 						saveImage(rgbBitmap, rgbBitmapOutputFile)
 						saveImage(nirBitmap, nirBitmapOutputFile)
 
 						navController.navigate(
-							CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath)
+							CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath)
+							//CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath)
 						)
 					}
 				}
@@ -352,12 +358,14 @@ class CameraFragment: Fragment() {
 					if (cameraId == cameraIdRGB){
 						Log.i("Camera ID NIR", "$cameraIdNIR")
 						when (cameraIdNIR) {
-							"OnePlus" -> navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath))
+							//"OnePlus" -> navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath))
+							"OnePlus" -> navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath))
 							else -> navController.navigate(CameraFragmentDirections.actionCameraFragmentSelf(cameraIdNIR, imageFormat))
 						}
 					}
 					else
-						navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, output.absolutePath))
+						//navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, output.absolutePath))
+						navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, output.absolutePath))
 				}
 			}
 		}
@@ -617,8 +625,10 @@ class CameraFragment: Fragment() {
 	companion object {
 		private val TAG = CameraFragment::class.java.simpleName
 		private lateinit var fileFormat: String
+		/*
 		lateinit var rgbAbsolutePath: String
 		lateinit var nirAbsolutePath: String
+		 */
 
 		/** Maximum number of images that will be held in the reader's buffer */
 		private const val IMAGE_BUFFER_SIZE: Int = 3
@@ -653,7 +663,7 @@ class CameraFragment: Fragment() {
 			}
 			val output = File(imageDirectory, "IMG_${fileFormat}_$nir.$fileExtension")
 			if (nir == "RGB")
-				rgbAbsolutePath = output.absolutePath
+				MainActivity.rgbAbsolutePath = output.absolutePath
 			return output
 		}
 	}

@@ -134,6 +134,10 @@
         <action
             android:id="@+id/action_reconstruction_fragment_to_application_title"
             app:destination="@+id/applicationselector_fragment"/>
+
+        <action
+            android:id="@+id/action_reconstruction_fragment_to_image_viewer_fragment"
+            app:destination="@+id/image_viewer_fragment"/>
     </fragment>
 
 </navigation>

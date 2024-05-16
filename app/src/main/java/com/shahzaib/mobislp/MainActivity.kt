@@ -40,11 +40,16 @@ class MainActivity: AppCompatActivity() {
 		var reconstructionTime: String = " s"
 		var classificationTime: String = " ms"
 		lateinit var tempRGBBitmap: Bitmap
+		lateinit var tempNIRBitmap: Bitmap
 		lateinit var tempRectangle: Rect
 		var cameraIDList: Pair<String, String> = Pair("", "")
 		var dataCapturing = false
 		var illuminationOption = "Halogen"
 		var executionTime = 0L
+
+
+		lateinit var rgbAbsolutePath: String
+		lateinit var nirAbsolutePath: String
 
 		fun generateAlertBox(context: Context, title: String, text: String, onPositiveButtonFunction: () -> Unit) {
 			val alertDialogBuilder = MaterialAlertDialogBuilder(context, R.style.AlertDialogTheme)

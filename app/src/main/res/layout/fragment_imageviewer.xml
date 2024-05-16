@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -17,17 +16,17 @@
         android:text="@string/app_name"
         android:textColor="@color/white"
         android:textSize="55sp"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/guideline"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.10" />
+        app:layout_constraintGuide_percent="0.1" />
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewpager"
@@ -45,48 +44,68 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.75" />
+        app:layout_constraintGuide_percent="0.6" />
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:theme="@style/TabLayoutTheme"
-        app:tabTextColor="@color/black"
-        app:tabRippleColor="@color/yellow_bg"
         android:contentDescription="@string/tab_layout_description"
-        app:tabTextAppearance="@style/TabLayoutTabTheme"
-        app:tabGravity="center"
-        app:layout_constraintTop_toBottomOf="@+id/guideline2"
+        android:theme="@style/TabLayoutTheme"
+        app:layout_constraintBottom_toBottomOf="@id/navigationConstraint"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintTop_toBottomOf="@+id/guideline2"
+        app:layout_constraintVertical_bias="0.0"
+        app:tabGravity="center"
+        app:tabRippleColor="@color/yellow_bg"
+        app:tabTextColor="@color/black"
+        />
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/navigationConstraint"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/guideline2"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/guideline2">
+
+        <TextView
+            android:id="@+id/informationText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/image_viewer_information_string"
+            android:textAlignment="center"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@id/button"
+            app:layout_constraintStart_toStartOf="@id/reloadButton"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.3" />
 
         <ImageButton
             android:id="@+id/reloadButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_menu_revert"
+            android:backgroundTint="@color/background"
             android:contentDescription="@string/reload_capture_fragment_string"
-            android:backgroundTint="@android:color/transparent"
-            app:layout_constraintTop_toTopOf="parent"
+            android:src="@android:drawable/ic_menu_revert"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/guideline3" />
+            app:layout_constraintEnd_toStartOf="@+id/button"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/informationText"
+            app:layout_constraintVertical_bias="0.85" />
 
-        <androidx.constraintlayout.widget.Guideline
+
+        <!--        <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guideline3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.25" />
-
+            app:layout_constraintGuide_percent="0.25" />-->
         <Button
             android:id="@+id/button"
             android:layout_width="wrap_content"
@@ -94,25 +113,14 @@
             android:backgroundTint="@color/background"
             android:fontFamily="@font/din_pro_condenced"
             android:gravity="center"
-            android:text="@string/get_hypercube_string"
+            android:text="@string/estimate_ripeness_string"
             android:textSize="23sp"
-            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/reloadButton"
-            app:layout_constraintEnd_toStartOf="@+id/information" />
-
-        <ImageButton
-            android:id="@+id/information"
-            android:layout_width="60dp"
-            android:layout_height="0dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="@string/information_button_string"
-            android:src="@android:drawable/ic_menu_info_details"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/button"
             app:layout_constraintEnd_toEndOf="parent"
-            tools:ignore="ImageContrastCheck" />
+            app:layout_constraintStart_toEndOf="@+id/reloadButton"
+            app:layout_constraintTop_toTopOf="@id/informationText"
+            app:layout_constraintVertical_bias="0.85" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

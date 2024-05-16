@@ -132,8 +132,12 @@ class ImageViewerFragment: Fragment() {
 							item.height/2 - Utils.boundingBoxHeight, item.height/2 + Utils.boundingBoxHeight,
 							canvas, view, bitmapOverlay, position)
 					}, 100)
-				else if (advancedControlOption && position == 0) {
-					MainActivity.tempRGBBitmap = bitmapOverlay
+				else if (advancedControlOption) {
+					when (position)
+					{
+						0 -> MainActivity.tempRGBBitmap = bitmapOverlay
+						1 -> MainActivity.tempNIRBitmap = bitmapOverlay
+					}
 				}
 
 				view.setOnTouchListener { v, event ->
@@ -204,10 +208,10 @@ class ImageViewerFragment: Fragment() {
 			}
 		}
 
-		fragmentImageViewerBinding.information.setOnClickListener {
+/*		fragmentImageViewerBinding.information.setOnClickListener {
 //			generateAlertBox(requireContext(), "Information", getString(R.string.image_viewer_information_string)) {}
 			generateAlertBox(requireContext(), "", getString(R.string.image_viewer_information_string)) {}
-		}
+		}*/
 
 		loadingDialogFragment.show(childFragmentManager, LoadingDialogFragment.TAG)
 	}
@@ -267,24 +271,32 @@ class ImageViewerFragment: Fragment() {
 				Log.i("Cropped Image", "$leftCrop $topCrop")
 				// if the app is asked to crop the image
 				if (leftCrop != -1F && topCrop != -1F) {
+					Log.i("Cropped Image", "Asked to crop")
 					rgbImageBitmap = cropImage(rgbImageBitmap, leftCrop, topCrop)
 					nirImageBitmap = cropImage(nirImageBitmap, leftCrop, topCrop)
 					Log.i("Cropped Image", "${rgbImageBitmap.width} ${rgbImageBitmap.height}")
 					Log.i("Cropped Image", "${nirImageBitmap.width} ${nirImageBitmap.height}")
-//					Log.i("Bitmap dimensions", "(${rgbImageBitmap.width},${rgbImageBitmap.height})")
+					Log.i("Bitmap dimensions", "(${rgbImageBitmap.width},${rgbImageBitmap.height})")
 					saveProcessedImages(requireContext(), rgbImageBitmap, nirImageBitmap, rgbImageFileName, nirImageFileName, Utils.croppedImageDirectory)
+
+					MainActivity.executionTime += System.currentTimeMillis() - cropTime
+
+					// addItemToViewPager(fragmentImageViewerBinding.viewpager, rgbImageBitmap, 2)
+					// addItemToViewPager(fragmentImageViewerBinding.viewpager, nirImageBitmap, 3)
+
+					MainActivity.originalRGBBitmap = rgbImageBitmap
+					MainActivity.originalNIRBitmap = nirImageBitmap
+
+					lifecycleScope.launch(Dispatchers.Main) {
+						navController.navigate(ImageViewerFragmentDirections.actionImageViewerFragmentToReconstructionFragment())
+					}
 				}
-				MainActivity.executionTime += System.currentTimeMillis() - cropTime
-
-				// addItemToViewPager(fragmentImageViewerBinding.viewpager, rgbImageBitmap, 2)
-				// addItemToViewPager(fragmentImageViewerBinding.viewpager, nirImageBitmap, 3)
-
-				MainActivity.originalRGBBitmap = rgbImageBitmap
-				MainActivity.originalNIRBitmap = nirImageBitmap
-
-				lifecycleScope.launch(Dispatchers.Main) {
-					navController.navigate(ImageViewerFragmentDirections.actionImageViewerFragmentToReconstructionFragment())
+				else
+				{
+					// only navigate to the next fragment if the user has selected a bounded region
+					generateAlertBox(requireContext(), "", "Please select a bounded region to reconstruct", {})
 				}
+
 			}
 		}
 	}
