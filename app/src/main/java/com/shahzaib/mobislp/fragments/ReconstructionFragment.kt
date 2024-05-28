@@ -18,6 +18,7 @@ import android.widget.Toast.LENGTH_LONG
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.Navigation
@@ -94,6 +95,8 @@ class ReconstructionFragment: Fragment() {
 
 	// views for toggling graph visibility
 	private lateinit var toggleVisibilityViews: Array<View>
+
+	private val reconstructionDone = MutableLiveData(false)
 
 	private suspend fun displayClassification()
 	{
@@ -428,8 +431,11 @@ class ReconstructionFragment: Fragment() {
 
 		Timer().schedule(1000) {
 			val reconstructionThread = Thread {
-				if (!::predictedHS.isInitialized)
+				if (!::predictedHS.isInitialized) {
 					generateHypercube()
+					reconstructionDone.postValue(true)
+				}
+
 			}
 			reconstructionThread.start()
 			try { reconstructionThread.join() }
@@ -554,29 +560,36 @@ class ReconstructionFragment: Fragment() {
 	{
 		super.onResume()
 
-		/* Perform Classification */
-		// putting it here instead of onStart() prevents classification from happening multiple times when you move back & forth between the classification & analysis pages
-		if (boundedAnalysis)
-		{
-			performClassification()
-			lifecycleScope.launch(Dispatchers.Main) {
-				Toast.makeText(requireContext(), "Total Execution Time: ${MainActivity.executionTime} ms", LENGTH_LONG).show()
-				MainActivity.executionTime = 0L
-			}
 
-		} else
-		{
-			// modify viewmodel in main (UI) thread to prevent data race
-			lifecycleScope.launch(Dispatchers.Main)
+		// use an observer so that onResume() doesn't run before the scheduled task in onStart() is complete (then predictedHS may be uninitialized)
+		reconstructionDone.observe(this, androidx.lifecycle.Observer { initialized ->
+			if (initialized == true)
 			{
-				val classificationConstraint = requireView().findViewById<ConstraintLayout>(R.id.classificationConstraint)
-				classificationConstraint.visibility = View.INVISIBLE
+				/* Perform Classification */
+				// putting it here instead of onStart() prevents classification from happening multiple times when you move back & forth between the classification & analysis pages
+				if (boundedAnalysis)
+				{
+					performClassification()
+					lifecycleScope.launch(Dispatchers.Main) {
+						Toast.makeText(requireContext(), "Total Execution Time: ${MainActivity.executionTime} ms", LENGTH_LONG).show()
+						MainActivity.executionTime = 0L
+					}
+
+				} else
+				{
+					// modify view model in main (UI) thread to prevent data race
+					lifecycleScope.launch(Dispatchers.Main)
+					{
+						val classificationConstraint = requireView().findViewById<ConstraintLayout>(R.id.classificationConstraint)
+						classificationConstraint.visibility = View.INVISIBLE
 //					val classifyBtn = requireView().findViewById<Button>(R.id.classifyButton)
 //					classifyBtn.visibility = View.VISIBLE
 //					classifyBtn.setClickable(true)
-			}
+					}
 
-		}
+				}
+			}
+		})
 	}
 
 	private fun classifyFruit()

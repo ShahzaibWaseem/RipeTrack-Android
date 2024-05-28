@@ -31,6 +31,7 @@ import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
 import android.provider.MediaStore
+import android.renderscript.ScriptGroup.Input
 import android.util.Log
 import android.util.Size
 import android.view.LayoutInflater
@@ -190,7 +191,40 @@ class CameraFragment: Fragment() {
 				}
 				else if (result.data?.clipData?.itemCount == 1)
 				{
-					generateAlertBox(requireContext(), "Only One Image Selected", "Cannot select 1 image, Select Two images.\nFirst image RGB, Second image NIR", reloadLambda)
+					val rgbUri = result.data!!.data
+
+					var rgbFile = getRealPathFromURI(rgbUri!!)
+					var nirFile = if (rgbFile.contains("-D")) rgbFile.replace("RGB-D", "NIR") else rgbFile.replace("RGB", "NIR")
+
+					var rgbBitmap = readImage(rgbFile)
+					var nirBitmap = readImage(nirFile)
+
+					MainActivity.originalImageRGB = rgbFile
+					MainActivity.originalImageNIR = nirFile
+
+					if (nirBitmap.width > rgbBitmap.width && nirBitmap.height > rgbBitmap.height) {
+						val tempBitmap = rgbBitmap
+						rgbBitmap = nirBitmap
+						nirBitmap = tempBitmap
+					}
+
+					rgbBitmap = compressImage(rgbBitmap)
+					nirBitmap = compressImage(nirBitmap)
+
+					val rgbBitmapOutputFile = createFile("RGB", "lossless")
+					val nirBitmapOutputFile = File(rgbBitmapOutputFile.toString().replace("RGB", "NIR"))
+					MainActivity.rgbAbsolutePath = rgbBitmapOutputFile.absolutePath
+					MainActivity.nirAbsolutePath = nirBitmapOutputFile.absolutePath
+					Log.i("Images Opened Path", "RGB Path: ${MainActivity.rgbAbsolutePath}, NIR Path: ${MainActivity.nirAbsolutePath}")
+
+					lifecycleScope.launch {
+						saveImage(rgbBitmap, rgbBitmapOutputFile)
+						saveImage(nirBitmap, nirBitmapOutputFile)
+
+						navController.navigate(
+							CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath)
+						)
+					}
 				}
 				else {
 					generateAlertBox(requireContext(),"Number of images exceeded 2", "Cannot select more than 2 images.\nFirst image RGB, Second image NIR", reloadLambda)
@@ -393,6 +427,7 @@ class CameraFragment: Fragment() {
 	@SuppressLint("MissingPermission")
 	private suspend fun openCamera(manager: CameraManager, cameraId: String, handler: Handler? = null):
 			CameraDevice = suspendCancellableCoroutine { cont ->
+		//Log.i("OpenCamera", "Opening camera $cameraId")
 		manager.openCamera(cameraId, object: CameraDevice.StateCallback() {
 			override fun onOpened(device: CameraDevice) = cont.resume(device)
 

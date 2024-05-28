@@ -18,6 +18,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -27,6 +28,9 @@ import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.example.android.camera.utils.GenericListAdapter
 import com.google.android.material.tabs.TabLayoutMediator
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.objects.ObjectDetection
+import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import com.shahzaib.mobislp.MainActivity
 import com.shahzaib.mobislp.MainActivity.Companion.generateAlertBox
 import com.shahzaib.mobislp.R
@@ -41,6 +45,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.BufferedInputStream
 import java.io.File
+import kotlin.time.Duration
 
 class ImageViewerFragment: Fragment() {
 	private val correctionMatrix = Matrix().apply { postRotate(90F); }
@@ -98,9 +103,25 @@ class ImageViewerFragment: Fragment() {
 		}
 	}
 
+	private fun boundingBox(left: Float, right: Float, top: Float, bottom: Float,
+							canvas: Canvas, bitmapOverlay: Bitmap) {
+		val paint = Paint()
+		paint.color = Color.argb(255, 253,250,114)
+		paint.strokeWidth = 5F
+		paint.style = Paint.Style.STROKE
+
+		Log.i("Crop Location", "L: $left, R: $right, T: $top, B: $bottom")
+
+		canvas.drawRect(left-2.5F, top-2.5F, right+2.5F, bottom+2.5F, paint)
+		if (bitmapOverlay.width > Utils.boundingBoxWidth*2 && bitmapOverlay.height > Utils.boundingBoxHeight*2) {
+			MainActivity.tempRGBBitmap = bitmapOverlay
+			MainActivity.tempRectangle = Rect(bottom.toInt(), left.toInt(), right.toInt(), top.toInt())
+		}
+	}
 	@SuppressLint("ClickableViewAccessibility")
 	@Suppress("KotlinConstantConditions")
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+
 		sharedPreferences = requireActivity().getSharedPreferences("mobislp_preferences", Context.MODE_PRIVATE)
 		advancedControlOption = when (sharedPreferences.getString("option", getString(R.string.advanced_option_string))!!) {
 			getString(R.string.advanced_option_string) -> true
@@ -116,6 +137,7 @@ class ImageViewerFragment: Fragment() {
 		var firstTap = false
 
 		_fragmentImageViewerBinding = FragmentImageviewerBinding.inflate(inflater, container, false)
+
 		fragmentImageViewerBinding.viewpager.apply {
 			offscreenPageLimit=2
 			adapter = GenericListAdapter(bitmapList,
@@ -124,6 +146,7 @@ class ImageViewerFragment: Fragment() {
 				view.scaleType = ImageView.ScaleType.FIT_XY
 				val bitmapOverlay = Bitmap.createBitmap(item.width, item.height, item.config)
 				val canvas = Canvas(bitmapOverlay)
+
 
 				canvas.drawBitmap(item, Matrix(), null)
 				if (!advancedControlOption)
@@ -140,7 +163,7 @@ class ImageViewerFragment: Fragment() {
 					}
 				}
 
-				view.setOnTouchListener { v, event ->
+					/*view.setOnTouchListener { v, event ->
 					canvas.drawBitmap(item, Matrix(), null)
 
 					var clickedX = ((event!!.x / v!!.width) * bitmapsWidth).toInt()
@@ -173,9 +196,11 @@ class ImageViewerFragment: Fragment() {
 						bottomCrop = clickedY + Utils.boundingBoxHeight
 					}
 					boundingBox(leftCrop, rightCrop, topCrop, bottomCrop, canvas, view, bitmapOverlay, position)
+					//boundingBox(rect.left.toFloat(), rect.right.toFloat(), rect.top.toFloat(), rect.bottom.toFloat(), canvas, view, bitmapOverlay, position)
 
 					false
-				}
+				}*/
+
 				Glide.with(view).load(item).into(view)
 			}
 		}
@@ -213,6 +238,8 @@ class ImageViewerFragment: Fragment() {
 			generateAlertBox(requireContext(), "", getString(R.string.image_viewer_information_string)) {}
 		}*/
 
+
+
 		loadingDialogFragment.show(childFragmentManager, LoadingDialogFragment.TAG)
 	}
 
@@ -233,22 +260,56 @@ class ImageViewerFragment: Fragment() {
 			saveMinMax(rgbImageBitmap, isRGB=true)
 			saveMinMax(nirImageBitmap, isRGB=false)
 			Log.i("MinMax values", "${MainActivity.minMaxRGB}, ${MainActivity.minMaxNIR}")
-
-
-
-
 			Log.i("Bitmap Size", "Decoded RGB: ${rgbImageBitmap.width} x ${rgbImageBitmap.height}, Decoded NIR: ${nirImageBitmap.width} x ${nirImageBitmap.height}")
 
 			bitmapsWidth = rgbImageBitmap.width
 			bitmapsHeight = rgbImageBitmap.height
-			val viewpagerThread = Thread {
-				addItemToViewPager(fragmentImageViewerBinding.viewpager, rgbImageBitmap, 0)
-				addItemToViewPager(fragmentImageViewerBinding.viewpager, nirImageBitmap, 1)
-			}
 
-			viewpagerThread.start()
-			try { viewpagerThread.join() }
-			catch (exception: InterruptedException) { exception.printStackTrace() }
+			/* Object Detection */
+			// Important to run this code in the I/O thread so that the main thread isn't slowed down
+
+			// bitmap for adding the bounding box processed via the object detector
+			val rgbBitmapOverlay = Bitmap.createBitmap(bitmapsWidth, bitmapsHeight, rgbImageBitmap.config)
+			val canvas = Canvas(rgbBitmapOverlay)
+
+			val detectorOptions = ObjectDetectorOptions.Builder()
+				.setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
+				.build()
+
+			val detector = ObjectDetection.getClient(detectorOptions)
+
+			val inputRGBImg = InputImage.fromBitmap(rgbImageBitmap, 0)
+
+			var rect: Rect
+
+			// only perform detection for the RGB image as the coordinates will apply to the NIR as well
+			// + the NIR will be cropped on the same coordinates for reconstruction/classification
+			detector.process(inputRGBImg)
+				.addOnSuccessListener { detections ->
+					Log.i("Detected Objects!", "${detections.size}")
+					canvas.drawBitmap(rgbImageBitmap, Matrix(), null)
+					rect = detections[0].boundingBox
+
+					val width = (rect.right - rect.left).toFloat()
+					val height = (rect.bottom - rect.top).toFloat() // note it's bottom - top because of how the coordinates are designed
+					leftCrop = rect.left + (width/2) - Utils.boundingBoxWidth
+					topCrop = rect.top + (height/2) - Utils.boundingBoxHeight
+					rightCrop = rect.left + (width/2) + Utils.boundingBoxWidth
+					bottomCrop = rect.top + (height/2) + Utils.boundingBoxHeight
+					boundingBox(leftCrop, rightCrop, topCrop, bottomCrop, canvas, rgbBitmapOverlay)
+
+					val viewpagerThread = Thread {
+						addItemToViewPager(fragmentImageViewerBinding.viewpager, rgbBitmapOverlay, 0)
+						addItemToViewPager(fragmentImageViewerBinding.viewpager, nirImageBitmap, 1)
+					}
+
+					viewpagerThread.start()
+					try { viewpagerThread.join() }
+					catch (exception: InterruptedException) { exception.printStackTrace() }
+				}
+				.addOnFailureListener {e ->
+					Log.i("Detection Failed", e.message.toString())
+				}
 
 			loadingDialogFragment.dismissDialog()
 
