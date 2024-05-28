@@ -116,7 +116,7 @@
         android:backgroundTint="@color/background"
         android:gravity="center"
         android:text="@string/launch_application_button"
-        android:textSize="51sp"
+        android:textSize="45sp"
         app:layout_constraintBottom_toTopOf="@+id/guideline3"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.graphics.*
+import android.opengl.Visibility
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -88,7 +89,6 @@ class ReconstructionFragment: Fragment() {
 	// set up the progress bar, progress text, & ripeness buttons' constraint for classification
 	private lateinit var progressBar: ProgressBar
 	private lateinit var progressText: TextView
-	private lateinit var ripenessBtnConstraint: ConstraintLayout
 
 	// flag for analysis
 	private var analyze = false
@@ -113,14 +113,6 @@ class ReconstructionFragment: Fragment() {
 
 		// lifetime classification (in percentages) to be used to grow progress bar
 		val remainingLifetimePct = 100 - classificationPair.second * 10
-
-		// make progress bar, progress text, & ripeness buttons visible
-		if (progressBar.visibility != View.VISIBLE && ripenessBtnConstraint.visibility != View.VISIBLE) {
-			progressBar.visibility = View.VISIBLE
-			ripenessBtnConstraint.visibility = View.VISIBLE
-			progressText.visibility = View.VISIBLE
-
-		}
 
 		if (progressBar.progress < remainingLifetimePct) {
 			progressBar.incrementProgressBy(1)
@@ -228,7 +220,7 @@ class ReconstructionFragment: Fragment() {
 		)
 
 		if (!advancedControlOption) {
-			fragmentReconstructionBinding.analysisButton.visibility = View.INVISIBLE
+//			fragmentReconstructionBinding.analysisButton.visibility = View.INVISIBLE
 //			fragmentReconstructionBinding.simpleModeSignaturePositionTextView.visibility = View.VISIBLE
 			fragmentReconstructionBinding.graphView.visibility = View.INVISIBLE
 			// fragmentReconstructionBinding.textViewClassTime.text = ""
@@ -395,16 +387,11 @@ class ReconstructionFragment: Fragment() {
 			}
 		}
 
-		fragmentReconstructionBinding.analysisButton.setOnClickListener {
-			fragmentReconstructionBinding.textConstraintView.visibility = View.INVISIBLE
-			fragmentReconstructionBinding.graphView.visibility = View.VISIBLE
-		}
 		loadingDialogFragment.show(childFragmentManager, LoadingDialogFragment.TAG)
 
 		// initialize these variables for the classification step
 		progressBar = requireView().findViewById<ProgressBar>(R.id.progressBar)
 		progressText = requireView().findViewById<TextView>(R.id.progressText)
-		ripenessBtnConstraint = requireView().findViewById<ConstraintLayout>(R.id.ripenessBtnConstraint)
 
 	}
 
@@ -491,9 +478,8 @@ class ReconstructionFragment: Fragment() {
 
 				// show the graph
 				toggleGraphVisibility()
+
 			}
-
-
 
 			TabLayoutMediator(fragmentReconstructionBinding.tabLayout,
 				fragmentReconstructionBinding.viewpager) { tab, position ->
@@ -581,7 +567,7 @@ class ReconstructionFragment: Fragment() {
 					lifecycleScope.launch(Dispatchers.Main)
 					{
 						val classificationConstraint = requireView().findViewById<ConstraintLayout>(R.id.classificationConstraint)
-						classificationConstraint.visibility = View.INVISIBLE
+//						classificationConstraint.visibility = View.INVISIBLE
 //					val classifyBtn = requireView().findViewById<Button>(R.id.classifyButton)
 //					classifyBtn.visibility = View.VISIBLE
 //					classifyBtn.setClickable(true)
