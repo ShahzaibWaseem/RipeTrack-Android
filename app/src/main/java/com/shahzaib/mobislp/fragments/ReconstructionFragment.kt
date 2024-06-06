@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.graphics.*
-import android.opengl.Visibility
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -101,7 +100,7 @@ class ReconstructionFragment: Fragment() {
 	private suspend fun displayClassification()
 	{
 		// delay the function to give a "growth" effect to the progress bar
-		delay(50L)
+		delay(30L)
 
 		if (!boundedAnalysis) {
 //			val classifyBtn = requireView().findViewById<Button>(R.id.classifyButton)
@@ -441,7 +440,7 @@ class ReconstructionFragment: Fragment() {
 			graphView.viewport.setMaxX(1000.0)
 			graphView.viewport.setMinX(400.0)
 			graphView.viewport.isYAxisBoundsManual = true
-			graphView.viewport.setMaxY(1.0)
+			graphView.viewport.setMaxY(1.2)
 			graphView.gridLabelRenderer.setHumanRounding(true)
 
 			/*
@@ -566,7 +565,7 @@ class ReconstructionFragment: Fragment() {
 					// modify view model in main (UI) thread to prevent data race
 					lifecycleScope.launch(Dispatchers.Main)
 					{
-						val classificationConstraint = requireView().findViewById<ConstraintLayout>(R.id.classificationConstraint)
+//						val classificationConstraint = requireView().findViewById<ConstraintLayout>(R.id.classificationConstraint)
 //						classificationConstraint.visibility = View.INVISIBLE
 //					val classifyBtn = requireView().findViewById<Button>(R.id.classifyButton)
 //					classifyBtn.visibility = View.VISIBLE
@@ -577,6 +576,15 @@ class ReconstructionFragment: Fragment() {
 			}
 		})
 	}
+
+	/*override fun onStop() {
+		super.onStop()
+		lifecycleScope.launch(Dispatchers.Main)
+		{
+			navController.navigate(ReconstructionFragmentDirections.actionReconstructionFragmentToApplicationTitle())
+		}
+
+	}*/
 
 	private fun classifyFruit()
 	{

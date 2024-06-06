@@ -107,16 +107,17 @@
             <!--constraint top to top of analysisConstraint-->
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/unripeBtn"
+                android:id="@+id/expiredBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/gray_bg"
                 android:clickable="false"
                 android:enabled="false"
-                android:text="@string/ripeness_unripe"
+                android:text="@string/ripeness_expired"
                 android:textColor="@color/black"
                 android:textSize="28sp"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/ripeBtn"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <com.google.android.material.button.MaterialButton
@@ -130,23 +131,26 @@
                 android:text="@string/ripeness_ripe"
                 android:textColor="@color/black"
                 android:textSize="28sp"
-                app:layout_constraintStart_toEndOf="@id/unripeBtn"
+                app:layout_constraintStart_toEndOf="@id/expiredBtn"
+                app:layout_constraintEnd_toStartOf="@id/unripeBtn"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/expiredBtn"
+                android:id="@+id/unripeBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
                 android:backgroundTint="@color/gray_bg"
+                android:layout_marginStart="10dp"
                 android:clickable="false"
                 android:enabled="false"
-                android:text="@string/ripeness_expired"
+                android:text="@string/ripeness_unripe"
                 android:textColor="@color/black"
                 android:textSize="28sp"
                 app:layout_constraintStart_toEndOf="@id/ripeBtn"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+
+
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
