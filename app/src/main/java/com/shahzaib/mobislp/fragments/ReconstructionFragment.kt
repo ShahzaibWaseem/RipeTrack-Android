@@ -15,7 +15,6 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
@@ -54,7 +53,6 @@ class ReconstructionFragment: Fragment() {
 	private val bandsChosen = mutableListOf<Int>()
 	private val loadingDialogFragment = LoadingDialogFragment()
 	private val randomColor = Random()
-	private var boundedAnalysis = true // assume user wants to reconstruct a portion of the whole image
 	private var color = Color.argb(255, randomColor.nextInt(256), randomColor.nextInt(256), randomColor.nextInt(256))
 
 	/** Host's navigation controller */
@@ -101,14 +99,6 @@ class ReconstructionFragment: Fragment() {
 	{
 		// delay the function to give a "growth" effect to the progress bar
 		delay(30L)
-
-		if (!boundedAnalysis) {
-//			val classifyBtn = requireView().findViewById<Button>(R.id.classifyButton)
-//			classifyBtn.visibility = View.INVISIBLE
-			val classificationConstraint =
-				requireView().findViewById<ConstraintLayout>(R.id.classificationConstraint)
-			classificationConstraint.visibility = View.VISIBLE
-		}
 
 		// lifetime classification (in percentages) to be used to grow progress bar
 		val remainingLifetimePct = 100 - classificationPair.second * 10
@@ -189,8 +179,6 @@ class ReconstructionFragment: Fragment() {
 		// set reconstruction & classification file options based on fruit
 		val fruit = sharedPreferences.getString("fruit", null)
 
-//		Log.i("Shared Preferences (Fruit Selected)", "$fruit")
-
 		if (fruit.equals("Pear") || fruit.equals("Avocado"))
 		{
 			reconstructionFile = reconstructionFiles[0]
@@ -235,20 +223,6 @@ class ReconstructionFragment: Fragment() {
 	@SuppressLint("ClickableViewAccessibility")
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
-		/*
-		fragmentReconstructionBinding.information.setOnClickListener {
-/*			if (!advancedControlOption)
-				generateAlertBox(requireContext(), "Information", resources.getString(R.string.reconstruction_analysis_information_simple_string), reloadLambda)
-			else
-				generateAlertBox(requireContext(),"Information", resources.getString(R.string.reconstruction_analysis_information_string), reloadLambda)*/
-			if (!advancedControlOption)
-				generateAlertBox(requireContext(), "", resources.getString(R.string.reconstruction_analysis_information_simple_string), reloadLambda)
-			else
-				generateAlertBox(requireContext(),"", resources.getString(R.string.reconstruction_analysis_information_string), reloadLambda)
-		}
-		 */
-
-
 
 		fragmentReconstructionBinding.viewpager.apply {
 			offscreenPageLimit=2
@@ -443,14 +417,6 @@ class ReconstructionFragment: Fragment() {
 			graphView.viewport.setMaxY(1.2)
 			graphView.gridLabelRenderer.setHumanRounding(true)
 
-			/*
-			graphView.setOnLongClickListener{
-				fragmentReconstructionBinding.textConstraintView.visibility = View.VISIBLE
-				fragmentReconstructionBinding.graphView.visibility = View.INVISIBLE
-				false
-			}
-			 */
-
 			fragmentReconstructionBinding.analyzeButton.setOnClickListener {
 
 				analyze = !analyze
@@ -508,7 +474,6 @@ class ReconstructionFragment: Fragment() {
 					// hide the graph
 					toggleGraphVisibility()
 
-
 					// clear the viewpager first
 					fragmentReconstructionBinding.viewpager.post {
 						bandsHS.clear()
@@ -528,14 +493,9 @@ class ReconstructionFragment: Fragment() {
 				}
 			}
 
-
-
-//			addItemToViewPager(fragmentReconstructionBinding.viewpager, MainActivity.tempRGBBitmap, 7)
-
 			addItemToViewPager(fragmentReconstructionBinding.viewpager, MainActivity.tempRGBBitmap, 0)
 			addItemToViewPager(fragmentReconstructionBinding.viewpager, MainActivity.tempNIRBitmap, 1)
 
-			// fragmentReconstructionBinding.viewpager.currentItem = fragmentReconstructionBinding.viewpager.adapter!!.itemCount - 1
 			loadingDialogFragment.dismissDialog()
 
 		}
@@ -552,39 +512,14 @@ class ReconstructionFragment: Fragment() {
 			{
 				/* Perform Classification */
 				// putting it here instead of onStart() prevents classification from happening multiple times when you move back & forth between the classification & analysis pages
-				if (boundedAnalysis)
-				{
-					performClassification()
-					lifecycleScope.launch(Dispatchers.Main) {
-						Toast.makeText(requireContext(), "Total Execution Time: ${MainActivity.executionTime} ms", LENGTH_LONG).show()
-						MainActivity.executionTime = 0L
-					}
-
-				} else
-				{
-					// modify view model in main (UI) thread to prevent data race
-					lifecycleScope.launch(Dispatchers.Main)
-					{
-//						val classificationConstraint = requireView().findViewById<ConstraintLayout>(R.id.classificationConstraint)
-//						classificationConstraint.visibility = View.INVISIBLE
-//					val classifyBtn = requireView().findViewById<Button>(R.id.classifyButton)
-//					classifyBtn.visibility = View.VISIBLE
-//					classifyBtn.setClickable(true)
-					}
-
+				performClassification()
+				lifecycleScope.launch(Dispatchers.Main) {
+					Toast.makeText(requireContext(), "Total Execution Time: ${MainActivity.executionTime} ms", LENGTH_LONG).show()
+					MainActivity.executionTime = 0L
 				}
 			}
 		})
 	}
-
-	/*override fun onStop() {
-		super.onStop()
-		lifecycleScope.launch(Dispatchers.Main)
-		{
-			navController.navigate(ReconstructionFragmentDirections.actionReconstructionFragmentToApplicationTitle())
-		}
-
-	}*/
 
 	private fun classifyFruit()
 	{
@@ -592,50 +527,7 @@ class ReconstructionFragment: Fragment() {
 
 		val startTime = System.currentTimeMillis()
 
-		if (boundedAnalysis)
-			classificationPair = classificationModel.predict(predictedHS, 68, 64, 64)
-		else
-		{
-/*			val targetX = clickedX.toInt()
-			val targetY = clickedY.toInt()
-			// traverse the 68 hyperspectral bands and pick out the selected region from all of them
-			val predictedHSRegion: ArrayList<Float> = arrayListOf()
-			for (i in 0 until numberOfBands)
-			{
-//				val topLeftIdx = i * 640 * 480 + (640*targetY + targetX)
-				val topLeftIdx = i * 640 * 480 + (480*targetY + targetX)
-				// here (j,k) is the relative coordinates of a point on the selected boundary region
-				for (k in 0 until 64)
-				{
-					for (j in 0 until 64)
-					{
-						predictedHSRegion.add(
-							predictedHS[topLeftIdx + 64*k + j]
-						)
-					}
-				}
-			}
-			val startX = clickedX.toInt() - 32
-			val startY = clickedY.toInt() - 32
-			val endX = startX + 64
-			val endY = startY + 64
-			val predictedHSRegion: ArrayList<Float> = arrayListOf()
-			for (i in 0 until numberOfBands)
-			{
-				for (x in startX until endX)
-				{
-					for (y in startY until endY)
-					{
-						val idx = i*640*480 + (480*y+x)
-						predictedHSRegion.add(
-							predictedHS[idx]
-						)
-					}
-				}
-			}
-			classificationPair = classificationModel.predict(predictedHSRegion.toFloatArray(), 68, 64, 64)
- */
-		}
+		classificationPair = classificationModel.predict(predictedHS, 68, 64, 64)
 
 		val endTime = System.currentTimeMillis()
 
@@ -643,7 +535,6 @@ class ReconstructionFragment: Fragment() {
 		classificationDuration = (endTime - startTime).toFloat()
 		MainActivity.executionTime += (endTime - startTime)
 		MainActivity.classificationTime = "$classificationDuration ms"
-
 
 		// use a toast to display classification time
 		lifecycleScope.launch(Dispatchers.Main)
@@ -757,11 +648,6 @@ class ReconstructionFragment: Fragment() {
 		val nirBitmap = MainActivity.originalNIRBitmap
 		bitmapsWidth = rgbBitmap.width
 		bitmapsHeight = rgbBitmap.height
-
-		if (!(bitmapsWidth == 64 && bitmapsHeight == 64)) {
-			// the entire image is being reconstructed
-			boundedAnalysis = false
-		}
 
 		val startTime = System.currentTimeMillis()
 		predictedHS = reconstructionModel.predict(rgbBitmap, nirBitmap)

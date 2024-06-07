@@ -79,23 +79,8 @@ object Utils {
 		var cameraIdNIR = ""
 		val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
-		/*var id=0
-		for (camera in cameraManager.cameraIdList)
-		{
-			val characteristics = cameraManager.getCameraCharacteristics(camera)
-			val capabilities = characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
-			capabilities?.forEach {
-				Log.i("Camera $id", "$it")
-			}
-			id++
-		/*for (cap in capabilities)
-			{
-				if ()
-			}*/
-		}*/
-
 		var cameraList = enumerateCameras(cameraManager)
-		//Log.i("CameraList", "${cameraList}")
+
 		if (application == MainActivity.MOBISPECTRAL_APPLICATION) {
 			cameraList = getMobiSpectralConfigCameras(cameraList)
 
@@ -103,7 +88,6 @@ object Utils {
 				Log.i("Available Cameras", camera.title)
 				if (camera.sensorArrangement == CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR) {
 					cameraIdNIR = camera.cameraId
-					//Log.i("NIR Availability", "$cameraIdNIR")
 				} else
 					cameraIdRGB = camera.cameraId
 			}
@@ -115,7 +99,6 @@ object Utils {
 			}
 
 		}
-		//Log.i("Camera IDs", "$cameraIdRGB, $cameraIdNIR")
 		return Pair(cameraIdRGB, cameraIdNIR)
 	}
 
@@ -223,7 +206,7 @@ fun enumerateCameras(cameraManager: CameraManager): MutableList<FormatItem> {
 	val availableCameras: MutableList<FormatItem> = mutableListOf()
 
 	// Get list of all compatible cameras
-	var cameraIds = cameraManager.cameraIdList.filter {
+	val cameraIds = cameraManager.cameraIdList.filter {
 		val characteristics = cameraManager.getCameraCharacteristics(it)
 		val orientation = lensOrientationString(characteristics.get(CameraCharacteristics.LENS_FACING)!!)
 		val isNIR = if(characteristics.get(CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT)
@@ -235,16 +218,13 @@ fun enumerateCameras(cameraManager: CameraManager): MutableList<FormatItem> {
 		capabilities?.contains(CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE) ?: false
 	}
 
-	//Log.i("cameraIds before compat check", "${cameraIds}")
-
-
 	// Iterate over the list of cameras and return all the compatible ones
 	cameraIds.forEach { id ->
 		val characteristics = cameraManager.getCameraCharacteristics(id)
 		val orientation = lensOrientationString(characteristics.get(CameraCharacteristics.LENS_FACING)!!)
 		val isNIR = if(characteristics.get(CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT)
 			== CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR) "NIR" else "RGB"
-		//Log.i("Camera id: $id is NIR?", "$isNIR")
+
 		// All cameras *must* support JPEG output so we don't need to check characteristics
 		// Return cameras that support NIR Filter Arrangement
 		if (isNIR == "NIR")
@@ -255,12 +235,6 @@ fun enumerateCameras(cameraManager: CameraManager): MutableList<FormatItem> {
 				orientation, CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGGB))
 
 	}
-	/*availableCameras.add(
-		FormatItem("Back, (7), NIR", "7", imageFormat,
-			"Back", CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR)
-	)*/
-
-//	Log.i("Available", "${cameraIds}")
 
 	return availableCameras
 }

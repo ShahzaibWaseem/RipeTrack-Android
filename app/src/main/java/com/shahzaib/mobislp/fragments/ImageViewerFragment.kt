@@ -79,7 +79,7 @@ class ImageViewerFragment: Fragment() {
 
 	private var advancedControlOption: Boolean = false
 
-	// to hold 64x64 bounding boxes to be drawn
+	// to hold 64x64 bounding boxes to be drawn for detected objects
 	data class Box(
 		val left: Float,
 		val top: Float,
@@ -89,7 +89,19 @@ class ImageViewerFragment: Fragment() {
 
 	private val detectedBoxes by lazy { mutableListOf<Box>() }
 
-	//private lateinit var rect: Rect
+	private val defaultPaint by lazy {
+		Paint().apply {
+			color = Color.argb(255, 253,250,114)
+			strokeWidth = 5F
+			style = Paint.Style.STROKE
+		}
+	}
+
+	private val highlightPaint by lazy {
+		Paint(defaultPaint).apply {
+			color = Color.argb(255, 126,255,0)
+		}
+	}
 
 	private fun imageViewFactory() = ImageView(requireContext()).apply {
 		layoutParams = ViewGroup.LayoutParams(
@@ -100,14 +112,9 @@ class ImageViewerFragment: Fragment() {
 
 	private fun boundingBox(left: Float, right: Float, top: Float, bottom: Float,
 							canvas: Canvas, view: ImageView, bitmapOverlay: Bitmap, position: Int) {
-		val paint = Paint()
-		paint.color = Color.argb(255, 253,250,114)
-		paint.strokeWidth = 5F
-		paint.style = Paint.Style.STROKE
-
 		Log.i("Crop Location", "L: $left, R: $right, T: $top, B: $bottom")
 
-		canvas.drawRect(left-2.5F, top-2.5F, right+2.5F, bottom+2.5F, paint)
+		canvas.drawRect(left-2.5F, top-2.5F, right+2.5F, bottom+2.5F, highlightPaint)
 
 		view.setImageBitmap(bitmapOverlay)
 
@@ -117,31 +124,8 @@ class ImageViewerFragment: Fragment() {
 		}
 	}
 
-	private fun boundingBox(left: Float, right: Float, top: Float, bottom: Float,
-							canvas: Canvas, bitmapOverlay: Bitmap) {
-		val paint = Paint()
-		paint.color = Color.argb(255, 253,250,114)
-		paint.strokeWidth = 5F
-		paint.style = Paint.Style.STROKE
-
-		Log.i("Crop Location", "L: $left, R: $right, T: $top, B: $bottom")
-
-		canvas.drawRect(left-2.5F, top-2.5F, right+2.5F, bottom+2.5F, paint)
-		if (bitmapOverlay.width > Utils.boundingBoxWidth*2 && bitmapOverlay.height > Utils.boundingBoxHeight*2) {
-			MainActivity.tempRGBBitmap = bitmapOverlay
-			MainActivity.tempRectangle = Rect(bottom.toInt(), left.toInt(), right.toInt(), top.toInt())
-		}
-	}
-
-	private fun highlightBox(box: Box, canvas: Canvas, view: ImageView, bitmapOverlay: Bitmap)
+	private fun drawBox(box: Box, paint: Paint, canvas: Canvas, view: ImageView, bitmapOverlay: Bitmap)
 	{
-		val paint = Paint()
-		paint.color = Color.argb(255, 126,255,0)
-		paint.strokeWidth = 5F
-		paint.style = Paint.Style.STROKE
-
-		//Log.i("Crop Location", "L: $left, R: $right, T: $top, B: $bottom")
-
 		canvas.drawRect(box.left-2.5F, box.top-2.5F, box.right+2.5F, box.bottom+2.5F, paint)
 
 		view.setImageBitmap(bitmapOverlay)
@@ -203,76 +187,82 @@ class ImageViewerFragment: Fragment() {
 
 				when (position)
 				{
-					0 -> MainActivity.tempRGBBitmap = bitmapOverlay
 					1 -> MainActivity.tempNIRBitmap = bitmapOverlay
-				}
-
-				Log.i("Crop Coordinates (ViewPager)", "($leftCrop,$topCrop), ($rightCrop,$bottomCrop)")
-
-				// draws a rectangle based on the result of object detection
-				// note: needs to run after a 100-millisecond delay otherwise the bounding box will not be drawn
-				Handler(Looper.getMainLooper()).postDelayed({
-					detectedBoxes.forEach {
-						boundingBox(it.left, it.right, it.top, it.bottom, canvas, view, bitmapOverlay, position)
-					}
-
-				}, 100)
-
-				view.setOnTouchListener { v, event ->
-					canvas.drawBitmap(item, Matrix(), null)
-
-					var clickedX = ((event!!.x / v!!.width) * bitmapsWidth).toInt()
-					var clickedY = ((event.y / v.height) * bitmapsHeight).toInt()
-
-					// Make sure the bounding box doesn't go outside the bounds of the image
-					if (clickedX + Utils.boundingBoxWidth > item.width)
-						clickedX = (item.width - Utils.boundingBoxWidth).toInt()
-					if (clickedY + Utils.boundingBoxHeight > item.width)
-						clickedY = (item.height - Utils.boundingBoxHeight).toInt()
-
-					if (clickedX - Utils.boundingBoxWidth < 0)
-						clickedX = (0 + Utils.boundingBoxWidth).toInt()
-					if (clickedY - Utils.boundingBoxHeight < 0)
-						clickedY = (0 + Utils.boundingBoxHeight).toInt()
-
-					var boxSelected = false
-					detectedBoxes.forEach {
-						// TODO need to account for overlapping boxes?
-						if (pointWithinBox(Pair(clickedX, clickedY), it))
-						{
-							Log.i("Tap Within a Box", "Drawing Green Box")
-							highlightBox(it, canvas, view, bitmapOverlay)
-							leftCrop = it.left
-							topCrop = it.top
-							rightCrop = it.right
-							bottomCrop = it.bottom
-							boxSelected = true
-						}
-					}
-
-					if (!boxSelected)
+					0 ->
 					{
-						Log.i("Box Added", "X: $clickedX ($bitmapsWidth), Y: $clickedY ($bitmapsHeight)")
+						MainActivity.tempRGBBitmap = bitmapOverlay
 
-						if (!firstTap) {
-							leftCrop = item.width/2 - Utils.boundingBoxWidth
-							topCrop = item.height/2 - Utils.boundingBoxHeight
-							rightCrop = item.width/2 + Utils.boundingBoxWidth
-							bottomCrop = item.height/2 + Utils.boundingBoxHeight
-							firstTap = true
-						}
-						else {
-							leftCrop = clickedX - Utils.boundingBoxWidth
-							topCrop = clickedY - Utils.boundingBoxHeight
-							rightCrop = clickedX + Utils.boundingBoxWidth
-							bottomCrop = clickedY + Utils.boundingBoxHeight
-						}
+						Log.i("Crop Coordinates (ViewPager)", "($leftCrop,$topCrop), ($rightCrop,$bottomCrop)")
 
-						boundingBox(leftCrop, rightCrop, topCrop, bottomCrop, canvas, view, bitmapOverlay, position)
+						// draws rectangles based on the result of object detection
+						// note: needs to run after a 100-millisecond delay otherwise the bounding box will not be drawn
+						Handler(Looper.getMainLooper()).postDelayed({
+							detectedBoxes.forEach {
+								Log.i("Box", "$it")
+								drawBox(it, defaultPaint, canvas, view, bitmapOverlay) }
+						}, 100)
+
+						view.setOnTouchListener { v, event ->
+							canvas.drawBitmap(item, Matrix(), null)
+							detectedBoxes.forEach { drawBox(it, defaultPaint, canvas, view, bitmapOverlay) }
+
+							var clickedX = ((event!!.x / v!!.width) * bitmapsWidth).toInt()
+							var clickedY = ((event.y / v.height) * bitmapsHeight).toInt()
+
+							// Make sure the bounding box doesn't go outside the bounds of the image
+							if (clickedX + Utils.boundingBoxWidth > item.width)
+								clickedX = (item.width - Utils.boundingBoxWidth).toInt()
+							if (clickedY + Utils.boundingBoxHeight > item.height)
+								clickedY = (item.height - Utils.boundingBoxHeight).toInt()
+
+							if (clickedX - Utils.boundingBoxWidth < 0)
+								clickedX = (0 + Utils.boundingBoxWidth).toInt()
+							if (clickedY - Utils.boundingBoxHeight < 0)
+								clickedY = (0 + Utils.boundingBoxHeight).toInt()
+
+							var boxSelected = false
+
+							detectedBoxes.forEach {
+								// TODO need to account for overlapping boxes?
+								if (pointWithinBox(Pair(clickedX, clickedY), it))
+								{
+									Log.i("Tapped Within a Box", "Drawing Green Box: $it")
+									drawBox(it, highlightPaint, canvas, view, bitmapOverlay)
+
+									// set crop coordinates for reconstruction
+									leftCrop = it.left
+									topCrop = it.top
+									rightCrop = it.right
+									bottomCrop = it.bottom
+
+									boxSelected = true
+								}
+							}
+
+							if (!boxSelected)
+							{
+								Log.i("Box Added", "X: $clickedX ($bitmapsWidth), Y: $clickedY ($bitmapsHeight)")
+
+								if (!firstTap) {
+									leftCrop = item.width/2 - Utils.boundingBoxWidth
+									topCrop = item.height/2 - Utils.boundingBoxHeight
+									rightCrop = item.width/2 + Utils.boundingBoxWidth
+									bottomCrop = item.height/2 + Utils.boundingBoxHeight
+									firstTap = true
+								}
+								else {
+									leftCrop = clickedX - Utils.boundingBoxWidth
+									topCrop = clickedY - Utils.boundingBoxHeight
+									rightCrop = clickedX + Utils.boundingBoxWidth
+									bottomCrop = clickedY + Utils.boundingBoxHeight
+								}
+
+								boundingBox(leftCrop, rightCrop, topCrop, bottomCrop, canvas, view, bitmapOverlay, position)
+							}
+
+							false
+						}
 					}
-
-
-					false
 				}
 
 				Glide.with(view).load(item).into(view)
@@ -306,13 +296,6 @@ class ImageViewerFragment: Fragment() {
 				)
 			}
 		}
-
-/*		fragmentImageViewerBinding.information.setOnClickListener {
-//			generateAlertBox(requireContext(), "Information", getString(R.string.image_viewer_information_string)) {}
-			generateAlertBox(requireContext(), "", getString(R.string.image_viewer_information_string)) {}
-		}*/
-
-
 
 		loadingDialogFragment.show(childFragmentManager, LoadingDialogFragment.TAG)
 	}
