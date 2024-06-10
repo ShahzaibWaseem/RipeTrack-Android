@@ -16,7 +16,7 @@
         android:gravity="center"
         android:text="@string/app_name"
         android:textColor="@color/white"
-        android:textSize="70sp"
+        android:textSize="55sp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/guideline"
         app:layout_constraintStart_toStartOf="parent"
@@ -43,116 +43,190 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.70" />
+        app:layout_constraintGuide_percent="0.6" />
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:theme="@style/TabLayoutTheme"
         android:contentDescription="@string/tab_layout_description"
-        app:tabTextAppearance="@style/TabLayoutTabTheme"
-        app:tabGravity="center"
-        app:layout_constraintStart_toStartOf="parent"
+        android:theme="@style/TabLayoutTheme"
+        app:tabTextColor="@color/black"
+        app:tabRippleColor="@color/yellow_bg"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/guideline2"/>
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/guideline2"
+        app:tabGravity="center"
+        app:tabTextAppearance="@style/TabLayoutTabTheme" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.05"/>
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.95"/>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/textConstraintView"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tab_layout"
-        app:layout_constraintBottom_toBottomOf="parent">
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="@id/guideline4"
+        app:layout_constraintStart_toStartOf="@id/guideline3"
+        app:layout_constraintBottom_toTopOf="@+id/guideline5"
+        app:layout_constraintTop_toBottomOf="@+id/tab_layout">
+
+        <TextView
+            android:id="@+id/informationText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/reconstruction_analysis_information_string"
+            android:textAlignment="center"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/classificationConstraint"/>
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/analysisConstraint"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            app:layout_constraintStart_toStartOf="parent"
+            android:id="@+id/classificationConstraint"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toTopOf="@id/progressConstraint"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/informationText">
+            <!--constraint top to top of analysisConstraint-->
 
-            <TextView
-                android:id="@+id/simpleModeSignaturePositionTextView"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/expiredBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:visibility="invisible"
+                android:backgroundTint="@color/gray_bg"
+                android:clickable="false"
+                android:enabled="false"
+                android:text="@string/ripeness_expired"
+                android:textColor="@color/black"
+                android:textSize="28sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
+                app:layout_constraintEnd_toStartOf="@id/ripeBtn"
+                app:layout_constraintTop_toTopOf="parent" />
 
-            <Button
-                android:id="@+id/analysisButton"
-                android:text="@string/analysis_button_text"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/ripeBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:backgroundTint="@color/background"
-                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginStart="10dp"
+                android:backgroundTint="@color/gray_bg"
+                android:clickable="false"
+                android:enabled="false"
+                android:text="@string/ripeness_ripe"
+                android:textColor="@color/black"
+                android:textSize="28sp"
+                app:layout_constraintStart_toEndOf="@id/expiredBtn"
+                app:layout_constraintEnd_toStartOf="@id/unripeBtn"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/unripeBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/gray_bg"
+                android:layout_marginStart="10dp"
+                android:clickable="false"
+                android:enabled="false"
+                android:text="@string/ripeness_unripe"
+                android:textColor="@color/black"
+                android:textSize="28sp"
+                app:layout_constraintStart_toEndOf="@id/ripeBtn"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"/>
+                app:layout_constraintTop_toTopOf="parent" />
+
+
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <ImageButton
-            android:id="@+id/information"
-            android:layout_width="60dp"
-            android:layout_height="0dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="@string/information_button_string"
-            android:src="@android:drawable/ic_menu_info_details"
-            app:layout_constraintStart_toEndOf="@+id/analysisConstraint"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@+id/textViewClass"
-            tools:ignore="ImageContrastCheck" />
-
-        <TextView
-            android:id="@+id/textViewClass"
-            android:layout_width="match_parent"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/progressConstraint"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/din_pro_condenced"
-            android:gravity="center"
-            android:textSize="22sp"
-            app:layout_constraintTop_toBottomOf="@+id/analysisConstraint"
-            app:layout_constraintBottom_toTopOf="@+id/textViewReconTime"
-            tools:layout_editor_absoluteX="0dp" />
-
-        <TextView
-            android:id="@+id/textViewReconTime"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="@font/din_pro_condenced"
-            android:gravity="center"
-            android:textSize="25sp"
-            android:text="@string/reconstruction_time_string"
-            app:layout_constraintTop_toBottomOf="@+id/textViewClass"
-            app:layout_constraintBottom_toTopOf="@+id/textViewClassTime"
-            tools:layout_editor_absoluteX="0dp" />
-
-        <TextView
-            android:id="@+id/textViewClassTime"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="@font/din_pro_condenced"
-            android:gravity="center"
-            android:text="@string/classify_text"
-            android:textSize="25sp"
-            app:layout_constraintTop_toBottomOf="@+id/textViewReconTime"
+            app:layout_constraintTop_toBottomOf="@id/classificationConstraint"
             app:layout_constraintBottom_toBottomOf="parent"
-            tools:layout_editor_absoluteX="0dp" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:indeterminate="false"
+                android:max="100"
+                android:minHeight="50dp"
+                android:scaleY="10"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <TextView
+                android:id="@+id/progressText"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:layout_marginTop="10dp"
+                android:textColor="@color/black"
+                android:textSize="20sp"
+                app:layout_constraintEnd_toEndOf="@id/progressBar"
+                app:layout_constraintStart_toStartOf="@id/progressBar"
+                app:layout_constraintTop_toTopOf="@id/progressBar" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.9" />
 
     <com.jjoe64.graphview.GraphView
         android:id="@+id/graphView"
         android:layout_width="match_parent"
-        android:padding="20dp"
         android:layout_height="0dp"
         android:visibility="invisible"
-        app:layout_constraintTop_toBottomOf="@+id/tab_layout"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintBottom_toTopOf="@+id/reloadButton"
+        app:layout_constraintTop_toBottomOf="@+id/tab_layout" />
+
+    <ImageButton
+        android:id="@+id/reloadButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/background"
+        android:contentDescription="@string/reload_capture_fragment_string"
+        android:src="@android:drawable/ic_menu_revert"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/guideline3"
+        app:layout_constraintTop_toBottomOf="@id/guideline5" />
+
+    <Button
+        android:id="@+id/analyzeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/background"
+        android:text="@string/analyze_button_text"
+        android:textSize="23sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/guideline4"
+        app:layout_constraintTop_toBottomOf="@id/guideline5" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

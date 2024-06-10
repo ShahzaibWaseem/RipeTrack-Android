@@ -66,4 +66,7 @@ dependencies {
 
 	// Library for graphs
 	implementation "com.jjoe64:graphview:4.2.2"
+
+	// Object detection & tracking feature with ML Kit model
+	implementation 'com.google.mlkit:object-detection:17.0.1'
 }

@@ -6,6 +6,7 @@
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
+    <color name="blue">#0000FF</color>
     <color name="white">#FFFFFFFF</color>
 
     <color name="sfu_red">#A6192E</color>
@@ -13,4 +14,12 @@
     <color name="sfu_dark_gray">#54585A</color>
     <color name="sfu_black">#000000</color>
     <color name="background">#279854</color>
+    <!--A slightly stronger yellow can be found here: https://www.color-hex.com/color-palette/25590-->
+    <color name="yellow_bg">#fcfcf5</color>
+    <color name="strong_yellow_bg">#fdfa72</color>
+    <color name="gray_bg">#919191</color>
+    <color name="old_yellow_bg">#fffec8</color>
+    <color name="progress_green">#8fb935</color>
+    <color name="progress_orange">#ff9248</color>
+    <color name="progress_yellow">#e6e22e</color>
 </resources>

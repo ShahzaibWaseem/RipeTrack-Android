@@ -9,7 +9,6 @@ import android.graphics.Matrix
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
-import android.media.Image
 import android.media.MediaScannerConnection
 import android.os.Build
 import android.os.Environment
@@ -47,8 +46,8 @@ object Utils {
 	const val croppedImageDirectory = "croppedImages"
 	const val processedImageDirectory = "processedImages"
 	const val hypercubeDirectory = "reconstructedHypercubes"
-	const val boundingBoxWidth = 22.5F
-	const val boundingBoxHeight = 22.5F
+	const val boundingBoxWidth = 32F
+	const val boundingBoxHeight = 32F
 	const val imageFormat = ImageFormat.JPEG
 	const val rawImageFormat = ImageFormat.RAW_SENSOR
 
@@ -81,57 +80,90 @@ object Utils {
 		val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
 		var cameraList = enumerateCameras(cameraManager)
+
 		if (application == MainActivity.MOBISPECTRAL_APPLICATION) {
 			cameraList = getMobiSpectralConfigCameras(cameraList)
 
 			for (camera in cameraList) {
 				Log.i("Available Cameras", camera.title)
-				if (camera.sensorArrangement == CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR)
+				if (camera.sensorArrangement == CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR) {
 					cameraIdNIR = camera.cameraId
-				else
+				} else
 					cameraIdRGB = camera.cameraId
 			}
+
 			// OnePlus has hidden their Photochrom camera, so accessing it via Intent.
 			if (cameraIdNIR == "") {
 				cameraIdNIR = if (Build.PRODUCT == "OnePlus8Pro") "OnePlus" else "No NIR Camera"
 				cameraIdRGB = if (Build.PRODUCT == "OnePlus8Pro") "0" else cameraIdRGB
 			}
+
 		}
 		return Pair(cameraIdRGB, cameraIdNIR)
 	}
 
-	fun cropImage(bitmap: Bitmap, left: Float, top: Float): Bitmap {
-		return Bitmap.createBitmap(bitmap, left.toInt(), top.toInt(), (boundingBoxWidth*2).toInt(), (boundingBoxHeight*2).toInt(), null, false)
-	}
-
-	fun fixedAlignment(imageRGB: Bitmap): Bitmap {
-		Log.i("Aligned RGB", "$aligningFactorX + $torchWidth = ${torchWidth + aligningFactorX} (${imageRGB.width})")
-		Log.i("Aligned RGB", "$aligningFactorY + $torchHeight = ${torchHeight + aligningFactorY} (${imageRGB.height})")
-		val alignedImageRGB = Bitmap.createBitmap(imageRGB, aligningFactorX, aligningFactorY, torchWidth, torchHeight, null, false)
-		Log.i("Aligned RGB", "Resulting Bitmap: W ${alignedImageRGB.width} H ${alignedImageRGB.height}")
-		return alignedImageRGB
-	}
-
-	@Suppress("DEPRECATION")
-	fun vibrate(context: Context) {
-		val vibrator: Vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-			val vibratorManager =  context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-			vibratorManager.defaultVibrator
-		} else {
-			context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+		fun cropImage(bitmap: Bitmap, left: Float, top: Float): Bitmap {
+			return Bitmap.createBitmap(
+				bitmap,
+				left.toInt(),
+				top.toInt(),
+				(boundingBoxWidth * 2).toInt(),
+				(boundingBoxHeight * 2).toInt(),
+				null,
+				false
+			)
 		}
 
-		val vibrationDuration = 500L
-		if (vibrator.hasVibrator()) {
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-				vibrator.vibrate(VibrationEffect.createOneShot(vibrationDuration, VibrationEffect.DEFAULT_AMPLITUDE))
+		fun fixedAlignment(imageRGB: Bitmap): Bitmap {
+			Log.i(
+				"Aligned RGB",
+				"$aligningFactorX + $torchWidth = ${torchWidth + aligningFactorX} (${imageRGB.width})"
+			)
+			Log.i(
+				"Aligned RGB",
+				"$aligningFactorY + $torchHeight = ${torchHeight + aligningFactorY} (${imageRGB.height})"
+			)
+			val alignedImageRGB = Bitmap.createBitmap(
+				imageRGB,
+				aligningFactorX,
+				aligningFactorY,
+				torchWidth,
+				torchHeight,
+				null,
+				false
+			)
+			Log.i(
+				"Aligned RGB",
+				"Resulting Bitmap: W ${alignedImageRGB.width} H ${alignedImageRGB.height}"
+			)
+			return alignedImageRGB
+		}
+
+		@Suppress("DEPRECATION")
+		fun vibrate(context: Context) {
+			val vibrator: Vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+				val vibratorManager =
+					context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+				vibratorManager.defaultVibrator
+			} else {
+				context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 			}
-			else {
-				vibrator.vibrate(vibrationDuration)
+
+			val vibrationDuration = 500L
+			if (vibrator.hasVibrator()) {
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+					vibrator.vibrate(
+						VibrationEffect.createOneShot(
+							vibrationDuration,
+							VibrationEffect.DEFAULT_AMPLITUDE
+						)
+					)
+				} else {
+					vibrator.vibrate(vibrationDuration)
+				}
 			}
 		}
 	}
-}
 lateinit var csvFile: File
 
 /** Helper class used as a data holder for each selectable camera format item */
@@ -201,6 +233,7 @@ fun enumerateCameras(cameraManager: CameraManager): MutableList<FormatItem> {
 		else
 			availableCameras.add(FormatItem("$orientation, ($id), RGB", id, imageFormat,
 				orientation, CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGGB))
+
 	}
 
 	return availableCameras

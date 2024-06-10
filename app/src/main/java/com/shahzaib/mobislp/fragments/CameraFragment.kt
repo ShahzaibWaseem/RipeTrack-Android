@@ -31,6 +31,7 @@ import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
 import android.provider.MediaStore
+import android.renderscript.ScriptGroup.Input
 import android.util.Log
 import android.util.Size
 import android.view.LayoutInflater
@@ -137,8 +138,12 @@ class CameraFragment: Fragment() {
 				else {
 					// If we have to select one image.
 					val nirUri: Uri? = result.data!!.data
+					MainActivity.nirAbsolutePath = nirUri?.let { getRealPathFromURI(it) }.toString()
+					Log.i("Images Opened Path", "NIR Path: ${MainActivity.nirAbsolutePath}")
+					/*
 					nirAbsolutePath = nirUri?.let { getRealPathFromURI(it) }.toString()
 					Log.i("Images Opened Path", "NIR Path: $nirAbsolutePath")
+					 */
 				}
 			}
 			else {
@@ -169,16 +174,55 @@ class CameraFragment: Fragment() {
 
 					val rgbBitmapOutputFile = createFile("RGB", "lossless")
 					val nirBitmapOutputFile = File(rgbBitmapOutputFile.toString().replace("RGB", "NIR"))
-					rgbAbsolutePath = rgbBitmapOutputFile.absolutePath
-					nirAbsolutePath = nirBitmapOutputFile.absolutePath
-					Log.i("Images Opened Path", "RGB Path: $rgbAbsolutePath, NIR Path: $nirAbsolutePath")
+					MainActivity.rgbAbsolutePath = rgbBitmapOutputFile.absolutePath
+					MainActivity.nirAbsolutePath = nirBitmapOutputFile.absolutePath
+					Log.i("Images Opened Path", "RGB Path: ${MainActivity.rgbAbsolutePath}, NIR Path: ${MainActivity.nirAbsolutePath}")
+//					Log.i("Images Opened Path", "RGB Path: $rgbAbsolutePath, NIR Path: $nirAbsolutePath")
 
 					lifecycleScope.launch {
 						saveImage(rgbBitmap, rgbBitmapOutputFile)
 						saveImage(nirBitmap, nirBitmapOutputFile)
 
 						navController.navigate(
-							CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath)
+							CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath)
+							//CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath)
+						)
+					}
+				}
+				else if (result.data?.clipData?.itemCount == 1)
+				{
+					val rgbUri = result.data!!.data
+
+					var rgbFile = getRealPathFromURI(rgbUri!!)
+					var nirFile = if (rgbFile.contains("-D")) rgbFile.replace("RGB-D", "NIR") else rgbFile.replace("RGB", "NIR")
+
+					var rgbBitmap = readImage(rgbFile)
+					var nirBitmap = readImage(nirFile)
+
+					MainActivity.originalImageRGB = rgbFile
+					MainActivity.originalImageNIR = nirFile
+
+					if (nirBitmap.width > rgbBitmap.width && nirBitmap.height > rgbBitmap.height) {
+						val tempBitmap = rgbBitmap
+						rgbBitmap = nirBitmap
+						nirBitmap = tempBitmap
+					}
+
+					rgbBitmap = compressImage(rgbBitmap)
+					nirBitmap = compressImage(nirBitmap)
+
+					val rgbBitmapOutputFile = createFile("RGB", "lossless")
+					val nirBitmapOutputFile = File(rgbBitmapOutputFile.toString().replace("RGB", "NIR"))
+					MainActivity.rgbAbsolutePath = rgbBitmapOutputFile.absolutePath
+					MainActivity.nirAbsolutePath = nirBitmapOutputFile.absolutePath
+					Log.i("Images Opened Path", "RGB Path: ${MainActivity.rgbAbsolutePath}, NIR Path: ${MainActivity.nirAbsolutePath}")
+
+					lifecycleScope.launch {
+						saveImage(rgbBitmap, rgbBitmapOutputFile)
+						saveImage(nirBitmap, nirBitmapOutputFile)
+
+						navController.navigate(
+							CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath)
 						)
 					}
 				}
@@ -343,15 +387,19 @@ class CameraFragment: Fragment() {
 
 				// Save the result to disk
 				val output = saveResult(result)
+				Log.i("CameraIDs RGB", "$cameraId $cameraIdRGB $cameraIdNIR")
 				lifecycleScope.launch(Dispatchers.Main) {
 					if (cameraId == cameraIdRGB){
+						Log.i("Camera ID NIR", "$cameraIdNIR")
 						when (cameraIdNIR) {
-							"OnePlus" -> navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath))
+							//"OnePlus" -> navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath))
+							"OnePlus" -> navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath))
 							else -> navController.navigate(CameraFragmentDirections.actionCameraFragmentSelf(cameraIdNIR, imageFormat))
 						}
 					}
 					else
-						navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, output.absolutePath))
+						//navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, output.absolutePath))
+						navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, output.absolutePath))
 				}
 			}
 		}
@@ -379,6 +427,7 @@ class CameraFragment: Fragment() {
 	@SuppressLint("MissingPermission")
 	private suspend fun openCamera(manager: CameraManager, cameraId: String, handler: Handler? = null):
 			CameraDevice = suspendCancellableCoroutine { cont ->
+		//Log.i("OpenCamera", "Opening camera $cameraId")
 		manager.openCamera(cameraId, object: CameraDevice.StateCallback() {
 			override fun onOpened(device: CameraDevice) = cont.resume(device)
 
@@ -521,7 +570,8 @@ class CameraFragment: Fragment() {
 	/** Helper function used to save a [CombinedCaptureResult] into a [File] */
 	private suspend fun saveResult(result: CombinedCaptureResult): File = suspendCoroutine { cont ->
 		when (result.format) {
-			ImageFormat.RAW_SENSOR -> {
+			ImageFormat.RAW_SENSOR, ImageFormat.RAW_PRIVATE, ImageFormat.RAW10 -> {
+				Log.i("RAW", "Capturing Raw Image")
 				val dngCreator = DngCreator(characteristics, result.metadata)
 				try {
 					val output = createFile("RGB", "lossless")
@@ -583,18 +633,7 @@ class CameraFragment: Fragment() {
 					Log.e(TAG, "Unable to write JPEG image to file", exc)
 					cont.resumeWithException(exc)
 				}
-
-				val dngCreator = DngCreator(characteristics, result.metadata)
-				try {
-					val output = createFile("RGB", "lossless")
-					FileOutputStream(output).use { dngCreator.writeImage(it, result.image) }
-					cont.resume(output)
-				} catch (exc: IOException) {
-					Log.e(TAG, "Unable to write DNG image to file", exc)
-					cont.resumeWithException(exc)
-				}
 			}
-
 			// No other formats are supported by this sample
 			else -> {
 				val exc = RuntimeException("Unknown image format: ${result.image.format}")
@@ -603,7 +642,6 @@ class CameraFragment: Fragment() {
 			}
 		}
 	}
-
 	override fun onStop() {
 		super.onStop()
 		try {
@@ -622,8 +660,10 @@ class CameraFragment: Fragment() {
 	companion object {
 		private val TAG = CameraFragment::class.java.simpleName
 		private lateinit var fileFormat: String
+		/*
 		lateinit var rgbAbsolutePath: String
 		lateinit var nirAbsolutePath: String
+		 */
 
 		/** Maximum number of images that will be held in the reader's buffer */
 		private const val IMAGE_BUFFER_SIZE: Int = 3
@@ -658,7 +698,7 @@ class CameraFragment: Fragment() {
 			}
 			val output = File(imageDirectory, "IMG_${fileFormat}_$nir.$fileExtension")
 			if (nir == "RGB")
-				rgbAbsolutePath = output.absolutePath
+				MainActivity.rgbAbsolutePath = output.absolutePath
 			return output
 		}
 	}
