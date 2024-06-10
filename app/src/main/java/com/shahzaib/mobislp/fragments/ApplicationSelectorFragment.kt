@@ -139,7 +139,7 @@ class ApplicationSelectorFragment: Fragment() {
 					fragmentApplicationSelectorBinding.radioGroup.checkedRadioButtonId
 				val selectedOption =
 					requireView().findViewById<RadioButton>(selectedRadio).text.toString()
-				val offlineMode = selectedOption == getString(R.string.offline_mode_string)
+				val offlineMode = selectedOption == getString(R.string.offline_mode_string) // signifies online/offline mode
 
 				editor!!.putString("application", selectedApplication)
 				editor.putString("fruit", selectedApplication)

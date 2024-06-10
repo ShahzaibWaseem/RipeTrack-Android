@@ -65,10 +65,10 @@ class ReconstructionFragment: Fragment() {
 
 	private lateinit var sharedPreferences: SharedPreferences
 	private lateinit var mobiSpectralApplication: String
-	private lateinit var reconstructionFile: String
 	private lateinit var classificationFile: String
-	private var reconstructionFiles = arrayOf("RipeTrack_reconstruction_mobile_pa_68.pt", "RipeTrack_reconstruction_mobile_bmn_68.pt")
+	private lateinit var reconstructionFile: String
 	private var classificationFiles = arrayOf("RipeTrack_classification_mobile_pa.pt", "RipeTrack_classification_mobile_bmn.pt")
+	private var reconstructionFiles = arrayOf("RipeTrack_reconstruction_mobile_pa_68.pt", "RipeTrack_reconstruction_mobile_bmn_68.pt")
 	private lateinit var mobiSpectralControlOption: String
 	private var advancedControlOption by Delegates.notNull<Boolean>()
 
@@ -176,19 +176,22 @@ class ReconstructionFragment: Fragment() {
 		mobiSpectralApplication = sharedPreferences.getString("application", getString(R.string.apple_string))!!
 		mobiSpectralControlOption = sharedPreferences.getString("option", getString(R.string.advanced_option_string))!!
 
+		Log.i("Offline Mode?", "${sharedPreferences.getBoolean("offline_mode", true)}")
+
 		// set reconstruction & classification file options based on fruit
-		val fruit = sharedPreferences.getString("fruit", null)
+		val fruit = sharedPreferences.getString("fruit", null) // this option will never be null, as the user must select a fruit to proceed with analysis
 
 		if (fruit.equals("Pear") || fruit.equals("Avocado"))
 		{
-			reconstructionFile = reconstructionFiles[0]
 			classificationFile = classificationFiles[0]
+			reconstructionFile = reconstructionFiles[0]
 		}
 		else
 		{
-			reconstructionFile = reconstructionFiles[1]
 			classificationFile = classificationFiles[1]
+			reconstructionFile = reconstructionFiles[1]
 		}
+		Log.i("Classification + Reconstruction Files Chosen", "$classificationFile, $reconstructionFile")
 
 		advancedControlOption = when (mobiSpectralControlOption) {
 			getString(R.string.advanced_option_string) -> true
@@ -457,7 +460,6 @@ class ReconstructionFragment: Fragment() {
 				}
 				else
 				{
-
 					when (position) {
 						0 -> tab.text = "RGB"
 						1 -> tab.text = "NIR"
@@ -465,8 +467,7 @@ class ReconstructionFragment: Fragment() {
 				}
 			}.attach()
 
-			val reloadBtn = fragmentReconstructionBinding.reloadButton
-			reloadBtn.setOnClickListener {
+			fragmentReconstructionBinding.reloadButton.setOnClickListener {
 				if (analyze)
 				{
 					// go back to classification page

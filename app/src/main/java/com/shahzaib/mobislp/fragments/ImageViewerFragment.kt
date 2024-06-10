@@ -103,6 +103,13 @@ class ImageViewerFragment: Fragment() {
 		}
 	}
 
+	/*
+	// used to decide for white balancing
+	private val offlineMode by lazy {
+		sharedPreferences.getBoolean("offline_mode", true)
+	}
+	*/
+
 	private fun imageViewFactory() = ImageView(requireContext()).apply {
 		layoutParams = ViewGroup.LayoutParams(
 			ViewGroup.LayoutParams.MATCH_PARENT,
@@ -494,6 +501,25 @@ class ImageViewerFragment: Fragment() {
 
 		if (isRGB){
 			bitmap = Bitmap.createBitmap(decodedBitmap, 0, 0, decodedBitmap.width, decodedBitmap.height, null, false)
+
+			/*
+			// Perform white balancing on the RGB image if (1) online mode or (2) offline mode and the selected RGB does not have white balancing
+			Log.i("WB Conditions (online mode, offline image with -D)", "$offlineMode, ${MainActivity.rgbAbsolutePath}")
+			if (
+				!offlineMode || ( offlineMode && !MainActivity.rgbAbsolutePath.contains("-D") )
+				)
+			{
+				Log.i("WB", "Process Began")
+				val whiteBalancingModel = WhiteBalance(requireContext())
+				val whiteBalancingThread = Thread {
+					bitmap = whiteBalancingModel.whiteBalance(bitmap)
+				}
+				whiteBalancingThread.start()
+				try { whiteBalancingThread.join() }
+				catch (exception: InterruptedException) { exception.printStackTrace() }
+				Log.i("WB", "Process Completed")
+			}
+			 */
 		}
 		else {
 			bitmap = if (decodedBitmap.width > decodedBitmap.height)
