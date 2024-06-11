@@ -19,7 +19,6 @@
     <string name="lab_string">NMSL @</string>
     <string name="school_string">SFU</string>
     <string name="estimate_ripeness_string">Estimate Ripeness</string>
-<!--<string name="get_hypercube_string">Get Hypercube</string> -->
     <string name="analyze_button_text">Analyze</string>
     <string name="analysis_button_text">Analysis</string>
     <string name="classify_button_text">Classify</string>
@@ -46,17 +45,14 @@
     <string name="no_nir_warning">No NIR Camera found.</string>
     <string name="coming_soon_information_string">This application is Coming Soon!</string>
     <string name="application_selector_information_string">Scroll the respective wheels to:\n(1) Choose a fruit to track its ripeness and remaining lifetime.\n(2) Choose online mode to capture an image or offline mode to choose a ready pair of images for reconstruction, useful for phones without an NIR camera.</string>
-<!--    <string name="application_selector_information_string">We can track the ripeness and remaining lifetime of five different fruits (Pear, Avocado, Banana, Mango, Nectarine). Scroll the wheel and select any of the applications.\nChoose which mode you\'d like to test the application on: Offline Mode lets the user use pre-existing images to be used in our models, It will also enable the user to test our model on android phones which do not have a NIR camera (by using our own provided images). So pressing it will allow the user to run the app and on the next page will require the user to input two images (RGB and NIR)</string>-->
-    <string name="application_selector_information_string_old">We have three different applications that we have worked on: Organic classification (Apples, Kiwi, Blueberries), Olive Oil Adulteration, Kiwi Organic Classification. Scroll the wheel and select any of the applications.\nChoose which mode you\'d like to test the application on: Offline Mode lets the user use pre-existing images to be used in our models, It will also enable the user to test our model on android phones which do not have a NIR camera (by using our own provided images). So pressing it will allow the user to run the app and on the next page will require the user to input two images (RGB and NIR).</string>
     <string name="capture_information_string">Clicking the camera capture button captures both RGB and NIR image, back to back, to make it easy to align the two images.\nThe camera will not capture photo if the lighting conditions are not adequate.</string>
-    <string name="image_viewer_information_string">Automatically Selecting a 64*64 patch.\n <b>Estimate Ripeness</b> for ripeness analysis.\nTap to change the bounding box.</string>
-    <string name="reconstruction_analysis_information_string">Tap on the \"Analyze\" button for signature analysis.\n<b>Tap and Hold</b> to show a new signature and delete all other persistent signature analysis.</string>
+    <string name="image_viewer_information_string">If visible, an object detection model has drawn a yellow 64x64 patch.\nTap inside it to select it or tap outside it to select a different region.\nThen, use <b>Estimate Ripeness</b> for ripeness analysis.</string>
+    <string name="reconstruction_analysis_information_string">Tap on the \"Analyze\" button for signature analysis.\nDuring analysis, <b>tap and hold</b> to show a new signature and delete all other persistent signature analysis.</string>
     <string name="reconstruction_analysis_information_simple_string">Swipe through the reconstructed Hypercube bands.\nIn the simple mode, the application just checks the signature of the middle pixel.</string>
 
     <string name="ripeness_unripe">Unripe</string>
     <string name="ripeness_ripe">Ripe</string>
     <string name="ripeness_expired">Expired</string>
-
     <string name="remaining_lifetime_placeholder">%d%% Remaining Lifetime</string>
 
 

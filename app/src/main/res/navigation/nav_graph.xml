@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--suppress NavigationFile-->
+<!-- see here for more info on the suppression: https://stackoverflow.com/questions/76796254/android-navigation-define-argument -->
 <navigation
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -7,7 +9,7 @@
 
     <fragment
         android:id="@+id/permissions_fragment"
-        android:name="com.shahzaib.mobislp.fragments.PermissionsFragment"
+        android:name="com.shahzaib.ripetrack.fragments.PermissionsFragment"
         android:label="Permissions">
         <action
             android:id="@+id/action_permissions_fragment_to_appselector"
@@ -16,7 +18,7 @@
 
     <fragment
         android:id="@+id/applicationselector_fragment"
-        android:name="com.shahzaib.mobislp.fragments.ApplicationSelectorFragment"
+        android:name="com.shahzaib.ripetrack.fragments.ApplicationSelectorFragment"
         android:label="ApplicationSelector">
 
         <action
@@ -30,7 +32,7 @@
 
     <fragment
         android:id="@+id/camera_fragment"
-        android:name="com.shahzaib.mobislp.fragments.CameraFragment"
+        android:name="com.shahzaib.ripetrack.fragments.CameraFragment"
         android:label="Camera">
         <argument
             android:name="camera_id"
@@ -64,7 +66,7 @@
 
     <fragment
         android:id="@+id/datacapturing_fragment"
-        android:name="com.shahzaib.mobislp.fragments.DataCaptureFragment"
+        android:name="com.shahzaib.ripetrack.fragments.DataCaptureFragment"
         android:label="DataCapturing">
         <argument
             android:name="camera_id"
@@ -98,7 +100,7 @@
 
     <fragment
         android:id="@+id/image_viewer_fragment"
-        android:name="com.shahzaib.mobislp.fragments.ImageViewerFragment"
+        android:name="com.shahzaib.ripetrack.fragments.ImageViewerFragment"
         android:label="Image Viewer">
         <argument
             android:name="file_path"
@@ -129,7 +131,7 @@
 
     <fragment
         android:id="@+id/reconstruction_fragment"
-        android:name="com.shahzaib.mobislp.fragments.ReconstructionFragment"
+        android:name="com.shahzaib.ripetrack.fragments.ReconstructionFragment"
         android:label="ReconstructionFragment">
         <action
             android:id="@+id/action_reconstruction_fragment_to_application_title"

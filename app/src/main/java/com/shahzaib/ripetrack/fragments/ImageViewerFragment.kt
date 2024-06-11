@@ -1,4 +1,4 @@
-package com.shahzaib.mobislp.fragments
+package com.shahzaib.ripetrack.fragments
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -32,16 +32,16 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
-import com.shahzaib.mobislp.MainActivity
-import com.shahzaib.mobislp.MainActivity.Companion.generateAlertBox
-import com.shahzaib.mobislp.R
-import com.shahzaib.mobislp.Utils
-import com.shahzaib.mobislp.Utils.cropImage
-import com.shahzaib.mobislp.Utils.imageFormat
-import com.shahzaib.mobislp.addCSVLog
-import com.shahzaib.mobislp.databinding.FragmentImageviewerBinding
-import com.shahzaib.mobislp.makeFolderInRoot
-import com.shahzaib.mobislp.saveProcessedImages
+import com.shahzaib.ripetrack.MainActivity
+import com.shahzaib.ripetrack.MainActivity.Companion.generateAlertBox
+import com.shahzaib.ripetrack.R
+import com.shahzaib.ripetrack.Utils
+import com.shahzaib.ripetrack.Utils.cropImage
+import com.shahzaib.ripetrack.Utils.imageFormat
+import com.shahzaib.ripetrack.addCSVLog
+import com.shahzaib.ripetrack.databinding.FragmentImageviewerBinding
+import com.shahzaib.ripetrack.makeFolderInRoot
+import com.shahzaib.ripetrack.saveProcessedImages
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.BufferedInputStream
@@ -165,7 +165,7 @@ class ImageViewerFragment: Fragment() {
 	@Suppress("KotlinConstantConditions")
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 
-		sharedPreferences = requireActivity().getSharedPreferences("mobislp_preferences", Context.MODE_PRIVATE)
+		sharedPreferences = requireActivity().getSharedPreferences("ripetrack_preferences", Context.MODE_PRIVATE)
 		advancedControlOption = when (sharedPreferences.getString("option", getString(R.string.advanced_option_string))!!) {
 			getString(R.string.advanced_option_string) -> true
 			getString(R.string.simple_option_string) -> false

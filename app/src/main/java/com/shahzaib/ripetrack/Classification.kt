@@ -1,4 +1,4 @@
-package com.shahzaib.mobislp
+package com.shahzaib.ripetrack
 
 import android.content.Context
 import android.util.Log

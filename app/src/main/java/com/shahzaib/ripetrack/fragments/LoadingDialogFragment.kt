@@ -1,4 +1,4 @@
-package com.shahzaib.mobislp.fragments
+package com.shahzaib.ripetrack.fragments
 
 import android.app.Dialog
 import android.os.Bundle
@@ -7,7 +7,7 @@ import android.widget.ProgressBar
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.shahzaib.mobislp.databinding.FragmentLoadingDialogBinding
+import com.shahzaib.ripetrack.databinding.FragmentLoadingDialogBinding
 
 class LoadingDialogFragment: DialogFragment() {
 	private lateinit var alertDialog: AlertDialog

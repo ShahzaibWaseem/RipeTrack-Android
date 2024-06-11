@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-	namespace 'com.shahzaib.mobislp'
+	namespace 'com.shahzaib.ripetrack'
 	compileSdk 34
 
 	defaultConfig {
-		applicationId "com.shahzaib.mobislp"
+		applicationId "com.shahzaib.ripetrack"
 		minSdk 24
 		targetSdk 34
 		versionCode 1

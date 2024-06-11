@@ -1,4 +1,4 @@
-package com.shahzaib.mobislp.fragments
+package com.shahzaib.ripetrack.fragments
 
 import android.Manifest
 import android.content.Context
@@ -17,7 +17,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.withStarted
 import androidx.navigation.Navigation
-import com.shahzaib.mobislp.R
+import com.shahzaib.ripetrack.R
 import kotlinx.coroutines.launch
 
 class PermissionsFragment: Fragment() {

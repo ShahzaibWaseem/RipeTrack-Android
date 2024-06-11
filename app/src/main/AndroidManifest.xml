@@ -24,7 +24,7 @@
         android:theme="@style/Theme.MobiSLP"
         tools:targetApi="31">
         <activity
-            android:name="com.shahzaib.mobislp.MainActivity"
+            android:name="com.shahzaib.ripetrack.MainActivity"
             android:clearTaskOnLaunch="true"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme"

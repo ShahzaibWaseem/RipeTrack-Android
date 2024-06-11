@@ -1,4 +1,4 @@
-package com.shahzaib.mobislp
+package com.shahzaib.ripetrack
 
 import org.junit.Test
 

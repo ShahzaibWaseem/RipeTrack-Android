@@ -1,4 +1,4 @@
-package com.shahzaib.mobislp
+package com.shahzaib.ripetrack
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -27,12 +27,12 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import com.opencsv.CSVWriter
-import com.shahzaib.mobislp.Utils.appRootPath
-import com.shahzaib.mobislp.Utils.croppedImageDirectory
-import com.shahzaib.mobislp.Utils.imageFormat
-import com.shahzaib.mobislp.Utils.processedImageDirectory
-import com.shahzaib.mobislp.Utils.rawImageDirectory
-import com.shahzaib.mobislp.Utils.torchHeight
+import com.shahzaib.ripetrack.Utils.appRootPath
+import com.shahzaib.ripetrack.Utils.croppedImageDirectory
+import com.shahzaib.ripetrack.Utils.imageFormat
+import com.shahzaib.ripetrack.Utils.processedImageDirectory
+import com.shahzaib.ripetrack.Utils.rawImageDirectory
+import com.shahzaib.ripetrack.Utils.torchHeight
 
 object Utils {
 	const val previewHeight = 800
@@ -41,7 +41,7 @@ object Utils {
 	const val torchWidth = 480
 	private const val aligningFactorX = 37  //This is 37 if picture captured in portrait [35-41 if un-warped] 83 if landscape
 	private const val aligningFactorY = 87  //This is 83 if picture captured in portrait [74 if un-warped] 100 if landscape
-	const val appRootPath = "MobiSLP"
+	const val appRootPath = "RipeTrack"
 	const val rawImageDirectory = "rawImages"
 	const val croppedImageDirectory = "croppedImages"
 	const val processedImageDirectory = "processedImages"
@@ -169,7 +169,7 @@ lateinit var csvFile: File
 /** Helper class used as a data holder for each selectable camera format item */
 data class FormatItem(val title: String, val cameraId: String, val format: Int, val orientation: String, val sensorArrangement: Int)
 
-data class MobiSLPCSVFormat(val fruitID: String, val originalImageRGB: String, val originalImageNIR: String, val actualLabel: String) {
+data class RipeTrackCSVFormat(val fruitID: String, val originalImageRGB: String, val originalImageNIR: String, val actualLabel: String) {
 	fun csvFormat(): Array<String> {
 		return arrayOf(fruitID, originalImageRGB, originalImageNIR, actualLabel)
 	}
@@ -243,9 +243,9 @@ fun makeFolderInRoot(directoryPath: String, context: Context) {
 	val externalStorageDirectory = Environment.getExternalStorageDirectory().toString()
 	val directory = File(externalStorageDirectory, "/$directoryPath")
 
-	csvFile = File(directory, "MobiSLP_Logs.csv")
+	csvFile = File(directory, "RipeTrack_Logs.csv")
 	if (!csvFile.exists()) {
-		val header = MobiSLPCSVFormat("Fruit ID", "Original RGB Path", "Original NIR Path", "Actual Label")
+		val header = RipeTrackCSVFormat("Fruit ID", "Original RGB Path", "Original NIR Path", "Actual Label")
 
 		val writer = CSVWriter(
 			FileWriter(csvFile, false),
@@ -370,7 +370,7 @@ suspend fun saveImage(bitmap: Bitmap, outputFile: File): File = suspendCoroutine
 
 fun addCSVLog (context: Context) {
 	if (csvFile.exists()) {
-		val entry = MobiSLPCSVFormat(MainActivity.fruitID, MainActivity.originalImageRGB, MainActivity.originalImageNIR, MainActivity.actualLabel)
+		val entry = RipeTrackCSVFormat(MainActivity.fruitID, MainActivity.originalImageRGB, MainActivity.originalImageNIR, MainActivity.actualLabel)
 
 		val writer = CSVWriter(
 			FileWriter(csvFile, true),

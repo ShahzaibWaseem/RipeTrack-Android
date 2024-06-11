@@ -1,4 +1,4 @@
-package com.shahzaib.mobislp
+package com.shahzaib.ripetrack
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -6,7 +6,7 @@ import android.graphics.Rect
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.shahzaib.mobislp.databinding.ActivityMainBinding
+import com.shahzaib.ripetrack.databinding.ActivityMainBinding
 
 class MainActivity: AppCompatActivity() {
 	private lateinit var activityMainBinding: ActivityMainBinding

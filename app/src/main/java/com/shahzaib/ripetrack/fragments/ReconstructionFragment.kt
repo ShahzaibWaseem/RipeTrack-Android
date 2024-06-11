@@ -1,4 +1,4 @@
-package com.shahzaib.mobislp.fragments
+package com.shahzaib.ripetrack.fragments
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -28,8 +28,8 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.tabs.TabLayoutMediator
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
-import com.shahzaib.mobislp.*
-import com.shahzaib.mobislp.databinding.FragmentReconstructionBinding
+import com.shahzaib.ripetrack.*
+import com.shahzaib.ripetrack.databinding.FragmentReconstructionBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -172,7 +172,7 @@ class ReconstructionFragment: Fragment() {
 		LoadingDialogFragment.text = getString(R.string.reconstructing_hypercube_string)
 		loadingDialogFragment.isCancelable = false
 
-		sharedPreferences = requireActivity().getSharedPreferences("mobislp_preferences", Context.MODE_PRIVATE)
+		sharedPreferences = requireActivity().getSharedPreferences("ripetrack_preferences", Context.MODE_PRIVATE)
 		mobiSpectralApplication = sharedPreferences.getString("application", getString(R.string.apple_string))!!
 		mobiSpectralControlOption = sharedPreferences.getString("option", getString(R.string.advanced_option_string))!!
 

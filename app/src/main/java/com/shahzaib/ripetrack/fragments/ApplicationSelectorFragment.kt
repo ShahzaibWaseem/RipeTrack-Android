@@ -1,4 +1,4 @@
-package com.shahzaib.mobislp.fragments
+package com.shahzaib.ripetrack.fragments
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -17,13 +17,13 @@ import androidx.lifecycle.withStarted
 import androidx.navigation.NavController
 import androidx.navigation.NavDirections
 import androidx.navigation.Navigation
-import com.shahzaib.mobislp.MainActivity
-import com.shahzaib.mobislp.MainActivity.Companion.generateAlertBox
-import com.shahzaib.mobislp.R
-import com.shahzaib.mobislp.Utils
-import com.shahzaib.mobislp.Utils.imageFormat
-import com.shahzaib.mobislp.databinding.FragmentApplicationselectorBinding
-import com.shahzaib.mobislp.makeDirectory
+import com.shahzaib.ripetrack.MainActivity
+import com.shahzaib.ripetrack.MainActivity.Companion.generateAlertBox
+import com.shahzaib.ripetrack.R
+import com.shahzaib.ripetrack.Utils
+import com.shahzaib.ripetrack.Utils.imageFormat
+import com.shahzaib.ripetrack.databinding.FragmentApplicationselectorBinding
+import com.shahzaib.ripetrack.makeDirectory
 import kotlinx.coroutines.launch
 
 class ApplicationSelectorFragment: Fragment() {
@@ -104,7 +104,7 @@ class ApplicationSelectorFragment: Fragment() {
 			Utils.getCameraIDs(requireContext(), MainActivity.MOBISPECTRAL_APPLICATION)
 		val cameraIdNIR = MainActivity.cameraIDList.second
 		val sharedPreferences =
-			requireActivity().getSharedPreferences("mobislp_preferences", Context.MODE_PRIVATE)
+			requireActivity().getSharedPreferences("ripetrack_preferences", Context.MODE_PRIVATE)
 		val editor = sharedPreferences?.edit()
 
 		fragmentApplicationSelectorBinding.applicationPicker.value =
