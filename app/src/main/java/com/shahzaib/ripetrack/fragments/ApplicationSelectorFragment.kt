@@ -57,7 +57,7 @@ class ApplicationSelectorFragment: Fragment() {
 			getString(R.string.mango_string),
 			getString(R.string.nectarine_string)
 		)
-		applicationPicker.textSize = 65F
+		applicationPicker.textSize = 90F
 		applicationPicker.minValue = 0
 		applicationPicker.maxValue = applicationArray.size - 1
 		applicationPicker.displayedValues = applicationArray
@@ -101,7 +101,7 @@ class ApplicationSelectorFragment: Fragment() {
 	override fun onStart() {
 		super.onStart()
 		MainActivity.cameraIDList =
-			Utils.getCameraIDs(requireContext(), MainActivity.MOBISPECTRAL_APPLICATION)
+			Utils.getCameraIDs(requireContext(), MainActivity.RIPETRACK_APPLICATION)
 		val cameraIdNIR = MainActivity.cameraIDList.second
 		val sharedPreferences =
 			requireActivity().getSharedPreferences("ripetrack_preferences", Context.MODE_PRIVATE)

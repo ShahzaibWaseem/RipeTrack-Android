@@ -29,6 +29,7 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.jjoe64.graphview.series.DataPoint
 import com.jjoe64.graphview.series.LineGraphSeries
 import com.shahzaib.ripetrack.*
+import com.shahzaib.ripetrack.MainActivity.Companion.generateAlertBox
 import com.shahzaib.ripetrack.databinding.FragmentReconstructionBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -47,7 +48,6 @@ class ReconstructionFragment: Fragment() {
 	private var classificationDuration = 0F
 	private val numberOfBands = 68
 	private val bandSpacing = 204 / numberOfBands
-	private var outputLabelString: String = ""
 	private var clickedX = 0.0F
 	private var clickedY = 0.0F
 	private val bandsChosen = mutableListOf<Int>()
@@ -64,20 +64,16 @@ class ReconstructionFragment: Fragment() {
 	private val fragmentReconstructionBinding get() = _fragmentReconstructionBinding!!
 
 	private lateinit var sharedPreferences: SharedPreferences
-	private lateinit var mobiSpectralApplication: String
+	private lateinit var ripeTrackApplication: String
 	private lateinit var classificationFile: String
 	private lateinit var reconstructionFile: String
 	private var classificationFiles = arrayOf("RipeTrack_classification_mobile_pa.pt", "RipeTrack_classification_mobile_bmn.pt")
 	private var reconstructionFiles = arrayOf("RipeTrack_reconstruction_mobile_pa_68.pt", "RipeTrack_reconstruction_mobile_bmn_68.pt")
-	private lateinit var mobiSpectralControlOption: String
+	private lateinit var ripeTrackControlOption: String
 	private var advancedControlOption by Delegates.notNull<Boolean>()
-
-	private lateinit var classificationLabels: Map<Pair<String, Long>, String>
 
 	private var bitmapsWidth = Utils.torchWidth
 	private var bitmapsHeight = Utils.torchHeight
-	private var alreadyMultiLabelInferred = false
-	private var applyOffset = false
 
 	private fun imageViewFactory() = ImageView(requireContext()).apply {
 		layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
@@ -173,8 +169,8 @@ class ReconstructionFragment: Fragment() {
 		loadingDialogFragment.isCancelable = false
 
 		sharedPreferences = requireActivity().getSharedPreferences("ripetrack_preferences", Context.MODE_PRIVATE)
-		mobiSpectralApplication = sharedPreferences.getString("application", getString(R.string.apple_string))!!
-		mobiSpectralControlOption = sharedPreferences.getString("option", getString(R.string.advanced_option_string))!!
+		ripeTrackApplication = sharedPreferences.getString("application", getString(R.string.apple_string))!!
+		ripeTrackControlOption = sharedPreferences.getString("option", getString(R.string.advanced_option_string))!!
 
 		Log.i("Offline Mode?", "${sharedPreferences.getBoolean("offline_mode", true)}")
 
@@ -193,35 +189,33 @@ class ReconstructionFragment: Fragment() {
 		}
 		Log.i("Classification + Reconstruction Files Chosen", "$classificationFile, $reconstructionFile")
 
-		advancedControlOption = when (mobiSpectralControlOption) {
+		advancedControlOption = when (ripeTrackControlOption) {
 			getString(R.string.advanced_option_string) -> true
 			getString(R.string.simple_option_string) -> false
 			else -> true
 		}
 
-//		fragmentReconstructionBinding.textViewClass.text = mobiSpectralApplication
+		// fragmentReconstructionBinding.textViewClass.text = ripeTrackApplication
 
 		toggleVisibilityViews = arrayOf(
 			fragmentReconstructionBinding.graphView,
-			fragmentReconstructionBinding.informationText,
 			fragmentReconstructionBinding.classificationConstraint,
 			fragmentReconstructionBinding.progressConstraint,
 			fragmentReconstructionBinding.analyzeButton
 		)
 
 		if (!advancedControlOption) {
-//			fragmentReconstructionBinding.analysisButton.visibility = View.INVISIBLE
-//			fragmentReconstructionBinding.simpleModeSignaturePositionTextView.visibility = View.VISIBLE
+			// fragmentReconstructionBinding.analysisButton.visibility = View.INVISIBLE
+			// fragmentReconstructionBinding.simpleModeSignaturePositionTextView.visibility = View.VISIBLE
 			fragmentReconstructionBinding.graphView.visibility = View.INVISIBLE
 			// fragmentReconstructionBinding.textViewClassTime.text = ""
-//			fragmentReconstructionBinding.simpleModeSignaturePositionTextView.text = getString(R.string.simple_mode_signature_string, MainActivity.tempRectangle.centerX(), MainActivity.tempRectangle.centerY())
+			// fragmentReconstructionBinding.simpleModeSignaturePositionTextView.text = getString(R.string.simple_mode_signature_string, MainActivity.tempRectangle.centerX(), MainActivity.tempRectangle.centerY())
 			// fragmentReconstructionBinding.textViewReconTime.visibility = View.INVISIBLE
 			// fragmentReconstructionBinding.textViewClassTime.visibility = View.INVISIBLE
 		}
 
 		return fragmentReconstructionBinding.root
 	}
-	val reloadLambda = {}
 
 	@SuppressLint("ClickableViewAccessibility")
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -262,9 +256,9 @@ class ReconstructionFragment: Fragment() {
 								view.setImageBitmap(bitmapOverlay)
 								try {
 									//inference()
-									val inputSignature = getSignature(predictedHS, clickedY.toInt(), clickedX.toInt())
+									getSignature(predictedHS, clickedY.toInt(), clickedX.toInt())
 									MainActivity.actualLabel = ""
-//                                addCSVLog(requireContext())
+									// addCSVLog(requireContext())
 								} catch (e: NullPointerException) {
 									e.printStackTrace()
 								}
@@ -284,8 +278,6 @@ class ReconstructionFragment: Fragment() {
 						canvas.drawBitmap(item, Matrix(), null)
 						view.setImageBitmap(bitmapOverlay)
 						fragmentReconstructionBinding.graphView.removeAllSeries()         // remove all previous series
-
-
 
 						/*
 
@@ -389,8 +381,13 @@ class ReconstructionFragment: Fragment() {
 
 	}
 
+	@SuppressLint("NotifyDataSetChanged")
 	override fun onStart() {
 		super.onStart()
+
+		fragmentReconstructionBinding.information.setOnClickListener {
+			generateAlertBox(requireContext(), "", getString(R.string.reconstruction_analysis_information_string)) {}
+		}
 
 		Timer().schedule(1000) {
 			val reconstructionThread = Thread {
@@ -471,6 +468,7 @@ class ReconstructionFragment: Fragment() {
 				if (analyze)
 				{
 					// go back to classification page
+					@Suppress("KotlinConstantConditions")
 					analyze = !analyze
 					// hide the graph
 					toggleGraphVisibility()
@@ -505,21 +503,22 @@ class ReconstructionFragment: Fragment() {
 	override fun onResume()
 	{
 		super.onResume()
-
-
 		// use an observer so that onResume() doesn't run before the scheduled task in onStart() is complete (then predictedHS may be uninitialized)
-		reconstructionDone.observe(this, androidx.lifecycle.Observer { initialized ->
-			if (initialized == true)
-			{
+		reconstructionDone.observe(this) { initialized ->
+			if (initialized == true) {
 				/* Perform Classification */
 				// putting it here instead of onStart() prevents classification from happening multiple times when you move back & forth between the classification & analysis pages
 				performClassification()
 				lifecycleScope.launch(Dispatchers.Main) {
-					Toast.makeText(requireContext(), "Total Execution Time: ${MainActivity.executionTime} ms", LENGTH_LONG).show()
+					Toast.makeText(
+						requireContext(),
+						"Total Execution Time: ${MainActivity.executionTime} ms",
+						LENGTH_LONG
+					).show()
 					MainActivity.executionTime = 0L
 				}
 			}
-		})
+		}
 	}
 
 	private fun classifyFruit()
@@ -545,92 +544,31 @@ class ReconstructionFragment: Fragment() {
 		}
 	}
 
-	private fun inference() {
-		if (!advancedControlOption) {
-			clickedX = bitmapsWidth/2F
-			clickedY = bitmapsHeight/2F
-		}
-		val finalResults = ArrayList<Long> ()
-
-		if (applyOffset && !alreadyMultiLabelInferred) {
-
-			val multiClassificationThread = Thread {
-				val zoneHeight = 8
-				val zoneWidth = 8
-				val numberOfZones = (2*Utils.boundingBoxWidth.toInt())/zoneWidth
-				val offsetX = if (applyOffset) bitmapsWidth/2 - Utils.boundingBoxWidth.toInt() else 0
-				val offsetY = if (applyOffset) bitmapsHeight/2 - Utils.boundingBoxHeight.toInt() else 0
-
-				for (z1 in 0 until numberOfZones) {
-					for (z2 in 0 until numberOfZones) {
-						val results = ArrayList<Long> ()
-
-						Log.i("Number of Zones", "Zones $numberOfZones X: ${offsetY+z1*zoneHeight} Y:  ${offsetX+z2*zoneWidth} ")
-						val frequencies = results.groupingBy { it }.eachCount()
-						finalResults.add(frequencies.maxBy { it.value }.key)
-						Log.i("Signatures OneClassify", "Final Results: $finalResults")
-					}
-				}
-			}
-			multiClassificationThread.start()
-			try { multiClassificationThread.join() }
-			catch (exception: InterruptedException) { exception.printStackTrace() }
-
-			alreadyMultiLabelInferred = true
-
-			val finalFrequencies = finalResults.groupingBy { it }.eachCount()
-			Log.i("Signatures OneClassify", "$finalResults $finalFrequencies")
-			var frequenciesString = ""
-			for (item in finalFrequencies) {
-				val substring = if (Pair(mobiSpectralApplication, item.key) !in classificationLabels)
-					"Something went wrong = ${item.value.toFloat()/finalResults.size.toFloat()}\n"
-				else
-					"${classificationLabels[Pair(mobiSpectralApplication, item.key)]!!} = ${item.value.toFloat()/finalResults.size.toFloat()}\n"
-
-				frequenciesString += substring
-			}
-			Log.i("Frequency String", frequenciesString)
-			val maxLabel = finalFrequencies.maxBy { it.value }
-
-
-//            fragmentReconstructionBinding.textViewClassTime.text = frequenciesString
-//			fragmentReconstructionBinding.textViewClassTime.visibility = View.VISIBLE
-//			fragmentReconstructionBinding.textViewClass.text = classificationLabels[Pair(mobiSpectralApplication, maxLabel.key)]
-			MainActivity.predictedLabel = frequenciesString
-
-
-		}
-		if (advancedControlOption){
-			val inputSignature = getSignature(predictedHS, clickedY.toInt(), clickedX.toInt())
-			MainActivity.predictedLabel = outputLabelString
-//            fragmentReconstructionBinding.textViewClass.text = outputLabelString
-//			fragmentReconstructionBinding.graphView.title = "$outputLabelString Signature at (x: ${clickedX.toInt()}, y: ${clickedY.toInt()})"
-		}
-//        addCSVLog(requireContext())
-	}
-
-	private fun getSignature(predictedHS: FloatArray, SignatureX: Int, SignatureY: Int): FloatArray {
+	private fun getSignature(predictedHS: FloatArray, row: Int, col: Int): FloatArray {
 		val signature = FloatArray(numberOfBands)
-		// Log.i("Touch Coordinates", "$SignatureX, $SignatureY")
-		val leftX = bitmapsWidth - 1 - SignatureY       // -1 is the pixel itself
-		val leftY = bitmapsHeight - 1 - SignatureX      // -1 is the pixel itself
+		// Log.i("Touch Coordinates", "$row, $col")
 
-		var idx = bitmapsWidth*SignatureX
-		idx += SignatureY
-		// print("Signature is:")
+		// 'remaining' as in how many pixels to the edges of the current band
+		val remainingX = bitmapsWidth - 1 - col       // -1 is the pixel itself
+		val remainingY = bitmapsHeight - 1 - row      // -1 is the pixel itself
+
+		var idx = bitmapsWidth*row + col
+
 		val series = LineGraphSeries<DataPoint>()
 
 		for (i in 0 until numberOfBands) {
 			signature[i] = predictedHS[idx]
 			if (advancedControlOption)
 				series.appendData(DataPoint(ACTUAL_BAND_WAVELENGTHS[i*bandSpacing], predictedHS[idx].toDouble()), true, numberOfBands)
-			idx += leftX + bitmapsWidth*leftY + 1 + (bitmapsWidth*SignatureX + SignatureY)
+
+			idx += remainingX + bitmapsWidth*remainingY + 1 // go to the first pixel of the next band
+			idx += bitmapsWidth*row + col					// go to pixel at the same row & col on the next band
 		}
 
 		if (advancedControlOption) {
 			val graphView = fragmentReconstructionBinding.graphView
 			// graphView.removeAllSeries()         // remove all previous series
-//			graphView.title = "$outputLabelString Signature at (x: $SignatureX, y: $SignatureY)"
+//			graphView.title = "$outputLabelString Signature at (x: $row, y: $col)"
 			graphView.gridLabelRenderer.padding = 50
 			graphView.gridLabelRenderer.textSize = 60F
 			series.dataPointsRadius = 20F

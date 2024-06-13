@@ -192,8 +192,8 @@ class CameraFragment: Fragment() {
 				{
 					val rgbUri = result.data!!.data
 
-					var rgbFile = getRealPathFromURI(rgbUri!!)
-					var nirFile = if (rgbFile.contains("-D")) rgbFile.replace("RGB-D", "NIR") else rgbFile.replace("RGB", "NIR")
+					val rgbFile = getRealPathFromURI(rgbUri!!)
+					val nirFile = if (rgbFile.contains("-D")) rgbFile.replace("RGB-D", "NIR") else rgbFile.replace("RGB", "NIR")
 
 					var rgbBitmap = readImage(rgbFile)
 					var nirBitmap = readImage(nirFile)
@@ -258,7 +258,7 @@ class CameraFragment: Fragment() {
 		_fragmentCameraBinding = FragmentCameraBinding.inflate(inflater, container, false)
 		sharedPreferences = requireActivity().getSharedPreferences("ripetrack_preferences", Context.MODE_PRIVATE)
 		mobiSpectralApplicationID = when(sharedPreferences.getString("application", "Organic Identification")!!) {
-			else -> MainActivity.MOBISPECTRAL_APPLICATION
+			else -> MainActivity.RIPETRACK_APPLICATION
 		}
 		offlineMode = sharedPreferences.getBoolean("offline_mode", false)
 		cameraIdRGB = MainActivity.cameraIDList.first
@@ -272,7 +272,7 @@ class CameraFragment: Fragment() {
 		super.onViewCreated(view, savedInstanceState)
 
 		fragmentCameraBinding.information.setOnClickListener {
-			generateAlertBox(requireContext(),"Information", resources.getString(R.string.capture_information_string)) {}
+			generateAlertBox(requireContext(),"", resources.getString(R.string.capture_information_string)) {}
 		}
 
 		if (cameraIdNIR == "OnePlus" || offlineMode)
@@ -389,7 +389,7 @@ class CameraFragment: Fragment() {
 				Log.i("CameraIDs RGB", "$cameraId $cameraIdRGB $cameraIdNIR")
 				lifecycleScope.launch(Dispatchers.Main) {
 					if (cameraId == cameraIdRGB){
-						Log.i("Camera ID NIR", "$cameraIdNIR")
+						Log.i("Camera ID NIR", cameraIdNIR)
 						when (cameraIdNIR) {
 							//"OnePlus" -> navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath))
 							"OnePlus" -> navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath))

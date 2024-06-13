@@ -144,7 +144,7 @@ class DataCaptureFragment: Fragment() {
 		_fragmentDataCaptureBinding = FragmentDatacaptureBinding.inflate(inflater, container, false)
 		sharedPreferences = requireActivity().getSharedPreferences("ripetrack_preferences", Context.MODE_PRIVATE)
 		mobiSpectralApplicationID = when(sharedPreferences.getString("application", "Organic Identification")!!) {
-			else -> MainActivity.MOBISPECTRAL_APPLICATION
+			else -> MainActivity.RIPETRACK_APPLICATION
 		}
 		val possibleIlluminations = arrayOf(getString(R.string.halogen_string), getString(R.string.led_string), getString(R.string.cfl_string), getString(R.string.arbitrary_string))
 		fruitID = sharedPreferences.getInt("fruitID", 0)

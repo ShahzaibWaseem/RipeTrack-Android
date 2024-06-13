@@ -81,7 +81,7 @@ object Utils {
 
 		var cameraList = enumerateCameras(cameraManager)
 
-		if (application == MainActivity.MOBISPECTRAL_APPLICATION) {
+		if (application == MainActivity.RIPETRACK_APPLICATION) {
 			cameraList = getMobiSpectralConfigCameras(cameraList)
 
 			for (camera in cameraList) {

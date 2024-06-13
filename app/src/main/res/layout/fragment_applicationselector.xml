@@ -153,7 +153,6 @@
 
         <TextView
             android:id="@+id/labTextView"
-            android:visibility="invisible"
             android:layout_width="wrap_content"
             android:layout_height="60dp"
             android:text="@string/lab_string"
@@ -161,7 +160,6 @@
             android:gravity="center"
             android:fontFamily="@font/countach_regular"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/guideline4"/>
 
         <androidx.constraintlayout.widget.Guideline
@@ -169,10 +167,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.5" />
+            app:layout_constraintGuide_begin="206dp" />
 
         <TextView
-            android:visibility="invisible"
             android:id="@+id/sfuTextView"
             android:layout_width="wrap_content"
             android:layout_height="60dp"
@@ -186,7 +183,6 @@
             android:text="@string/school_string"
             android:textColor="@color/white"
             android:textSize="30sp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/guideline4"
             app:layout_constraintTop_toTopOf="parent"
             tools:ignore="RtlSymmetry" />

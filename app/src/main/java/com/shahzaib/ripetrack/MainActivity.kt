@@ -21,9 +21,8 @@ class MainActivity: AppCompatActivity() {
 	}
 
 	companion object {
-		const val MOBISPECTRAL_APPLICATION = 0
+		const val RIPETRACK_APPLICATION = 0
 		lateinit var fruitID: String
-		lateinit var fruitName: String
 		lateinit var originalRGBBitmap: Bitmap
 		lateinit var originalNIRBitmap: Bitmap
 		lateinit var originalImageRGB: String
@@ -35,8 +34,6 @@ class MainActivity: AppCompatActivity() {
 		var minMaxRGB = Pair(1000, -1000)
 		var minMaxNIR = Pair(1000, -1000)
 		var actualLabel: String = ""
-		var predictedLabel: String = ""
-		var normalizationTime: String = " s"
 		var reconstructionTime: String = " s"
 		var classificationTime: String = " ms"
 		lateinit var tempRGBBitmap: Bitmap
@@ -47,7 +44,6 @@ class MainActivity: AppCompatActivity() {
 		var illuminationOption = "Halogen"
 		var executionTime = 0L
 
-
 		lateinit var rgbAbsolutePath: String
 		lateinit var nirAbsolutePath: String
 
@@ -56,7 +52,6 @@ class MainActivity: AppCompatActivity() {
 			alertDialogBuilder.setMessage(text)
 			alertDialogBuilder.setTitle(title)
 			alertDialogBuilder.setCancelable(false)
-//			if (title == "Information")
 			if (title == "Information" || title.isEmpty())
 				alertDialogBuilder.setPositiveButton("Okay") { dialog, _ -> dialog?.cancel() }
 			else

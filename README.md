@@ -8,7 +8,7 @@ This application is written in Kotlin for Android phones. It works in two modes:
 For OnePlus 8 Pro, the camera with NIR information was removed using software due to [privacy concerns](https://www.theverge.com/2020/5/15/21259723/oneplus-8-pro-x-ray-vision-infrared-filter-see-through-plastic). It can be accessed in OxygenOS 11 using [Factory Mode](https://www.xda-developers.com/oneplus-8-pro-color-filter-camera-still-accessible-adb-command/ "How to access Color Filter Camera on OnePlus 8 Pro using adb") or by rooting the phone in OxygenOS 12.
 
 ## Install the App
-The APK for the application can be downloaded from here: [MobiSpectral APK](https://drive.google.com/file/d/1PTKukhxSUIIPlZ5BdgdiZDa5hXmC8Yrm/view). There are Information boxes on each screen as textual descriptions which tell the user what to do.
+<!--The APK for the application can be downloaded from here: [RipeTrack APK](). There are Information boxes on each screen as textual descriptions which tell the user what to do.-->
 
 Steps for installing the application on your phone are as follows:
 
@@ -27,7 +27,7 @@ Steps for installing the application on your phone are as follows:
 You can also [build the application from source code](#build-the-application-from-the-source-code).
 
 ## Test the Application in Offline Mode
-Download one or more of the following Mobile Image datasets to test the application:
+Download one or more of the following Mobile Image [datasets](https://drive.google.com/drive/folders/1oBmib1meInQ5zZzC0itiRDGs5IKJRZPb?usp=drive_link "Dataset URL") to test the application:
 
 - Pear Bosc
 - Pear Bartlett
