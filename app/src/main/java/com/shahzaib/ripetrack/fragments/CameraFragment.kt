@@ -126,7 +126,7 @@ class CameraFragment: Fragment() {
 	private var mobiSpectralApplicationID = 0
 	private var offlineMode = false
 
-	val reloadLambda = { startMyActivityForResult() }
+	private val reloadLambda = { startMyActivityForResult() }
 
 	private val myActivityResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
 		if (result.resultCode == Activity.RESULT_OK) {
@@ -146,87 +146,88 @@ class CameraFragment: Fragment() {
 				}
 			}
 			else {
-				if (result.data?.clipData?.itemCount == 2) {
-					var rgbFile = getRealPathFromURI(result.data!!.clipData?.getItemAt(0)?.uri!!)
-					var nirFile = getRealPathFromURI(result.data!!.clipData?.getItemAt(1)?.uri!!)
+				when (result.data?.clipData?.itemCount) {
+					2 -> {
+						var rgbFile = getRealPathFromURI(result.data!!.clipData?.getItemAt(0)?.uri!!)
+						var nirFile = getRealPathFromURI(result.data!!.clipData?.getItemAt(1)?.uri!!)
 
-					if (rgbFile.contains("NIR")) {
-						val tempFile = rgbFile
-						rgbFile = nirFile
-						nirFile = tempFile
+						if (rgbFile.contains("NIR")) {
+							val tempFile = rgbFile
+							rgbFile = nirFile
+							nirFile = tempFile
+						}
+
+						var rgbBitmap = readImage(rgbFile)
+						var nirBitmap = readImage(nirFile)
+
+						MainActivity.originalImageRGB = rgbFile
+						MainActivity.originalImageNIR = nirFile
+
+						if (nirBitmap.width > rgbBitmap.width && nirBitmap.height > rgbBitmap.height) {
+							val tempBitmap = rgbBitmap
+							rgbBitmap = nirBitmap
+							nirBitmap = tempBitmap
+						}
+
+						rgbBitmap = compressImage(rgbBitmap)
+						nirBitmap = compressImage(nirBitmap)
+
+						val rgbBitmapOutputFile = createFile("RGB", "lossless")
+						val nirBitmapOutputFile = File(rgbBitmapOutputFile.toString().replace("RGB", "NIR"))
+						MainActivity.rgbAbsolutePath = rgbBitmapOutputFile.absolutePath
+						MainActivity.nirAbsolutePath = nirBitmapOutputFile.absolutePath
+						Log.i("Images Opened Path", "RGB Path: ${MainActivity.rgbAbsolutePath}, NIR Path: ${MainActivity.nirAbsolutePath}")
+						// Log.i("Images Opened Path", "RGB Path: $rgbAbsolutePath, NIR Path: $nirAbsolutePath")
+
+						lifecycleScope.launch {
+							saveImage(rgbBitmap, rgbBitmapOutputFile)
+							saveImage(nirBitmap, nirBitmapOutputFile)
+
+							navController.navigate(
+								CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath)
+								//CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath)
+							)
+						}
 					}
+					1 -> {
+						val rgbUri = result.data!!.data
 
-					var rgbBitmap = readImage(rgbFile)
-					var nirBitmap = readImage(nirFile)
+						val rgbFile = getRealPathFromURI(rgbUri!!)
+						val nirFile = if (rgbFile.contains("-D")) rgbFile.replace("RGB-D", "NIR") else rgbFile.replace("RGB", "NIR")
 
-					MainActivity.originalImageRGB = rgbFile
-					MainActivity.originalImageNIR = nirFile
+						var rgbBitmap = readImage(rgbFile)
+						var nirBitmap = readImage(nirFile)
 
-					if (nirBitmap.width > rgbBitmap.width && nirBitmap.height > rgbBitmap.height) {
-						val tempBitmap = rgbBitmap
-						rgbBitmap = nirBitmap
-						nirBitmap = tempBitmap
+						MainActivity.originalImageRGB = rgbFile
+						MainActivity.originalImageNIR = nirFile
+
+						if (nirBitmap.width > rgbBitmap.width && nirBitmap.height > rgbBitmap.height) {
+							val tempBitmap = rgbBitmap
+							rgbBitmap = nirBitmap
+							nirBitmap = tempBitmap
+						}
+
+						rgbBitmap = compressImage(rgbBitmap)
+						nirBitmap = compressImage(nirBitmap)
+
+						val rgbBitmapOutputFile = createFile("RGB", "lossless")
+						val nirBitmapOutputFile = File(rgbBitmapOutputFile.toString().replace("RGB", "NIR"))
+						MainActivity.rgbAbsolutePath = rgbBitmapOutputFile.absolutePath
+						MainActivity.nirAbsolutePath = nirBitmapOutputFile.absolutePath
+						Log.i("Images Opened Path", "RGB Path: ${MainActivity.rgbAbsolutePath}, NIR Path: ${MainActivity.nirAbsolutePath}")
+
+						lifecycleScope.launch {
+							saveImage(rgbBitmap, rgbBitmapOutputFile)
+							saveImage(nirBitmap, nirBitmapOutputFile)
+
+							navController.navigate(
+								CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath)
+							)
+						}
 					}
-
-					rgbBitmap = compressImage(rgbBitmap)
-					nirBitmap = compressImage(nirBitmap)
-
-					val rgbBitmapOutputFile = createFile("RGB", "lossless")
-					val nirBitmapOutputFile = File(rgbBitmapOutputFile.toString().replace("RGB", "NIR"))
-					MainActivity.rgbAbsolutePath = rgbBitmapOutputFile.absolutePath
-					MainActivity.nirAbsolutePath = nirBitmapOutputFile.absolutePath
-					Log.i("Images Opened Path", "RGB Path: ${MainActivity.rgbAbsolutePath}, NIR Path: ${MainActivity.nirAbsolutePath}")
-//					Log.i("Images Opened Path", "RGB Path: $rgbAbsolutePath, NIR Path: $nirAbsolutePath")
-
-					lifecycleScope.launch {
-						saveImage(rgbBitmap, rgbBitmapOutputFile)
-						saveImage(nirBitmap, nirBitmapOutputFile)
-
-						navController.navigate(
-							CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath)
-							//CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, nirAbsolutePath)
-						)
+					else -> {
+						generateAlertBox(requireContext(),"Number of images exceeded 2", "Cannot select more than 2 images.\nFirst image RGB, Second image NIR", reloadLambda)
 					}
-				}
-				else if (result.data?.clipData?.itemCount == 1)
-				{
-					val rgbUri = result.data!!.data
-
-					val rgbFile = getRealPathFromURI(rgbUri!!)
-					val nirFile = if (rgbFile.contains("-D")) rgbFile.replace("RGB-D", "NIR") else rgbFile.replace("RGB", "NIR")
-
-					var rgbBitmap = readImage(rgbFile)
-					var nirBitmap = readImage(nirFile)
-
-					MainActivity.originalImageRGB = rgbFile
-					MainActivity.originalImageNIR = nirFile
-
-					if (nirBitmap.width > rgbBitmap.width && nirBitmap.height > rgbBitmap.height) {
-						val tempBitmap = rgbBitmap
-						rgbBitmap = nirBitmap
-						nirBitmap = tempBitmap
-					}
-
-					rgbBitmap = compressImage(rgbBitmap)
-					nirBitmap = compressImage(nirBitmap)
-
-					val rgbBitmapOutputFile = createFile("RGB", "lossless")
-					val nirBitmapOutputFile = File(rgbBitmapOutputFile.toString().replace("RGB", "NIR"))
-					MainActivity.rgbAbsolutePath = rgbBitmapOutputFile.absolutePath
-					MainActivity.nirAbsolutePath = nirBitmapOutputFile.absolutePath
-					Log.i("Images Opened Path", "RGB Path: ${MainActivity.rgbAbsolutePath}, NIR Path: ${MainActivity.nirAbsolutePath}")
-
-					lifecycleScope.launch {
-						saveImage(rgbBitmap, rgbBitmapOutputFile)
-						saveImage(nirBitmap, nirBitmapOutputFile)
-
-						navController.navigate(
-							CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath)
-						)
-					}
-				}
-				else {
-					generateAlertBox(requireContext(),"Number of images exceeded 2", "Cannot select more than 2 images.\nFirst image RGB, Second image NIR", reloadLambda)
 				}
 			}
 		}

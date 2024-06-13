@@ -358,8 +358,8 @@ class ReconstructionFragment: Fragment() {
 		loadingDialogFragment.show(childFragmentManager, LoadingDialogFragment.TAG)
 
 		// initialize these variables for the classification step
-		progressBar = requireView().findViewById<ProgressBar>(R.id.progressBar)
-		progressText = requireView().findViewById<TextView>(R.id.progressText)
+		progressBar = requireView().findViewById(R.id.progressBar)
+		progressText = requireView().findViewById(R.id.progressText)
 
 	}
 
@@ -510,11 +510,7 @@ class ReconstructionFragment: Fragment() {
 				// putting it here instead of onStart() prevents classification from happening multiple times when you move back & forth between the classification & analysis pages
 				performClassification()
 				lifecycleScope.launch(Dispatchers.Main) {
-					Toast.makeText(
-						requireContext(),
-						"Total Execution Time: ${MainActivity.executionTime} ms",
-						LENGTH_LONG
-					).show()
+					Log.i("Total Execution Time", "Total Execution Time: ${MainActivity.executionTime} ms")
 					MainActivity.executionTime = 0L
 				}
 			}

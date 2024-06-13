@@ -42,21 +42,11 @@ class ApplicationSelectorFragment: Fragment() {
 	}
 
 	@RequiresApi(Build.VERSION_CODES.Q)
-	override fun onCreateView(
-		inflater: LayoutInflater,
-		container: ViewGroup?,
-		savedInstanceState: Bundle?
-	): View {
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		fragmentApplicationSelectorBinding =
 			FragmentApplicationselectorBinding.inflate(inflater, container, false)
 		val applicationPicker = fragmentApplicationSelectorBinding.applicationPicker
-		applicationArray = arrayOf(
-			getString(R.string.pear_string),
-			getString(R.string.avocado_string),
-			getString(R.string.banana_string),
-			getString(R.string.mango_string),
-			getString(R.string.nectarine_string)
-		)
+		applicationArray = arrayOf(getString(R.string.pear_string), getString(R.string.avocado_string), getString(R.string.banana_string), getString(R.string.mango_string), getString(R.string.nectarine_string))
 		applicationPicker.textSize = 90F
 		applicationPicker.minValue = 0
 		applicationPicker.maxValue = applicationArray.size - 1
@@ -74,13 +64,9 @@ class ApplicationSelectorFragment: Fragment() {
 		if (cameraIdNIR == "No NIR Camera") {
 			fragmentApplicationSelectorBinding.runApplicationButton.isEnabled = false
 			fragmentApplicationSelectorBinding.runApplicationButton.setBackgroundColor(
-				ContextCompat.getColor(
-					requireContext(),
-					R.color.sfu_dark_gray
-				)
+				ContextCompat.getColor(requireContext(), R.color.sfu_dark_gray)
 			)
-			fragmentApplicationSelectorBinding.runApplicationButton.text =
-				resources.getString(R.string.no_nir_warning)
+			fragmentApplicationSelectorBinding.runApplicationButton.text = resources.getString(R.string.no_nir_warning)
 			fragmentApplicationSelectorBinding.runApplicationButton.transformationMethod = null
 		}
 	}
@@ -88,13 +74,9 @@ class ApplicationSelectorFragment: Fragment() {
 	private fun enableButton() {
 		fragmentApplicationSelectorBinding.runApplicationButton.isEnabled = true
 		fragmentApplicationSelectorBinding.runApplicationButton.setBackgroundColor(
-			ContextCompat.getColor(
-				requireContext(),
-				R.color.background
-			)
+			ContextCompat.getColor(requireContext(), R.color.background)
 		)
-		fragmentApplicationSelectorBinding.runApplicationButton.text =
-			resources.getString(R.string.launch_application_button).uppercase()
+		fragmentApplicationSelectorBinding.runApplicationButton.text = resources.getString(R.string.launch_application_button).uppercase()
 	}
 
 	@SuppressLint("ClickableViewAccessibility")
@@ -110,11 +92,7 @@ class ApplicationSelectorFragment: Fragment() {
 		fragmentApplicationSelectorBinding.applicationPicker.value =
 			applicationArray.indexOf(sharedPreferences.getString("fruit", "Pear"))
 		fragmentApplicationSelectorBinding.information.setOnClickListener {
-			generateAlertBox(
-				requireContext(),
-				"",
-				getString(R.string.application_selector_information_string)
-			) { }
+			generateAlertBox(requireContext(), "", getString(R.string.application_selector_information_string)) { }
 		}
 
 		fragmentApplicationSelectorBinding.radioGroup.setOnCheckedChangeListener { _, _ ->

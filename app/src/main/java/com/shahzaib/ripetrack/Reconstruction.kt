@@ -26,17 +26,9 @@ class Reconstruction(context: Context, modelPath: String) {
 		val pixels = IntArray(pixelCount)
 		bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
 
-		var min = 1000
-		var max = -1000
+		val min = if (isRGB) MainActivity.minMaxRGB.first else MainActivity.minMaxNIR.first
+		val max = if (isRGB) MainActivity.minMaxRGB.second else MainActivity.minMaxNIR.second
 
-		if (isRGB) {
-			min = MainActivity.minMaxRGB.first
-			max = MainActivity.minMaxRGB.second
-		}
-		else {
-			min = MainActivity.minMaxNIR.first
-			max = MainActivity.minMaxNIR.second
-		}
 		val diff = (max - min).toFloat()
 		val outBuffer: FloatBuffer = Tensor.allocateFloatBuffer(3 * width * height)
 

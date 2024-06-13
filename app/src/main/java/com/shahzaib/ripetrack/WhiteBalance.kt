@@ -10,6 +10,7 @@ import org.pytorch.Tensor
 import org.pytorch.torchvision.TensorImageUtils
 import kotlin.math.roundToInt
 
+@Suppress("unused")
 class WhiteBalance(context: Context) {
     private var modelAwb: Module? = null
     private var modelS: Module? = null
