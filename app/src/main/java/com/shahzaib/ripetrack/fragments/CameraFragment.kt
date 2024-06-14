@@ -123,7 +123,7 @@ class CameraFragment: Fragment() {
 	private lateinit var cameraIdNIR: String
 
 	private lateinit var sharedPreferences: SharedPreferences
-	private var mobiSpectralApplicationID = 0
+	private var ripeTrackApplicationID = 0
 	private var offlineMode = false
 
 	private val reloadLambda = { startMyActivityForResult() }
@@ -258,7 +258,7 @@ class CameraFragment: Fragment() {
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		_fragmentCameraBinding = FragmentCameraBinding.inflate(inflater, container, false)
 		sharedPreferences = requireActivity().getSharedPreferences("ripetrack_preferences", Context.MODE_PRIVATE)
-		mobiSpectralApplicationID = when(sharedPreferences.getString("application", "Organic Identification")!!) {
+		ripeTrackApplicationID = when(sharedPreferences.getString("application", "Organic Identification")!!) {
 			else -> MainActivity.RIPETRACK_APPLICATION
 		}
 		offlineMode = sharedPreferences.getBoolean("offline_mode", false)

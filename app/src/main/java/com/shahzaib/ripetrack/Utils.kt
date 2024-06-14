@@ -82,7 +82,7 @@ object Utils {
 		var cameraList = enumerateCameras(cameraManager)
 
 		if (application == MainActivity.RIPETRACK_APPLICATION) {
-			cameraList = getMobiSpectralConfigCameras(cameraList)
+			cameraList = getRipeTrackConfigCameras(cameraList)
 
 			for (camera in cameraList) {
 				Log.i("Available Cameras", camera.title)
@@ -183,7 +183,7 @@ private fun lensOrientationString(value: Int) = when(value) {
 	else -> "Unknown"
 }
 
-fun getMobiSpectralConfigCameras(availableCameras: MutableList<FormatItem>): MutableList<FormatItem> {
+fun getRipeTrackConfigCameras(availableCameras: MutableList<FormatItem>): MutableList<FormatItem> {
 	val usableCameraList: MutableList<FormatItem> = mutableListOf()
 
 	for (camera in availableCameras) {

@@ -115,7 +115,7 @@ class DataCaptureFragment: Fragment() {
 	private lateinit var cameraIdNIR: String
 
 	private lateinit var sharedPreferences: SharedPreferences
-	private var mobiSpectralApplicationID = 0
+	private var ripeTrackApplicationID = 0
 	private var fruitApplication = ""
 	private var fruitID = 0
 	private var fruitName = 0
@@ -143,7 +143,7 @@ class DataCaptureFragment: Fragment() {
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		_fragmentDataCaptureBinding = FragmentDatacaptureBinding.inflate(inflater, container, false)
 		sharedPreferences = requireActivity().getSharedPreferences("ripetrack_preferences", Context.MODE_PRIVATE)
-		mobiSpectralApplicationID = when(sharedPreferences.getString("application", "Organic Identification")!!) {
+		ripeTrackApplicationID = when(sharedPreferences.getString("application", "Organic Identification")!!) {
 			else -> MainActivity.RIPETRACK_APPLICATION
 		}
 		val possibleIlluminations = arrayOf(getString(R.string.halogen_string), getString(R.string.led_string), getString(R.string.cfl_string), getString(R.string.arbitrary_string))

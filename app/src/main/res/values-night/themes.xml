@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.MobiSLP" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.RipeTrack" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/sfu_primary</item>
         <item name="colorPrimaryVariant">@color/sfu_red</item>
