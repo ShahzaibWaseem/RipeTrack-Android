@@ -41,7 +41,7 @@ The datasets are in pairs of RGB and NIR images. Each dataset has the following 
 ```
 [fruit]
 │
-└──	[num]_NIR.png
+└── [num]_NIR.png
 	[num]_RGB.png
 	...
 ```
