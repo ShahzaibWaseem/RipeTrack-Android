@@ -17,6 +17,12 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
 import androidx.core.net.toUri
+import com.opencsv.CSVWriter
+import com.shahzaib.ripetrack.Utils.appRootPath
+import com.shahzaib.ripetrack.Utils.croppedImageDirectory
+import com.shahzaib.ripetrack.Utils.imageFormat
+import com.shahzaib.ripetrack.Utils.processedImageDirectory
+import com.shahzaib.ripetrack.Utils.rawImageDirectory
 import java.io.BufferedWriter
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -26,13 +32,6 @@ import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-import com.opencsv.CSVWriter
-import com.shahzaib.ripetrack.Utils.appRootPath
-import com.shahzaib.ripetrack.Utils.croppedImageDirectory
-import com.shahzaib.ripetrack.Utils.imageFormat
-import com.shahzaib.ripetrack.Utils.processedImageDirectory
-import com.shahzaib.ripetrack.Utils.rawImageDirectory
-import com.shahzaib.ripetrack.Utils.torchHeight
 
 object Utils {
 	const val previewHeight = 800
@@ -103,39 +102,14 @@ object Utils {
 	}
 
 		fun cropImage(bitmap: Bitmap, left: Float, top: Float): Bitmap {
-			return Bitmap.createBitmap(
-				bitmap,
-				left.toInt(),
-				top.toInt(),
-				(boundingBoxWidth * 2).toInt(),
-				(boundingBoxHeight * 2).toInt(),
-				null,
-				false
-			)
+			return Bitmap.createBitmap(bitmap, left.toInt(), top.toInt(), (boundingBoxWidth * 2).toInt(), (boundingBoxHeight * 2).toInt(), null, false)
 		}
 
 		fun fixedAlignment(imageRGB: Bitmap): Bitmap {
-			Log.i(
-				"Aligned RGB",
-				"$aligningFactorX + $torchWidth = ${torchWidth + aligningFactorX} (${imageRGB.width})"
-			)
-			Log.i(
-				"Aligned RGB",
-				"$aligningFactorY + $torchHeight = ${torchHeight + aligningFactorY} (${imageRGB.height})"
-			)
-			val alignedImageRGB = Bitmap.createBitmap(
-				imageRGB,
-				aligningFactorX,
-				aligningFactorY,
-				torchWidth,
-				torchHeight,
-				null,
-				false
-			)
-			Log.i(
-				"Aligned RGB",
-				"Resulting Bitmap: W ${alignedImageRGB.width} H ${alignedImageRGB.height}"
-			)
+			Log.i("Aligned RGB", "$aligningFactorX + $torchWidth = ${torchWidth + aligningFactorX} (${imageRGB.width})")
+			Log.i("Aligned RGB","$aligningFactorY + $torchHeight = ${torchHeight + aligningFactorY} (${imageRGB.height})")
+			val alignedImageRGB = Bitmap.createBitmap(imageRGB,aligningFactorX, aligningFactorY, torchWidth, torchHeight,null, false)
+			Log.i("Aligned RGB", "Resulting Bitmap: W ${alignedImageRGB.width} H ${alignedImageRGB.height}")
 			return alignedImageRGB
 		}
 
@@ -345,7 +319,7 @@ fun readImage(inputFile: String): Bitmap {
 }
 
 fun compressImage(bmp: Bitmap): Bitmap {
-	var bitmap = resizeBitmap(bmp, torchHeight)
+	var bitmap = bmp
 	Log.i("Utils.copyFile", "${bitmap.height} ${bitmap.width}")
 	if (bitmap.width > bitmap.height) {     // rotate so the image is always up right (portrait)
 		bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, Matrix().apply { postRotate(90F); }, false)

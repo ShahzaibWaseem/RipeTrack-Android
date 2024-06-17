@@ -110,43 +110,40 @@ class ApplicationSelectorFragment: Fragment() {
 			}
 		}
 
-			fragmentApplicationSelectorBinding.runApplicationButton.setOnTouchListener { _, _ ->
-				val selectedApplication =
-					applicationArray[fragmentApplicationSelectorBinding.applicationPicker.value]
-				val selectedRadio =
-					fragmentApplicationSelectorBinding.radioGroup.checkedRadioButtonId
-				val selectedOption =
-					requireView().findViewById<RadioButton>(selectedRadio).text.toString()
-				val offlineMode = selectedOption == getString(R.string.offline_mode_string) // signifies online/offline mode
+		fragmentApplicationSelectorBinding.runApplicationButton.setOnTouchListener { _, _ ->
+			val selectedApplication = applicationArray[fragmentApplicationSelectorBinding.applicationPicker.value]
+			val selectedRadio = fragmentApplicationSelectorBinding.radioGroup.checkedRadioButtonId
+			val selectedOption = requireView().findViewById<RadioButton>(selectedRadio).text.toString()
+			val offlineMode = selectedOption == getString(R.string.offline_mode_string) // signifies online/offline mode
 
-				editor!!.putString("application", selectedApplication)
-				editor.putString("fruit", selectedApplication)
-				editor.putString("option", getString(R.string.advanced_option_string))
-				editor.putBoolean("offline_mode", offlineMode)
-				Log.i("Radio Button", "$selectedApplication, $selectedOption")
-				editor.apply()
-				MainActivity.actualLabel = selectedApplication
-				if (selectedOption == getString(R.string.data_capturing_mode_string))
-					lifecycleScope.launch {
-						withStarted {
-							navController.safeNavigate(
-								ApplicationSelectorFragmentDirections.actionAppselectorToDataCapturingFragment(
-									MainActivity.cameraIDList.first, imageFormat
-								)
+			editor!!.putString("application", selectedApplication)
+			editor.putString("fruit", selectedApplication)
+			editor.putString("option", getString(R.string.advanced_option_string))
+			editor.putBoolean("offline_mode", offlineMode)
+			Log.i("Radio Button", "$selectedApplication, $selectedOption")
+			editor.apply()
+			MainActivity.actualLabel = selectedApplication
+			if (selectedOption == getString(R.string.data_capturing_mode_string))
+				lifecycleScope.launch {
+					withStarted {
+						navController.safeNavigate(
+							ApplicationSelectorFragmentDirections.actionAppselectorToDataCapturingFragment(
+								MainActivity.cameraIDList.first, imageFormat
 							)
-						}
+						)
 					}
-				else
-					lifecycleScope.launch {
-						withStarted {
-							navController.safeNavigate(
-								ApplicationSelectorFragmentDirections.actionAppselectorToCameraFragment(
-									MainActivity.cameraIDList.first, imageFormat
-								)
+				}
+			else
+				lifecycleScope.launch {
+					withStarted {
+						navController.safeNavigate(
+							ApplicationSelectorFragmentDirections.actionAppselectorToCameraFragment(
+								MainActivity.cameraIDList.first, imageFormat
 							)
-						}
+						)
 					}
-				true
-			}
+				}
+			true
+		}
 	}
 }

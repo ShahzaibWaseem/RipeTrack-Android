@@ -81,13 +81,7 @@ class ImageViewerFragment: Fragment() {
 	private var advancedControlOption: Boolean = false
 
 	// to hold 64x64 bounding boxes to be drawn for detected objects
-	data class Box(
-		val left: Float,
-		val top: Float,
-		val right: Float,
-		val bottom: Float,
-	)
-	{
+	data class Box(val left: Float, val top: Float, val right: Float, val bottom: Float){
 		// secondary constructor to use with Rectangles
 		constructor(coordRect: Rect): this(coordRect.left.toFloat(), coordRect.top.toFloat(), coordRect.right.toFloat(), coordRect.bottom.toFloat())
 	}
@@ -130,14 +124,10 @@ class ImageViewerFragment: Fragment() {
 		)
 	}
 
-	private fun drawBox(box: Box, paint: Paint, canvas: Canvas)
-	{
-
+	private fun drawBox(box: Box, paint: Paint, canvas: Canvas) {
 		canvas.drawRect(box.left-2.5F, box.top-2.5F, box.right+2.5F, box.bottom+2.5F, paint)
-
 	}
-	private fun drawBoxOnView(box: Box, paint: Paint, canvas: Canvas, view: ImageView, bitmapOverlay: Bitmap)
-	{
+	private fun drawBoxOnView(box: Box, paint: Paint, canvas: Canvas, view: ImageView, bitmapOverlay: Bitmap) {
 		drawBox(box, paint, canvas)
 
 		view.setImageBitmap(bitmapOverlay)
@@ -148,8 +138,7 @@ class ImageViewerFragment: Fragment() {
 		}
 	}
 
-	private fun startViewPager(rgbImageBitmap: Bitmap, nirImageBitmap: Bitmap)
-	{
+	private fun startViewPager(rgbImageBitmap: Bitmap, nirImageBitmap: Bitmap) {
 		val viewpagerThread = Thread {
 			addItemToViewPager(fragmentImageViewerBinding.viewpager, rgbImageBitmap, 0)
 			addItemToViewPager(fragmentImageViewerBinding.viewpager, nirImageBitmap, 1)
@@ -160,8 +149,7 @@ class ImageViewerFragment: Fragment() {
 		catch (exception: InterruptedException) { exception.printStackTrace() }
 	}
 
-	private fun pointWithinBox(point: Pair<Int, Int>, box: Box): Boolean
-	{
+	private fun pointWithinBox(point: Pair<Int, Int>, box: Box): Boolean {
 		val pointFloat = Pair(point.first.toFloat(), point.second.toFloat())
 		return pointFloat.first in box.left ..box.right && pointFloat.second in box.top .. box.bottom
 	}
@@ -196,11 +184,9 @@ class ImageViewerFragment: Fragment() {
 
 				canvas.drawBitmap(item, Matrix(), null)
 
-				when (position)
-				{
+				when (position) {
 					1 -> MainActivity.tempNIRBitmap = bitmapOverlay
-					0 ->
-					{
+					0 -> {
 						Log.i("Crop Coordinates (ViewPager)", "($leftCrop,$topCrop), ($rightCrop,$bottomCrop)")
 
 						// draws rectangles based on the result of object detection
@@ -236,8 +222,7 @@ class ImageViewerFragment: Fragment() {
 
 							// check if the user tapped within a fruit box
 							fruitBoxes.forEach {
-								if (pointWithinBox(Pair(clickedX, clickedY), it))
-								{
+								if (pointWithinBox(Pair(clickedX, clickedY), it)) {
 									Log.i("Tapped Within a Box", "Drawing Green Box: $it")
 
 									// set crop coordinates for reconstruction
@@ -254,8 +239,7 @@ class ImageViewerFragment: Fragment() {
 
 							}
 
-							if (!boxSelected)
-							{
+							if (!boxSelected) {
 								Log.i("Box Added", "X: $clickedX ($bitmapsWidth), Y: $clickedY ($bitmapsHeight)")
 
 								if (!firstTap) {
@@ -307,8 +291,7 @@ class ImageViewerFragment: Fragment() {
 		fragmentImageViewerBinding.Title.setOnClickListener {
 			lifecycleScope.launch(Dispatchers.Main) {
 				navController.navigate(
-					ImageViewerFragmentDirections
-						.actionImageViewerFragmentToApplicationTitle()
+					ImageViewerFragmentDirections.actionImageViewerFragmentToApplicationTitle()
 				)
 			}
 		}
@@ -316,8 +299,7 @@ class ImageViewerFragment: Fragment() {
 		fragmentImageViewerBinding.reloadButton.setOnClickListener {
 			lifecycleScope.launch(Dispatchers.Main) {
 				navController.navigate(
-					ImageViewerFragmentDirections
-						.actionImageViewerFragmentToCameraFragment(
+					ImageViewerFragmentDirections.actionImageViewerFragmentToCameraFragment(
 							MainActivity.cameraIDList.first, imageFormat)
 				)
 			}
@@ -362,47 +344,30 @@ class ImageViewerFragment: Fragment() {
 
 			// only perform detection for the RGB image as the coordinates will apply to the NIR as well
 			// + the NIR will be cropped on the same coordinates for reconstruction/classification
-			detector.process(inputRGBImg)
-				.addOnSuccessListener { detections ->
-					Log.i("Detected Objects!", "${detections.size}, $detections")
+			detector.process(inputRGBImg).addOnSuccessListener { detections ->
+				Log.i("Detected Objects!", "${detections.size}, $detections")
 
-					if (detections.size > 0)
-					{
-						detections.forEach {
-							val currRect = it.boundingBox
+				if (detections.size > 0){
+					detections.forEach {
+						val currRect = it.boundingBox
 
-							fruitBoxes.add(Box(currRect))
+						fruitBoxes.add(Box(currRect))
 
-							// Find coordinates of the 64x64 bounding box in the middle of the detected box
-							val width = (currRect.right - currRect.left).toFloat()
-							val height = (currRect.bottom - currRect.top).toFloat() // note it's bottom - top because of how the coordinates are designed
-							val left = (currRect.left + (width/2) - Utils.boundingBoxWidth)
-							val top = currRect.top + (height/2) - Utils.boundingBoxHeight
-							val right = currRect.left + (width/2) + Utils.boundingBoxWidth
-							val bottom = currRect.top + (height/2) + Utils.boundingBoxHeight
-
-							val middleBox = Box(left, top, right, bottom)
-							detectedBoxes.add(middleBox)
-						}
-
-					}
-					else // if the object cannot be detected, select the 64x64 region in the middle
-					{
-						Toast.makeText(requireContext(), "No Objects Detected", LENGTH_LONG).show()
-
-						val left = rgbImageBitmap.width/2 - Utils.boundingBoxWidth
-						val top = rgbImageBitmap.height/2 - Utils.boundingBoxHeight
-						val right = rgbImageBitmap.width/2 + Utils.boundingBoxWidth
-						val bottom = rgbImageBitmap.height/2 + Utils.boundingBoxHeight
+						// Find coordinates of the 64x64 bounding box in the middle of the detected box
+						val width = (currRect.right - currRect.left).toFloat()
+						val height = (currRect.bottom - currRect.top).toFloat() // note it's bottom - top because of how the coordinates are designed
+						val left = (currRect.left + (width/2) - Utils.boundingBoxWidth)
+						val top = currRect.top + (height/2) - Utils.boundingBoxHeight
+						val right = currRect.left + (width/2) + Utils.boundingBoxWidth
+						val bottom = currRect.top + (height/2) + Utils.boundingBoxHeight
 
 						val middleBox = Box(left, top, right, bottom)
 						detectedBoxes.add(middleBox)
 					}
-					startViewPager(rgbImageBitmap, nirImageBitmap)
 				}
-				.addOnFailureListener {e ->
-					Log.i("Detection Failed", e.message.toString())
-					Toast.makeText(requireContext(), "Object Detection Failed", LENGTH_LONG).show()
+
+				else { // if the object cannot be detected, select the 64x64 region in the middle
+					Toast.makeText(requireContext(), "No Objects Detected", LENGTH_LONG).show()
 
 					val left = rgbImageBitmap.width/2 - Utils.boundingBoxWidth
 					val top = rgbImageBitmap.height/2 - Utils.boundingBoxHeight
@@ -411,9 +376,22 @@ class ImageViewerFragment: Fragment() {
 
 					val middleBox = Box(left, top, right, bottom)
 					detectedBoxes.add(middleBox)
-
-					startViewPager(rgbImageBitmap, nirImageBitmap)
 				}
+				startViewPager(rgbImageBitmap, nirImageBitmap)
+			}.addOnFailureListener {e ->
+				Log.i("Detection Failed", e.message.toString())
+				Toast.makeText(requireContext(), "Object Detection Failed", LENGTH_LONG).show()
+
+				val left = rgbImageBitmap.width/2 - Utils.boundingBoxWidth
+				val top = rgbImageBitmap.height/2 - Utils.boundingBoxHeight
+				val right = rgbImageBitmap.width/2 + Utils.boundingBoxWidth
+				val bottom = rgbImageBitmap.height/2 + Utils.boundingBoxHeight
+
+				val middleBox = Box(left, top, right, bottom)
+				detectedBoxes.add(middleBox)
+
+				startViewPager(rgbImageBitmap, nirImageBitmap)
+			}
 
 			loadingDialogFragment.dismissDialog()
 
@@ -435,12 +413,12 @@ class ImageViewerFragment: Fragment() {
 				Log.i("Cropped Image (before change)", "$leftCrop $topCrop")
 				if (leftCrop == -1F && topCrop == -1F && !advancedControlOption) {
 					leftCrop = rgbImageBitmap.width/2 - Utils.boundingBoxWidth
-					topCrop = rgbImageBitmap.height/2 - Utils.boundingBoxWidth
+					topCrop = rgbImageBitmap.height/2 - Utils.boundingBoxHeight
 				}
 				Log.i("Cropped Image", "$leftCrop $topCrop")
 				// if the app is asked to crop the image
 				if (leftCrop != -1F && topCrop != -1F) {
-					Log.i("Cropped Image", "Asked to crop")
+					Log.i("Cropped Image", "Asked to crop. Size Before Crop (WH): RGB (${rgbImageBitmap.width}, ${rgbImageBitmap.height}); NIR (${nirImageBitmap.width}, ${nirImageBitmap.height})")
 					rgbImageBitmap = cropImage(rgbImageBitmap, leftCrop, topCrop)
 					nirImageBitmap = cropImage(nirImageBitmap, leftCrop, topCrop)
 					Log.i("Cropped Image", "${rgbImageBitmap.width} ${rgbImageBitmap.height}")
@@ -498,11 +476,19 @@ class ImageViewerFragment: Fragment() {
 		val intArrayPixels = IntArray(width * height)
 		val intArrayValues = IntArray(width * height * 3)
 		bitmap.getPixels(intArrayPixels, 0, width, 0, 0, width, height)
+		val centerPixel = IntArray(3)
+		Log.i("MinMax", "Size: ${intArrayValues.size/2}")
 		for (idx in intArrayPixels.indices) {
 			val color = intArrayPixels[idx]
 			intArrayValues[3 * idx] = Color.red(color)
 			intArrayValues[3 * idx + 1] = Color.green(color)
 			intArrayValues[3 * idx + 2] = Color.blue(color)
+
+			if (idx == intArrayValues.size/2){
+				centerPixel[0] = Color.red(color)
+				centerPixel[1] = Color.green(color)
+				centerPixel[2] = Color.blue(color)
+			}
 		}
 		val min = intArrayValues.min()
 		val max = intArrayValues.max()
@@ -512,6 +498,7 @@ class ImageViewerFragment: Fragment() {
 		else
 			MainActivity.minMaxNIR = Pair(min, max)
 		Log.i("MinMax", "isRGB: $isRGB\tMin: $min\tMax: $max")
+		Log.i("MinMax", "Center: ${centerPixel[0]}, ${centerPixel[1]}, ${centerPixel[2]}")
 	}
 
 	/** Utility function used to decode a [Bitmap] from a byte array */
