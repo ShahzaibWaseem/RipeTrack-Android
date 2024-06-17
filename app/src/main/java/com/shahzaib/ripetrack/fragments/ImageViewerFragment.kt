@@ -11,6 +11,7 @@ import android.graphics.DashPathEffect
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.Typeface
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -93,7 +94,7 @@ class ImageViewerFragment: Fragment() {
 	}
 
 	private val fruitBoxes by lazy { mutableListOf<Box>() }
-	private val detectedBoxes by lazy { mutableListOf<Box>() }
+	private val centalBoxes by lazy { mutableListOf<Box>() }
 
 	private val defaultPaint by lazy {
 		Paint().apply {
@@ -113,6 +114,17 @@ class ImageViewerFragment: Fragment() {
 	private val highlightPaint by lazy {
 		Paint(defaultPaint).apply {
 			color = Color.argb(255, 126,255,0)
+		}
+	}
+
+	// for drawing text on the Bitmaps
+	private val textPaint by lazy {
+		Paint(defaultPaint).apply {
+			strokeWidth = 1F
+			style = Paint.Style.FILL
+			textSize = 20F
+			typeface = Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL)
+			isAntiAlias = true
 		}
 	}
 
@@ -194,6 +206,13 @@ class ImageViewerFragment: Fragment() {
 				val bitmapOverlay = Bitmap.createBitmap(item.width, item.height, item.config)
 				val canvas = Canvas(bitmapOverlay)
 
+				/* Text Overlay */
+				// this might not work well if the object's top or left is 0 (at the edge)
+				val text = "EUR-x Days Remain"
+				val tBounds = Rect()
+				textPaint.getTextBounds(text, 0, text.length, tBounds)
+				//Log.i("Text Bounds", "$tBounds")
+
 				canvas.drawBitmap(item, Matrix(), null)
 
 				when (position)
@@ -206,12 +225,24 @@ class ImageViewerFragment: Fragment() {
 						// draws rectangles based on the result of object detection
 						// note: needs to run after a 100-millisecond delay otherwise the bounding box will not be drawn
 						Handler(Looper.getMainLooper()).postDelayed({
-							fruitBoxes.forEach { drawBoxOnView(it, dottedPaint, canvas, view, bitmapOverlay) }
+							fruitBoxes.forEach {
+								drawBoxOnView(it, dottedPaint, canvas, view, bitmapOverlay)
+
+								val left = (	if (tBounds.left < 0) it.left - tBounds.left else it.left + tBounds.left	) - 2.5F
+								val top = (		if (tBounds.top < 0) it.top - tBounds.top else it.top + tBounds.top		) - 2.5F
+								canvas.drawText(text, left, top, textPaint)
+							}
 						}, 100)
 
 						view.setOnTouchListener { v, event ->
 							canvas.drawBitmap(item, Matrix(), null)
-							fruitBoxes.forEach { drawBoxOnView(it, dottedPaint, canvas, view, bitmapOverlay) }
+							fruitBoxes.forEach {
+								drawBoxOnView(it, dottedPaint, canvas, view, bitmapOverlay)
+
+								val left = (if (tBounds.left < 0) it.left - tBounds.left else it.left + tBounds.left) - 2.5F
+								val top = (if (tBounds.top < 0) it.top - tBounds.top else it.top + tBounds.top) - 2.5F
+								canvas.drawText(text, left, top, textPaint)
+							}
 
 							var clickedX = ((event!!.x / v!!.width) * bitmapsWidth).toInt()
 							var clickedY = ((event.y / v.height) * bitmapsHeight).toInt()
@@ -382,7 +413,7 @@ class ImageViewerFragment: Fragment() {
 							val bottom = currRect.top + (height/2) + Utils.boundingBoxHeight
 
 							val middleBox = Box(left, top, right, bottom)
-							detectedBoxes.add(middleBox)
+							centalBoxes.add(middleBox)
 						}
 
 					}
@@ -396,7 +427,7 @@ class ImageViewerFragment: Fragment() {
 						val bottom = rgbImageBitmap.height/2 + Utils.boundingBoxHeight
 
 						val middleBox = Box(left, top, right, bottom)
-						detectedBoxes.add(middleBox)
+						centalBoxes.add(middleBox)
 					}
 					startViewPager(rgbImageBitmap, nirImageBitmap)
 				}
@@ -410,7 +441,7 @@ class ImageViewerFragment: Fragment() {
 					val bottom = rgbImageBitmap.height/2 + Utils.boundingBoxHeight
 
 					val middleBox = Box(left, top, right, bottom)
-					detectedBoxes.add(middleBox)
+					centalBoxes.add(middleBox)
 
 					startViewPager(rgbImageBitmap, nirImageBitmap)
 				}
