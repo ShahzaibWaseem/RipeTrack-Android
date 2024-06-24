@@ -4,10 +4,12 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color.rgb
 import android.util.Log
+import org.apache.commons.math3.linear.*
 import org.pytorch.IValue
 import org.pytorch.Module
 import org.pytorch.Tensor
 import org.pytorch.torchvision.TensorImageUtils
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @Suppress("unused")
@@ -34,7 +36,153 @@ class WhiteBalance(context: Context) {
         outputT = modelT?.forward(inputs)?.toTensor()!!
         outputS = modelS?.forward(inputs)?.toTensor()!!
 
-        return colorTempInterpolate(outputT!!, outputS!!)
+        return colorTempInterpolate(
+            outOfGamutClipping(applyMappingFunc(image, getMappingFunc(image, outputT!!))),
+            outOfGamutClipping(applyMappingFunc(image, getMappingFunc(image, outputS!!)))
+        )
+    }
+
+    /* reshapes image Tensors of shape [1, 3, row, col] to [row*col, 3], which is the equivalent of np.reshape(image, [-1, 3]) in Python */
+    private fun rearrangeToRGBPixels(image: Tensor): Tensor {
+        val tensorData = image.dataAsFloatArray
+
+        // size is 3 (for r,g,b) * rows * cols e.g. 3 * 640 * 480
+        val imageData = FloatArray(tensorData.size)
+
+        Log.i("(Mapping) Rearrange to RGB Pixels", "${image.shape().toList()}")
+        val numPixels = (image.shape()[2] * image.shape()[3]).toInt()
+
+        // rearrange imageData into the shape row * col * 3
+        var idx = 0 // for iterating over imageData with steps of 3 (pixel-by-pixel)
+        for (i in 0 until numPixels) {
+            // tensorData is comprised of an entire row for reds, one for greens and one for blues
+            // these are extracted from their corresponding rows and the pixel is gathered back together
+            imageData[idx] = tensorData[i]
+            imageData[idx + 1] = tensorData[i + numPixels]
+            imageData[idx + 2] = tensorData[i + (numPixels + numPixels)]
+            idx += 3
+        }
+
+        return Tensor.fromBlob(imageData, longArrayOf(numPixels.toLong(), 3))
+    }
+
+    /*
+    Kernel function: kernel(r, g, b) -> (r,g,b,rg,rb,gb,r^2,g^2,b^2,rgb,1)
+    Ref: Hong, et al., "A study of digital camera colorimetric characterization
+    based on polynomial modeling." Color Research & Application, 2001.
+     */
+    private fun kernelP(image: Tensor): Tensor {
+        val result = mutableListOf<Float>() // could potentially use a FloatArray() for quicker results
+
+        // rearrange image to nx3 form i.e. an array of pixels
+        val imageReshaped = rearrangeToRGBPixels(image)
+        val imageData = imageReshaped.dataAsFloatArray
+
+        for (i in imageData.indices step 3) {
+            val r = imageData[i]
+            val g = imageData[i + 1]
+            val b = imageData[i + 2]
+            result.add(r)
+            result.add(g)
+            result.add(b)
+            result.add(r * g)
+            result.add(r * b)
+            result.add(g * b)
+            result.add(r.pow(2))
+            result.add(g.pow(2))
+            result.add(b.pow(2))
+            result.add(r * g * b)
+            result.add(1F)
+        }
+
+        // image Tensor is usually of the shape 1 x 3 x row x col, so we use row*col to get the pixel count so that
+        // the resulting tensor has shape (row*col)x11
+        return Tensor.fromBlob(
+            result.toFloatArray(),
+            longArrayOf(image.shape()[2] * image.shape()[3], 11)
+        )
+    }
+
+    // convert a 1D array into a 2D array as such: Array<DoubleArray> of size [row][col] (row is inferred)
+    private fun arrayTo2DArray(array: DoubleArray, col: Int): Array<DoubleArray> {
+        return array.toList().chunked(col) { it.toDoubleArray() }.toTypedArray()
+    }
+
+    private fun floatToDoubleArray(input: FloatArray): DoubleArray {
+        return DoubleArray(input.size) { input[it].toDouble() }
+    }
+
+    /*
+    Assuming input images are of the form [1, 3, row, col]
+     */
+    private fun getMappingFunc(image1: Tensor, image2: Tensor): RealMatrix {
+        // rearrange image tensors to arrays of pixels
+        val image2Rearranged = rearrangeToRGBPixels(image2)
+
+        // convert images to 2D arrays (matrices) of dimension nx11 and nx3
+        val image1Mat = arrayTo2DArray(floatToDoubleArray(kernelP(image1).dataAsFloatArray), 11)
+        val image2Mat = arrayTo2DArray(floatToDoubleArray(image2Rearranged.dataAsFloatArray), 3)
+
+        // Use QR decomposition to solve for X in the equation AX = B, where A = image1Mat (input) and B = image2Mat (output)
+        val qrDecomposition = QRDecomposition(Array2DRowRealMatrix(image1Mat))
+        return qrDecomposition.solver.solve(Array2DRowRealMatrix(image2Mat))
+    }
+
+    // assuming image has dimensions 1x3x640x480
+    private fun applyMappingFunc(image: Tensor, mapping: RealMatrix): Tensor {
+        val imageFeatures = kernelP(image)
+
+        // AX = B, here we're multiplying A (nx11) by X (11x3)
+        // Note we need to use arrayTo2DArray as floatToDoubleArray() gives a vector, but the proper dimensions are required for mat multiplication
+        val input = Array2DRowRealMatrix(
+            arrayTo2DArray(floatToDoubleArray(imageFeatures.dataAsFloatArray), 11)
+        )
+
+        Log.i("(Mapping) applyMappingFunc", "Input: ${listOf(input.rowDimension, input.columnDimension)}, Mapping: ${listOf(mapping.rowDimension, mapping.columnDimension)}")
+        val predictions = input.multiply(mapping)
+        // reshape image to 1x3x640x480 format
+        val rList = mutableListOf<Double>()
+        val gList = mutableListOf<Double>()
+        val bList = mutableListOf<Double>()
+
+        for (i in 0 until predictions.rowDimension) {
+            val currRow = predictions.getRow(i)
+            for (j in currRow.indices step 3) {
+                rList.add(currRow[j])
+                gList.add(currRow[j + 1])
+                bList.add(currRow[j + 2])
+            }
+        }
+
+        // size of result is the total number of entries
+        //val result = DoubleArray(predictions.rowDimension * predictions.columnDimension)
+        val result = FloatArray(predictions.rowDimension * predictions.columnDimension)
+
+        // for iterating through result
+        var idx = 0
+
+        // add the red pixel values first, then the greens and finally the blues
+        listOf(rList, gList, bList).forEach{
+            it.forEach {item ->
+                result[idx] = item.toFloat()
+                idx += 1
+            }
+        }
+
+        // return a Tensor in the same shape as the original image
+        return Tensor.fromBlob(result, image.shape())
+    }
+
+    private fun outOfGamutClipping(image: Tensor): Tensor {
+        // why DoubleArray()? because this is a tensor_float64, not tensor_float32
+        val imageData = image.dataAsFloatArray
+
+        imageData.indices.forEach {
+            val item = imageData[it]
+            imageData[it] = if (item > 1F) 1F else if (item < 0F) 0F else item
+        }
+
+        return Tensor.fromBlob(imageData, image.shape())
     }
 
     /*
@@ -96,6 +244,9 @@ class WhiteBalance(context: Context) {
 
     fun whiteBalance(rgbBitmap: Bitmap): Bitmap {
         val rgbTensor = TensorImageUtils.bitmapToFloat32Tensor(rgbBitmap, mean, std)
+
+        Log.i("RGB Tensor", "$rgbTensor")
+        Log.i("RGB Tensor after kernelP", "${kernelP(rgbTensor)}")
 
         Log.i("imageShape", "${rgbTensor.shape().toList()}")
 
