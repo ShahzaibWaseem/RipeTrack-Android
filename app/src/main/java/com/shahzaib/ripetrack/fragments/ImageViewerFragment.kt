@@ -7,11 +7,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.DashPathEffect
 import android.graphics.Matrix
-import android.graphics.Paint
 import android.graphics.Rect
-import android.graphics.Typeface
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -35,19 +32,30 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import com.shahzaib.ripetrack.MainActivity
+import com.shahzaib.ripetrack.MainActivity.Companion.centralBoxes
+import com.shahzaib.ripetrack.MainActivity.Companion.croppableNIRBitmap
+import com.shahzaib.ripetrack.MainActivity.Companion.croppableRGBBitmap
+import com.shahzaib.ripetrack.MainActivity.Companion.fruitBoxes
 import com.shahzaib.ripetrack.MainActivity.Companion.generateAlertBox
 import com.shahzaib.ripetrack.R
 import com.shahzaib.ripetrack.Utils
 import com.shahzaib.ripetrack.Utils.cropImage
 import com.shahzaib.ripetrack.Utils.imageFormat
+import com.shahzaib.ripetrack.WhiteBalance
 import com.shahzaib.ripetrack.addCSVLog
 import com.shahzaib.ripetrack.databinding.FragmentImageviewerBinding
+import com.shahzaib.ripetrack.drawBox
+import com.shahzaib.ripetrack.drawBoxOnView
 import com.shahzaib.ripetrack.makeFolderInRoot
+import com.shahzaib.ripetrack.pointWithinBox
 import com.shahzaib.ripetrack.saveProcessedImages
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.BufferedInputStream
 import java.io.File
+import kotlin.math.roundToInt
+
+typealias Box = MainActivity.Companion.Box
 
 class ImageViewerFragment: Fragment() {
 	private val correctionMatrix = Matrix().apply { postRotate(90F); }
@@ -81,59 +89,11 @@ class ImageViewerFragment: Fragment() {
 
 	private var advancedControlOption: Boolean = false
 
-	// to hold 64x64 bounding boxes to be drawn for detected objects
-	data class Box(
-		val left: Float,
-		val top: Float,
-		val right: Float,
-		val bottom: Float,
-	)
-	{
-		// secondary constructor to use with Rectangles
-		constructor(coordRect: Rect): this(coordRect.left.toFloat(), coordRect.top.toFloat(), coordRect.right.toFloat(), coordRect.bottom.toFloat())
-	}
-
-	private val fruitBoxes by lazy { mutableListOf<Box>() }
-	private val centalBoxes by lazy { mutableListOf<Box>() }
-
-	private val defaultPaint by lazy {
-		Paint().apply {
-			color = Color.argb(255, 253,250,114)
-			strokeWidth = 5F
-			style = Paint.Style.STROKE
-		}
-	}
-
-	private val dottedPaint by lazy {
-		Paint(defaultPaint).apply {
-			strokeWidth = 1F
-			pathEffect = DashPathEffect(floatArrayOf(10F, 4F), 0F)
-		}
-	}
-
-	private val highlightPaint by lazy {
-		Paint(defaultPaint).apply {
-			color = Color.argb(255, 126,255,0)
-		}
-	}
-
-	// for drawing text on the Bitmaps
-	private val textPaint by lazy {
-		Paint(defaultPaint).apply {
-			strokeWidth = 1F
-			style = Paint.Style.FILL
-			textSize = 20F
-			typeface = Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL)
-			isAntiAlias = true
-		}
-	}
-
-	/*
 	// used to decide for white balancing
 	private val offlineMode by lazy {
 		sharedPreferences.getBoolean("offline_mode", true)
 	}
-	*/
+
 
 	private fun imageViewFactory() = ImageView(requireContext()).apply {
 		layoutParams = ViewGroup.LayoutParams(
@@ -142,26 +102,7 @@ class ImageViewerFragment: Fragment() {
 		)
 	}
 
-	private fun drawBox(box: Box, paint: Paint, canvas: Canvas)
-	{
-
-		canvas.drawRect(box.left-2.5F, box.top-2.5F, box.right+2.5F, box.bottom+2.5F, paint)
-
-	}
-	private fun drawBoxOnView(box: Box, paint: Paint, canvas: Canvas, view: ImageView, bitmapOverlay: Bitmap)
-	{
-		drawBox(box, paint, canvas)
-
-		view.setImageBitmap(bitmapOverlay)
-
-		if (bitmapOverlay.width > Utils.boundingBoxWidth*2 && bitmapOverlay.height > Utils.boundingBoxHeight*2) {
-			MainActivity.tempRGBBitmap = bitmapOverlay
-			MainActivity.tempRectangle = Rect(box.bottom.toInt(), box.left.toInt(), box.right.toInt(), box.top.toInt())
-		}
-	}
-
-	private fun startViewPager(rgbImageBitmap: Bitmap, nirImageBitmap: Bitmap)
-	{
+	private fun startViewPager(rgbImageBitmap: Bitmap, nirImageBitmap: Bitmap) {
 		val viewpagerThread = Thread {
 			addItemToViewPager(fragmentImageViewerBinding.viewpager, rgbImageBitmap, 0)
 			addItemToViewPager(fragmentImageViewerBinding.viewpager, nirImageBitmap, 1)
@@ -170,12 +111,6 @@ class ImageViewerFragment: Fragment() {
 		viewpagerThread.start()
 		try { viewpagerThread.join() }
 		catch (exception: InterruptedException) { exception.printStackTrace() }
-	}
-
-	private fun pointWithinBox(point: Pair<Int, Int>, box: Box): Boolean
-	{
-		val pointFloat = Pair(point.first.toFloat(), point.second.toFloat())
-		return pointFloat.first in box.left ..box.right && pointFloat.second in box.top .. box.bottom
 	}
 
 	@SuppressLint("ClickableViewAccessibility")
@@ -210,56 +145,55 @@ class ImageViewerFragment: Fragment() {
 				// this might not work well if the object's top or left is 0 (at the edge)
 				val text = "EUR-x Days Remain"
 				val tBounds = Rect()
-				textPaint.getTextBounds(text, 0, text.length, tBounds)
+				MainActivity.textPaint.getTextBounds(text, 0, text.length, tBounds)
 				//Log.i("Text Bounds", "$tBounds")
 
 				canvas.drawBitmap(item, Matrix(), null)
 
-				when (position)
-				{
+				when (position) {
 					1 -> MainActivity.tempNIRBitmap = bitmapOverlay
-					0 ->
-					{
+					0 -> {
 						Log.i("Crop Coordinates (ViewPager)", "($leftCrop,$topCrop), ($rightCrop,$bottomCrop)")
 
 						// draws rectangles based on the result of object detection
 						// note: needs to run after a 100-millisecond delay otherwise the bounding box will not be drawn
 						Handler(Looper.getMainLooper()).postDelayed({
 							fruitBoxes.forEach {
-								drawBoxOnView(it, dottedPaint, canvas, view, bitmapOverlay)
+								drawBoxOnView(it, MainActivity.dottedPaint, canvas, view, bitmapOverlay)
 
 								val left = (	if (tBounds.left < 0) it.left - tBounds.left else it.left + tBounds.left	) - 2.5F
 								val top = (		if (tBounds.top < 0) it.top - tBounds.top else it.top + tBounds.top		) - 2.5F
-								canvas.drawText(text, left, top, textPaint)
+								canvas.drawText(text, left, top, MainActivity.textPaint)
 							}
 						}, 100)
 
 						view.setOnTouchListener { v, event ->
 							canvas.drawBitmap(item, Matrix(), null)
 							fruitBoxes.forEach {
-								drawBoxOnView(it, dottedPaint, canvas, view, bitmapOverlay)
+								Log.i("BOX (if)", "Drawing a box $it")
+								drawBoxOnView(it, MainActivity.dottedPaint, canvas, view, bitmapOverlay)
 
 								val left = (if (tBounds.left < 0) it.left - tBounds.left else it.left + tBounds.left) - 2.5F
 								val top = (if (tBounds.top < 0) it.top - tBounds.top else it.top + tBounds.top) - 2.5F
-								canvas.drawText(text, left, top, textPaint)
+								canvas.drawText(text, left, top, MainActivity.textPaint)
 							}
 
-							var clickedX = ((event!!.x / v!!.width) * bitmapsWidth).toInt()
-							var clickedY = ((event.y / v.height) * bitmapsHeight).toInt()
+							var clickedX = ((event!!.x / v!!.width) * bitmapsWidth).roundToInt()
+							var clickedY = ((event.y / v.height) * bitmapsHeight).roundToInt()
 
 							// Make sure the bounding box doesn't go outside the bounds of the image
-							if (clickedX + Utils.boundingBoxWidth > item.width)
-								clickedX = (item.width - Utils.boundingBoxWidth).toInt()
-							if (clickedY + Utils.boundingBoxHeight > item.height)
-								clickedY = (item.height - Utils.boundingBoxHeight).toInt()
+							if (clickedX + Utils.boundingBoxWidth > bitmapsWidth)
+								clickedX = (item.width - Utils.boundingBoxWidth).roundToInt()
+							if (clickedY + Utils.boundingBoxHeight > bitmapsHeight)
+								clickedY = (item.height - Utils.boundingBoxHeight).roundToInt()
 
 							if (clickedX - Utils.boundingBoxWidth < 0)
-								clickedX = (0 + Utils.boundingBoxWidth).toInt()
+								clickedX = (0 + Utils.boundingBoxWidth).roundToInt()
 							if (clickedY - Utils.boundingBoxHeight < 0)
-								clickedY = (0 + Utils.boundingBoxHeight).toInt()
+								clickedY = (0 + Utils.boundingBoxHeight).roundToInt()
 
 							// take a bitmap of the RGB image without modifications
-							val originalRGB = Bitmap.createBitmap(item.width, item.height, item.config)
+							val originalRGB = Bitmap.createBitmap(bitmapsWidth, bitmapsHeight, item.config)
 							val tempCanvas = Canvas(originalRGB)
 							tempCanvas.drawBitmap(item, Matrix(), null)
 
@@ -267,8 +201,7 @@ class ImageViewerFragment: Fragment() {
 
 							// check if the user tapped within a fruit box
 							fruitBoxes.forEach {
-								if (pointWithinBox(Pair(clickedX, clickedY), it))
-								{
+								if (pointWithinBox(Pair(clickedX, clickedY), it)){
 									Log.i("Tapped Within a Box", "Drawing Green Box: $it")
 
 									// set crop coordinates for reconstruction
@@ -278,15 +211,13 @@ class ImageViewerFragment: Fragment() {
 									bottomCrop = clickedY + Utils.boundingBoxHeight
 
 									// draw only the selected fruit box
-									drawBox(it, dottedPaint, tempCanvas)
+									drawBox(it, MainActivity.dottedPaint, tempCanvas)
 
 									boxSelected = true
 								}
-
 							}
 
-							if (!boxSelected)
-							{
+							if (!boxSelected) {
 								Log.i("Box Added", "X: $clickedX ($bitmapsWidth), Y: $clickedY ($bitmapsHeight)")
 
 								if (!firstTap) {
@@ -309,10 +240,10 @@ class ImageViewerFragment: Fragment() {
 							val pickedBox = Box(leftCrop, topCrop, rightCrop, bottomCrop)
 
 							// show the box to the user
-							drawBoxOnView(pickedBox, highlightPaint, canvas, view, bitmapOverlay)
+							drawBoxOnView(pickedBox, MainActivity.highlightPaint, canvas, view, bitmapOverlay)
 
 							// also draw it on the copy RGB bitmap
-							drawBox(pickedBox, highlightPaint, tempCanvas)
+							drawBox(pickedBox, MainActivity.highlightPaint, tempCanvas)
 
 							// this is going to be used in reconstruction fragment
 							MainActivity.tempRGBBitmap = originalRGB
@@ -353,7 +284,6 @@ class ImageViewerFragment: Fragment() {
 				)
 			}
 		}
-
 		loadingDialogFragment.show(childFragmentManager, LoadingDialogFragment.TAG)
 	}
 
@@ -379,6 +309,10 @@ class ImageViewerFragment: Fragment() {
 			bitmapsWidth = rgbImageBitmap.width
 			bitmapsHeight = rgbImageBitmap.height
 
+			// Important: clear the box lists so that old boxes from previous iterations are not drawn
+			fruitBoxes.clear()
+			centralBoxes.clear()
+
 			/* Object Detection */
 			// Important to run this code in the I/O thread so that the main thread isn't slowed down
 
@@ -397,8 +331,7 @@ class ImageViewerFragment: Fragment() {
 				.addOnSuccessListener { detections ->
 					Log.i("Detected Objects!", "${detections.size}, $detections")
 
-					if (detections.size > 0)
-					{
+					if (detections.size > 0) {
 						detections.forEach {
 							val currRect = it.boundingBox
 
@@ -413,12 +346,12 @@ class ImageViewerFragment: Fragment() {
 							val bottom = currRect.top + (height/2) + Utils.boundingBoxHeight
 
 							val middleBox = Box(left, top, right, bottom)
-							centalBoxes.add(middleBox)
+							centralBoxes.add(middleBox)
 						}
 
 					}
-					else // if the object cannot be detected, select the 64x64 region in the middle
-					{
+					// if the object cannot be detected, select the 64x64 region in the middle
+					else {
 						Toast.makeText(requireContext(), "No Objects Detected", LENGTH_LONG).show()
 
 						val left = rgbImageBitmap.width/2 - Utils.boundingBoxWidth
@@ -427,7 +360,7 @@ class ImageViewerFragment: Fragment() {
 						val bottom = rgbImageBitmap.height/2 + Utils.boundingBoxHeight
 
 						val middleBox = Box(left, top, right, bottom)
-						centalBoxes.add(middleBox)
+						centralBoxes.add(middleBox)
 					}
 					startViewPager(rgbImageBitmap, nirImageBitmap)
 				}
@@ -441,7 +374,7 @@ class ImageViewerFragment: Fragment() {
 					val bottom = rgbImageBitmap.height/2 + Utils.boundingBoxHeight
 
 					val middleBox = Box(left, top, right, bottom)
-					centalBoxes.add(middleBox)
+					centralBoxes.add(middleBox)
 
 					startViewPager(rgbImageBitmap, nirImageBitmap)
 				}
@@ -472,8 +405,16 @@ class ImageViewerFragment: Fragment() {
 				// if the app is asked to crop the image
 				if (leftCrop != -1F && topCrop != -1F) {
 					Log.i("Cropped Image", "Asked to crop")
+
+					croppableRGBBitmap = rgbImageBitmap
+					croppableNIRBitmap = rgbImageBitmap
+
+					// don't crop them just yet, we'll need them for the next fragment
 					rgbImageBitmap = cropImage(rgbImageBitmap, leftCrop, topCrop)
 					nirImageBitmap = cropImage(nirImageBitmap, leftCrop, topCrop)
+					MainActivity.originalRGBBitmap = rgbImageBitmap
+					MainActivity.originalNIRBitmap = nirImageBitmap
+
 					Log.i("Cropped Image", "${rgbImageBitmap.width} ${rgbImageBitmap.height}")
 					Log.i("Cropped Image", "${nirImageBitmap.width} ${nirImageBitmap.height}")
 					Log.i("Bitmap dimensions", "(${rgbImageBitmap.width},${rgbImageBitmap.height})")
@@ -481,8 +422,8 @@ class ImageViewerFragment: Fragment() {
 
 					MainActivity.executionTime += System.currentTimeMillis() - cropTime
 
-					MainActivity.originalRGBBitmap = rgbImageBitmap
-					MainActivity.originalNIRBitmap = nirImageBitmap
+					//MainActivity.originalRGBBitmap = rgbImageBitmap
+					//MainActivity.originalNIRBitmap = nirImageBitmap
 
 					lifecycleScope.launch(Dispatchers.Main) {
 						navController.navigate(ImageViewerFragmentDirections.actionImageViewerFragmentToReconstructionFragment())
@@ -556,13 +497,9 @@ class ImageViewerFragment: Fragment() {
 		if (isRGB){
 			bitmap = Bitmap.createBitmap(decodedBitmap, 0, 0, decodedBitmap.width, decodedBitmap.height, null, false)
 
-			/*
 			// Perform white balancing on the RGB image if (1) online mode or (2) offline mode and the selected RGB does not have white balancing
 			Log.i("WB Conditions (online mode, offline image with -D)", "$offlineMode, ${MainActivity.rgbAbsolutePath}")
-			if (
-				!offlineMode || ( offlineMode && !MainActivity.rgbAbsolutePath.contains("-D") )
-				)
-			{
+			if (!offlineMode || ( offlineMode && !MainActivity.rgbAbsolutePath.contains("-D"))){
 				Log.i("WB", "Process Began")
 				val whiteBalancingModel = WhiteBalance(requireContext())
 				val whiteBalancingThread = Thread {
@@ -573,7 +510,6 @@ class ImageViewerFragment: Fragment() {
 				catch (exception: InterruptedException) { exception.printStackTrace() }
 				Log.i("WB", "Process Completed")
 			}
-			 */
 		}
 		else {
 			bitmap = if (decodedBitmap.width > decodedBitmap.height)

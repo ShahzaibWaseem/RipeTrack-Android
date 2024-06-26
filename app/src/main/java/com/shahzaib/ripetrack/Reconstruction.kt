@@ -81,7 +81,6 @@ class Reconstruction(context: Context, modelPath: String) {
 		val nirTensor: Tensor = getOneBand(getNormalizedTensor(nirBitmap, isRGB = false), 0)
 		Log.i("Normalization", "First Pixel Normalized: [${nirTensor.dataAsFloatArray[0]}, ${nirTensor.dataAsFloatArray[1]}, ${nirTensor.dataAsFloatArray[2]}]")
 
-
 		val imageTensor: Tensor = concatenate(rgbBitmapTensor, nirTensor, 4)
 		val inputs: IValue = IValue.from(imageTensor)
 

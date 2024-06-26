@@ -6,7 +6,6 @@ import org.pytorch.IValue
 import org.pytorch.Module
 import org.pytorch.Tensor
 
-
 class Classification(context: Context, modelPath: String) {
     private var model: Module? = null
 
@@ -38,5 +37,4 @@ class Classification(context: Context, modelPath: String) {
 
         return Pair(ripenessArgmax!!, remainingLifeArgmax!!)
     }
-
 }

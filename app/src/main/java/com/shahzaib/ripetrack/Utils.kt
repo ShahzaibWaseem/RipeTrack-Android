@@ -4,8 +4,10 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.ImageFormat
 import android.graphics.Matrix
+import android.graphics.Paint
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
@@ -16,7 +18,15 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
+import android.widget.ImageView
 import androidx.core.net.toUri
+import com.opencsv.CSVWriter
+import com.shahzaib.ripetrack.Utils.appRootPath
+import com.shahzaib.ripetrack.Utils.croppedImageDirectory
+import com.shahzaib.ripetrack.Utils.imageFormat
+import com.shahzaib.ripetrack.Utils.processedImageDirectory
+import com.shahzaib.ripetrack.Utils.rawImageDirectory
+import com.shahzaib.ripetrack.Utils.torchHeight
 import java.io.BufferedWriter
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -26,13 +36,8 @@ import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
-import com.opencsv.CSVWriter
-import com.shahzaib.ripetrack.Utils.appRootPath
-import com.shahzaib.ripetrack.Utils.croppedImageDirectory
-import com.shahzaib.ripetrack.Utils.imageFormat
-import com.shahzaib.ripetrack.Utils.processedImageDirectory
-import com.shahzaib.ripetrack.Utils.rawImageDirectory
-import com.shahzaib.ripetrack.Utils.torchHeight
+
+typealias Box = MainActivity.Companion.Box
 
 object Utils {
 	const val previewHeight = 800
@@ -386,3 +391,88 @@ fun addCSVLog (context: Context) {
 	else
 		makeFolderInRoot(appRootPath, context)
 }
+fun drawBox(box: Box, paint: Paint, canvas: Canvas)
+{
+	val strokeWidth = paint.strokeWidth
+	canvas.drawRect(box.left-strokeWidth, box.top-strokeWidth, box.right+strokeWidth, box.bottom+strokeWidth, paint)
+
+}
+fun drawBoxOnView(box: Box, paint: Paint, canvas: Canvas, view: ImageView, bitmapOverlay: Bitmap) {
+	drawBox(box, paint, canvas)
+
+	view.setImageBitmap(bitmapOverlay)
+}
+
+fun pointWithinBox(point: Pair<Int, Int>, box: Box): Boolean {
+	val pointFloat = Pair(point.first.toFloat(), point.second.toFloat())
+	return pointFloat.first in box.left ..box.right && pointFloat.second in box.top .. box.bottom
+}
+
+/*
+class MathOps {
+	companion object {
+		fun dot (a: DoubleArray, b: DoubleArray): Double {
+			var dotProduct = 0.0
+			for(i in 0 until a.size) {
+				dotProduct += (a[ i ] * b[ i ])
+			}
+			return dotProduct
+		}
+
+		fun dotMatrixList(matrix: Array<DoubleArray>, list: DoubleArray): DoubleArray {
+			val dotList = DoubleArray(matrix[0].size)
+
+			for(i in matrix.indices) {
+				dotList[i] = dot(matrix[i], list)
+			}
+			return dotList
+		}
+
+		fun mmul(weights: Array<DoubleArray>, X: Array<DoubleArray>): Array<DoubleArray> {
+			val outWeights = Array(weights.size){ DoubleArray(weights[0].size) }
+
+			weights.indices.forEach {classes ->
+				val currentX = DoubleArray(weights[0].size)
+				weights[classes].indices.forEach {features->
+					currentX[features] = weights[classes][features]
+				}
+				outWeights[classes] = dotMatrixList(weights, X[classes])
+			}
+			return outWeights
+		}
+
+		fun subtract (a: DoubleArray, b: DoubleArray): DoubleArray {
+			val difference = DoubleArray(a.size)
+			for(i in 0 until a.size) {
+				difference[i] =  (a[ i ] - b[ i ])
+			}
+			return difference
+		}
+
+		fun multiplyScalar (a: DoubleArray, k: Double): DoubleArray {
+			val results = DoubleArray(a.size)
+			for (i in 0 until a.size) {
+				results[ i ] = a[ i ] * k
+			}
+			return results
+		}
+
+		fun multidimMean(x: Array<DoubleArray>): Array<Double> {
+			val mean = ArrayList<Double>()
+			for (i in 0 until x[0].size) {
+				var sum = 0.0
+				for (array in x) {
+					sum += array[i]
+				}
+				mean.add(sum / x.size)
+			}
+			return mean.toTypedArray()
+		}
+
+		fun mean(x: DoubleArray): Double
+		{
+
+		}
+	}
+}
+ */
