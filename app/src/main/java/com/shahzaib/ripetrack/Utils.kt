@@ -391,8 +391,7 @@ fun addCSVLog (context: Context) {
 	else
 		makeFolderInRoot(appRootPath, context)
 }
-fun drawBox(box: Box, paint: Paint, canvas: Canvas)
-{
+fun drawBox(box: Box, paint: Paint, canvas: Canvas){
 	val strokeWidth = paint.strokeWidth
 	canvas.drawRect(box.left-strokeWidth, box.top-strokeWidth, box.right+strokeWidth, box.bottom+strokeWidth, paint)
 

@@ -49,10 +49,10 @@ import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
 class ReconstructionFragment: Fragment() {
-//	private lateinit var predictedHS: FloatArray
+	// private lateinit var predictedHS: FloatArray
 	private lateinit var classificationPair: Pair<String, Int>
 	private var bandsHS: MutableList<Bitmap> = mutableListOf()
-//	private var reconstructionDuration = 0F
+	// private var reconstructionDuration = 0F
 	private val numberOfBands = 68
 	private val bandSpacing = 204 / numberOfBands
 	private var clickedX = 0.0F
@@ -74,7 +74,7 @@ class ReconstructionFragment: Fragment() {
 	private lateinit var ripeTrackApplication: String
 	private lateinit var classificationFile: String
 	private lateinit var reconstructionFile: String
-	private var classificationFiles = arrayOf("RipeTrack_classification_mobile_pa.pt", "RipeTrack_classification_mobile_bmn.pt")
+	private var classificationFiles = arrayOf("RipeTrack_classification_mobile_pa_oneplus.pt", "RipeTrack_classification_mobile_bmn_oneplus.pt")
 	private var reconstructionFiles = arrayOf("RipeTrack_reconstruction_mobile_pa_68.pt", "RipeTrack_reconstruction_mobile_bmn_68.pt")
 	private lateinit var ripeTrackControlOption: String
 	private var advancedControlOption by Delegates.notNull<Boolean>()
@@ -107,7 +107,6 @@ class ReconstructionFragment: Fragment() {
 	private lateinit var toggleVisibilityViews: Array<View>
 
 	private val reconstructionDone = MutableLiveData(false)
-
 
 	private suspend fun displayClassification()	{
 		// delay the function to give a "growth" effect to the progress bar
@@ -178,8 +177,7 @@ class ReconstructionFragment: Fragment() {
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		super.onCreateView(inflater, container, savedInstanceState)
-		_fragmentReconstructionBinding = FragmentReconstructionBinding.inflate(
-			inflater, container, false)
+		_fragmentReconstructionBinding = FragmentReconstructionBinding.inflate(inflater, container, false)
 		LoadingDialogFragment.text = getString(R.string.reconstructing_hypercube_string)
 		loadingDialogFragment.isCancelable = false
 
@@ -341,8 +339,6 @@ class ReconstructionFragment: Fragment() {
 							canvas.drawCircle(clickedX, clickedY, 5F, paint)
 							view.setImageBitmap(bitmapOverlay)
 							try {
-								//inference()
-								//getSignature(predictedHS, clickedY.roundToInt(), clickedX.roundToInt())
 								getSignature(chosenHS, clickedY.roundToInt(), clickedX.roundToInt())
 								MainActivity.actualLabel = ""
 								// addCSVLog(requireContext())
@@ -352,14 +348,10 @@ class ReconstructionFragment: Fragment() {
 						}
 						if (itemTouched && savedClickedX != clickedX && savedClickedY != clickedY)
 							itemTouched = false
-
-
-
 						false
 					}
 
 					view.setOnLongClickListener {
-
 						if (!analyze) {
 							return@setOnLongClickListener false
 						}
@@ -372,7 +364,6 @@ class ReconstructionFragment: Fragment() {
 						fragmentReconstructionBinding.graphView.removeAllSeries()         // remove all previous series
 						false
 					}
-
 				}
 				Glide.with(view).load(item).into(view)
 			}
@@ -536,11 +527,11 @@ class ReconstructionFragment: Fragment() {
 					addItemToViewPager(fragmentReconstructionBinding.viewpager, MainActivity.tempNIRBitmap, 1)
 				}
 				else{
-					// navigate back to the imageviewerfragment
+					// navigate back to the ImageViewerFragment
 					lifecycleScope.launch(Dispatchers.Main) {
 						navController.navigate(ReconstructionFragmentDirections
-								.actionReconstructionFragmentToImageViewerFragment(
-									MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath)
+							.actionReconstructionFragmentToImageViewerFragment(
+								MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath)
 						)
 					}
 				}
@@ -659,7 +650,6 @@ class ReconstructionFragment: Fragment() {
 		bitmapsHeight = rgbBitmap.height
 
 		return reconstructionModel.predict(rgbBitmap, nirBitmap)
-
 	}
 
 	private fun getBand(predictedHS: FloatArray, bandNumber: Int, reverseScale: Boolean = false): Bitmap {

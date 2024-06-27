@@ -45,8 +45,8 @@
     <string name="no_nir_warning">No NIR Camera found.</string>
     <string name="coming_soon_information_string">This application is Coming Soon!</string>
     <string name="application_selector_information_string">Choose a fruit to track its ripeness and remaining lifetime.\n\nUse \"Online Mode\" to capture and analyze image in real-time.\n\nUse \"Offline Mode\" to choose a pair of images for analysis.</string>
-    <string name="capture_information_string">Tap center button to capture images.\n\nThe camera will not capture photo if the lighting conditions are not adequate.</string>
-    <string name="image_viewer_information_string">If visible, an object detection model has drawn a yellow 64x64 patch.\n\nTap inside it to select it or tap outside it to select a different region\n\nThen, use <em>Estimate Ripeness</em> for ripeness analysis.</string>
+    <string name="capture_information_string">Tap center button to capture images.\n\nThe camera will not capture photo if the lighting condition is not adequate.</string>
+    <string name="image_viewer_information_string">If visible, an object detection model has drawn a yellow 64x64 patch.\n\nTap inside it to select it or tap outside it to select a different region\n\nThen, use <b>"Estimate Ripeness"</b> for ripeness analysis.</string>
     <string name="image_viewer_text_string">Tap to pick a region\nto analyze further</string>
     <string name="reconstruction_analysis_information_string">Tap on the \"Analyze\" button for signature analysis.\n\nDuring analysis, <em>tap and hold</em> to show a new signature and delete all other persistent signature analysis.</string>
     <string name="reconstruction_analysis_information_simple_string">Swipe through the reconstructed Hypercube bands.\n\nIn the simple mode, the application just checks the signature of the middle pixel.</string>
