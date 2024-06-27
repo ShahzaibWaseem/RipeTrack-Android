@@ -18,6 +18,7 @@
     <color name="yellow_bg">#fcfcf5</color>
     <color name="strong_yellow_bg">#fdfa72</color>
     <color name="gray_bg">#919191</color>
+    <color name="gray_dim">#7C7A7A</color>
     <color name="old_yellow_bg">#fffec8</color>
     <color name="progress_green">#8fb935</color>
     <color name="progress_orange">#ff9248</color>

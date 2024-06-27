@@ -150,11 +150,21 @@ class ImageViewerFragment: Fragment() {
 
 				canvas.drawBitmap(item, Matrix(), null)
 
+				/* the code below was for previous phases where object detection happened in this fragment instead of ReconstructionFragment
+				the when block below replaces all of it
+				* */
+				when (position) {
+					0 -> MainActivity.tempRGBBitmap = bitmapOverlay
+					1 -> MainActivity.tempNIRBitmap = bitmapOverlay
+				}
+
+				/*
 				when (position) {
 					1 -> MainActivity.tempNIRBitmap = bitmapOverlay
 					0 -> {
 						Log.i("Crop Coordinates (ViewPager)", "($leftCrop,$topCrop), ($rightCrop,$bottomCrop)")
 
+						/*
 						// draws rectangles based on the result of object detection
 						// note: needs to run after a 100-millisecond delay otherwise the bounding box will not be drawn
 						Handler(Looper.getMainLooper()).postDelayed({
@@ -166,9 +176,12 @@ class ImageViewerFragment: Fragment() {
 								canvas.drawText(text, left, top, MainActivity.textPaint)
 							}
 						}, 100)
+						*/
 
 						view.setOnTouchListener { v, event ->
 							canvas.drawBitmap(item, Matrix(), null)
+
+							/*
 							fruitBoxes.forEach {
 								Log.i("BOX (if)", "Drawing a box $it")
 								drawBoxOnView(it, MainActivity.dottedPaint, canvas, view, bitmapOverlay)
@@ -177,6 +190,7 @@ class ImageViewerFragment: Fragment() {
 								val top = (if (tBounds.top < 0) it.top - tBounds.top else it.top + tBounds.top) - 2.5F
 								canvas.drawText(text, left, top, MainActivity.textPaint)
 							}
+							*/
 
 							var clickedX = ((event!!.x / v!!.width) * bitmapsWidth).roundToInt()
 							var clickedY = ((event.y / v.height) * bitmapsHeight).roundToInt()
@@ -192,6 +206,7 @@ class ImageViewerFragment: Fragment() {
 							if (clickedY - Utils.boundingBoxHeight < 0)
 								clickedY = (0 + Utils.boundingBoxHeight).roundToInt()
 
+							/*
 							// take a bitmap of the RGB image without modifications
 							val originalRGB = Bitmap.createBitmap(bitmapsWidth, bitmapsHeight, item.config)
 							val tempCanvas = Canvas(originalRGB)
@@ -215,27 +230,29 @@ class ImageViewerFragment: Fragment() {
 
 									boxSelected = true
 								}
+							}*/
+
+							//if (!boxSelected) {
+
+							Log.i("Box Added", "X: $clickedX ($bitmapsWidth), Y: $clickedY ($bitmapsHeight)")
+
+							if (!firstTap) {
+								leftCrop = item.width/2 - Utils.boundingBoxWidth
+								topCrop = item.height/2 - Utils.boundingBoxHeight
+								rightCrop = item.width/2 + Utils.boundingBoxWidth
+								bottomCrop = item.height/2 + Utils.boundingBoxHeight
+								firstTap = true
+							}
+							else {
+								leftCrop = clickedX - Utils.boundingBoxWidth
+								topCrop = clickedY - Utils.boundingBoxHeight
+								rightCrop = clickedX + Utils.boundingBoxWidth
+								bottomCrop = clickedY + Utils.boundingBoxHeight
 							}
 
-							if (!boxSelected) {
-								Log.i("Box Added", "X: $clickedX ($bitmapsWidth), Y: $clickedY ($bitmapsHeight)")
+							//}
 
-								if (!firstTap) {
-									leftCrop = item.width/2 - Utils.boundingBoxWidth
-									topCrop = item.height/2 - Utils.boundingBoxHeight
-									rightCrop = item.width/2 + Utils.boundingBoxWidth
-									bottomCrop = item.height/2 + Utils.boundingBoxHeight
-									firstTap = true
-								}
-								else {
-									leftCrop = clickedX - Utils.boundingBoxWidth
-									topCrop = clickedY - Utils.boundingBoxHeight
-									rightCrop = clickedX + Utils.boundingBoxWidth
-									bottomCrop = clickedY + Utils.boundingBoxHeight
-								}
-
-							}
-
+							/*
 							// box picked by the user
 							val pickedBox = Box(leftCrop, topCrop, rightCrop, bottomCrop)
 
@@ -247,11 +264,15 @@ class ImageViewerFragment: Fragment() {
 
 							// this is going to be used in reconstruction fragment
 							MainActivity.tempRGBBitmap = originalRGB
+							 */
+
+
 
 							false
 						}
 					}
 				}
+				*/
 
 				Glide.with(view).load(item).into(view)
 			}
@@ -395,6 +416,34 @@ class ImageViewerFragment: Fragment() {
 
 			fragmentImageViewerBinding.button.setOnClickListener {
 				val cropTime = System.currentTimeMillis()
+
+				Log.i("Cropped Image", "Asked to crop")
+
+				croppableRGBBitmap = rgbImageBitmap
+				croppableNIRBitmap = rgbImageBitmap
+
+				// don't crop them just yet, we'll need them for the next fragment
+				//rgbImageBitmap = cropImage(rgbImageBitmap, leftCrop, topCrop)
+				//nirImageBitmap = cropImage(nirImageBitmap, leftCrop, topCrop)
+				MainActivity.originalRGBBitmap = rgbImageBitmap
+				MainActivity.originalNIRBitmap = nirImageBitmap
+
+				Log.i("Cropped Image", "${rgbImageBitmap.width} ${rgbImageBitmap.height}")
+				Log.i("Cropped Image", "${nirImageBitmap.width} ${nirImageBitmap.height}")
+				Log.i("Bitmap dimensions", "(${rgbImageBitmap.width},${rgbImageBitmap.height})")
+				saveProcessedImages(requireContext(), rgbImageBitmap, nirImageBitmap, rgbImageFileName, nirImageFileName, Utils.croppedImageDirectory)
+
+				MainActivity.executionTime += System.currentTimeMillis() - cropTime
+
+				//MainActivity.originalRGBBitmap = rgbImageBitmap
+				//MainActivity.originalNIRBitmap = nirImageBitmap
+
+				lifecycleScope.launch(Dispatchers.Main) {
+					navController.navigate(ImageViewerFragmentDirections.actionImageViewerFragmentToReconstructionFragment())
+				}
+
+				/*
+
 				// if crop isn't initialized for simple mode
 				Log.i("Cropped Image (before change)", "$leftCrop $topCrop")
 				if (leftCrop == -1F && topCrop == -1F && !advancedControlOption) {
@@ -434,6 +483,7 @@ class ImageViewerFragment: Fragment() {
 					// only navigate to the next fragment if the user has selected a bounded region
 					generateAlertBox(requireContext(), "", "Please select a bounded region to reconstruct") {}
 				}
+				 */
 
 			}
 		}
@@ -497,6 +547,7 @@ class ImageViewerFragment: Fragment() {
 		if (isRGB){
 			bitmap = Bitmap.createBitmap(decodedBitmap, 0, 0, decodedBitmap.width, decodedBitmap.height, null, false)
 
+			/*
 			// Perform white balancing on the RGB image if (1) online mode or (2) offline mode and the selected RGB does not have white balancing
 			Log.i("WB Conditions (online mode, offline image with -D)", "$offlineMode, ${MainActivity.rgbAbsolutePath}")
 			if (!offlineMode || ( offlineMode && !MainActivity.rgbAbsolutePath.contains("-D"))){
@@ -510,6 +561,8 @@ class ImageViewerFragment: Fragment() {
 				catch (exception: InterruptedException) { exception.printStackTrace() }
 				Log.i("WB", "Process Completed")
 			}
+			 */
+
 		}
 		else {
 			bitmap = if (decodedBitmap.width > decodedBitmap.height)

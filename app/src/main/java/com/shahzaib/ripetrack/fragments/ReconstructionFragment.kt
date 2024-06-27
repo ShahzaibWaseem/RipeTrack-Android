@@ -135,7 +135,7 @@ class ReconstructionFragment: Fragment() {
 		val ripeBtn = requireView().findViewById<MaterialButton>(R.id.ripeBtn)
 		val expiredBtn = requireView().findViewById<MaterialButton>(R.id.expiredBtn)
 		listOf(unripeBtn, ripeBtn, expiredBtn).forEach {
-			it.setTextColor(Color.BLACK)
+			it.setTextColor(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.gray_dim)))
 			it.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.gray_bg))
 			it.strokeWidth = 0
 		}
@@ -266,7 +266,7 @@ class ReconstructionFragment: Fragment() {
 				var savedClickedX = 0.0F
 				var savedClickedY = 0.0F
 
-				when (Pair(position, analyze)){
+				when (Pair(position, analyze))	{
 					Pair(0, false) -> {
 						// show bounding boxes and the inference output
 						// this task needs to be delayed or all the results won't be shown
@@ -316,7 +316,13 @@ class ReconstructionFragment: Fragment() {
 				}
 
 				if (analyze){
+
 					view.setOnTouchListener { v, event ->
+						if (!analyze) {
+							return@setOnTouchListener false
+						}
+
+						Log.i("TouchListener", "Pressed")
 						clickedX = (event!!.x / v!!.width) * bitmapsWidth
 						clickedY = (event.y / v.height) * bitmapsHeight
 
@@ -347,10 +353,18 @@ class ReconstructionFragment: Fragment() {
 						if (itemTouched && savedClickedX != clickedX && savedClickedY != clickedY)
 							itemTouched = false
 
+
+
 						false
 					}
 
 					view.setOnLongClickListener {
+
+						if (!analyze) {
+							return@setOnLongClickListener false
+						}
+
+						Log.i("LongClickListener", "Pressed")
 						bitmapOverlay = Bitmap.createBitmap(item.width, item.height, item.config)
 						canvas = Canvas(bitmapOverlay)
 						canvas.drawBitmap(item, Matrix(), null)
@@ -358,6 +372,7 @@ class ReconstructionFragment: Fragment() {
 						fragmentReconstructionBinding.graphView.removeAllSeries()         // remove all previous series
 						false
 					}
+
 				}
 				Glide.with(view).load(item).into(view)
 			}
