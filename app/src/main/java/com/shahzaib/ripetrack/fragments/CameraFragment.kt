@@ -642,6 +642,7 @@ class CameraFragment: Fragment() {
 			}
 		}
 	}
+
 	override fun onStop() {
 		super.onStop()
 		try {

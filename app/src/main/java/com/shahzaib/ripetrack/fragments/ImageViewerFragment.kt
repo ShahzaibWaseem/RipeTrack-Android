@@ -265,9 +265,6 @@ class ImageViewerFragment: Fragment() {
 							// this is going to be used in reconstruction fragment
 							MainActivity.tempRGBBitmap = originalRGB
 							 */
-
-
-
 							false
 						}
 					}
@@ -423,8 +420,8 @@ class ImageViewerFragment: Fragment() {
 				croppableNIRBitmap = rgbImageBitmap
 
 				// don't crop them just yet, we'll need them for the next fragment
-				//rgbImageBitmap = cropImage(rgbImageBitmap, leftCrop, topCrop)
-				//nirImageBitmap = cropImage(nirImageBitmap, leftCrop, topCrop)
+				// rgbImageBitmap = cropImage(rgbImageBitmap, leftCrop, topCrop)
+				// nirImageBitmap = cropImage(nirImageBitmap, leftCrop, topCrop)
 				MainActivity.originalRGBBitmap = rgbImageBitmap
 				MainActivity.originalNIRBitmap = nirImageBitmap
 

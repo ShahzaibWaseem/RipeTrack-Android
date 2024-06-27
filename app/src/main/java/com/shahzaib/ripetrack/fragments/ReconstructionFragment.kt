@@ -169,9 +169,6 @@ class ReconstructionFragment: Fragment() {
 			// (initialize or reset) progress value on both bar & progress text
 			progressBar.progress = 0
 			progressText.text = getString(R.string.remaining_lifetime_placeholder, progressBar.progress)
-
-			// classifyFruit()
-			// displayClassification()
 		}
 	}
 
@@ -206,8 +203,6 @@ class ReconstructionFragment: Fragment() {
 			else -> true
 		}
 
-		// fragmentReconstructionBinding.textViewClass.text = ripeTrackApplication
-
 		toggleVisibilityViews = arrayOf(
 			fragmentReconstructionBinding.graphView,
 			fragmentReconstructionBinding.classificationConstraint,
@@ -216,32 +211,8 @@ class ReconstructionFragment: Fragment() {
 		)
 
 		if (!advancedControlOption) {
-			// fragmentReconstructionBinding.analysisButton.visibility = View.INVISIBLE
-			// fragmentReconstructionBinding.simpleModeSignaturePositionTextView.visibility = View.VISIBLE
 			fragmentReconstructionBinding.graphView.visibility = View.INVISIBLE
-			// fragmentReconstructionBinding.textViewClassTime.text = ""
-			// fragmentReconstructionBinding.simpleModeSignaturePositionTextView.text = getString(R.string.simple_mode_signature_string, MainActivity.tempRectangle.centerX(), MainActivity.tempRectangle.centerY())
-			// fragmentReconstructionBinding.textViewReconTime.visibility = View.INVISIBLE
-			// fragmentReconstructionBinding.textViewClassTime.visibility = View.INVISIBLE
 		}
-
-		// reconstruct & get classification output for all detected objects
-		/*lifecycleScope.launch(Dispatchers.Default)
-		{
-			centralBoxes.forEach {
-				val currHS = generateIndividualHypercube(it)
-				val result = classifyIndividualFruit(currHS)
-				val state = when (result.first) {
-					0 -> "Unripe"
-					1 -> "Ripe"
-					else -> "Expired"
-				}
-				Log.i("Output for box", "Box: $it ===> $state, ${100 - result.second * 10}% Remaining Lifetime")
-				processingResults.add("$state, ${100 - result.second * 10}% Remaining Lifetime")
-			}
-			Log.i("Output for box", "All outputs done -- ${processingResults.size}, ${fruitBoxes.size}, ${centralBoxes.size}")
-			//processingDone.postValue(true)
-		}*/
 
 		return fragmentReconstructionBinding.root
 	}
@@ -314,7 +285,6 @@ class ReconstructionFragment: Fragment() {
 				}
 
 				if (analyze){
-
 					view.setOnTouchListener { v, event ->
 						if (!analyze) {
 							return@setOnTouchListener false
@@ -431,21 +401,7 @@ class ReconstructionFragment: Fragment() {
 		}
 
 		Timer().schedule(1000) {
-			/*
-			val reconstructionThread = Thread {
-				if (!::predictedHS.isInitialized) {
-					generateHypercube()
-					reconstructionDone.postValue(true)
-				}
-			}
-
-			reconstructionThread.start()
-			try { reconstructionThread.join() }
-			catch (exception: InterruptedException) { exception.printStackTrace() }
-			 */
-
 			val inferenceThread = Thread {
-				// if (!::processingResults.isInitialized)
 				performInference()
 			}
 			inferenceThread.start()
@@ -481,7 +437,6 @@ class ReconstructionFragment: Fragment() {
 					if (::chosenHS.isInitialized)
 						for (i in selectedIndices){
 							bandsChosen.add(i)
-							//addItemToViewPager(fragmentReconstructionBinding.viewpager, getBand(predictedHS, i), selectedIndices.indexOf(i))
 							addItemToViewPager(fragmentReconstructionBinding.viewpager, getBand(chosenHS, i), selectedIndices.indexOf(i))
 						}
 				}
@@ -559,29 +514,6 @@ class ReconstructionFragment: Fragment() {
 		}
 	}
 
-	/*
-	private fun classifyFruit(){
-		val classificationModel = context?.let { Classification(it, classificationFile) }!!
-
-		val startTime = System.currentTimeMillis()
-
-		classificationPair = classificationModel.predict(predictedHS, 68, 64, 64)
-
-		val endTime = System.currentTimeMillis()
-
-		// in milliseconds
-		classificationDuration = (endTime - startTime).toFloat()
-		MainActivity.executionTime += (endTime - startTime)
-		MainActivity.classificationTime = "$classificationDuration ms"
-
-		// use a toast to display classification time
-		lifecycleScope.launch(Dispatchers.Main){
-			val classificationToast = Toast.makeText(requireContext(), "Classification Time ${MainActivity.classificationTime}", LENGTH_LONG)
-			classificationToast.show()
-		}
-	}
-	 */
-
 	private fun classifyIndividualFruit(targetHS: FloatArray): Pair<Int, Int>{
 		val classificationModel = context?.let { Classification(it, classificationFile) }!!
 		return classificationModel.predict(targetHS, numberOfBands.toLong(), patchWidth.toLong(), patchHeight.toLong())
@@ -620,26 +552,6 @@ class ReconstructionFragment: Fragment() {
 
 		return signature
 	}
-
-	/*private fun generateHypercube() {
-		val reconstructionModel = context?.let { Reconstruction(it, reconstructionFile) }!!
-
-		val rgbBitmap = MainActivity.originalRGBBitmap
-		val nirBitmap = MainActivity.originalNIRBitmap
-		bitmapsWidth = rgbBitmap.width
-		bitmapsHeight = rgbBitmap.height
-
-		val startTime = System.currentTimeMillis()
-		predictedHS = reconstructionModel.predict(rgbBitmap, nirBitmap)
-
-		val endTime = System.currentTimeMillis()
-		reconstructionDuration = (endTime - startTime).toFloat()
-		MainActivity.executionTime += (endTime - startTime)
-		reconstructionDuration /= 1000.0F
-		println(getString(R.string.reconstruction_time_string, reconstructionDuration))
-		MainActivity.reconstructionTime = "$reconstructionDuration s"
-		// fragmentReconstructionBinding.textViewReconTime.text = getString(R.string.reconstruction_time_string, reconstructionDuration)
-	}*/
 
 	private fun generateIndividualHypercube(box: Box): FloatArray {
 		val reconstructionModel = context?.let { Reconstruction(it, reconstructionFile) }!!
