@@ -60,12 +60,8 @@ class WhiteBalance(context: Context) {
 
 
         return colorTempInterpolate(
-            outOfGamutClipping(
-                applyMappingFunc(image, getMappingFunc(image, outputT!!))
-            ),
-            outOfGamutClipping(
-                applyMappingFunc(image, getMappingFunc(image, outputS!!))
-            )
+            outOfGamutClipping(applyMappingFunc(image, getMappingFunc(image, outputT!!))),
+            outOfGamutClipping(applyMappingFunc(image, getMappingFunc(image, outputS!!)))
         )
     }
 
@@ -76,11 +72,11 @@ class WhiteBalance(context: Context) {
         // size is 3 (for r,g,b) * rows * cols e.g. 3 * 640 * 480
         val imageData = FloatArray(tensorData.size)
 
-        Log.i("(Mapping) Rearrange to RGB Pixels", "${image.shape().toList()}")
         val numPixels = (image.shape()[2] * image.shape()[3]).toInt()
+        Log.i("WhiteBalance", "(Mapping) Rearrange to RGB Pixels: ${image.shape().toList()} Num Pixels: $numPixels")
 
         // rearrange imageData into the shape row * col * 3
-        var idx = 0 // for iterating over imageData with steps of 3 (pixel-by-pixel)
+        var idx = 0             // for iterating over imageData with steps of 3 (pixel-by-pixel)
         for (i in 0 until numPixels) {
             // tensorData is comprised of an entire row for reds, one for greens and one for blues
             // these are extracted from their corresponding rows and the pixel is gathered back together
@@ -94,13 +90,12 @@ class WhiteBalance(context: Context) {
     }
 
     /*
-    Kernel function: kernel(r, g, b) -> (r,g,b,rg,rb,gb,r^2,g^2,b^2,rgb,1)
-    Ref: Hong, et al., "A study of digital camera colorimetric characterization
-    based on polynomial modeling." Color Research & Application, 2001.
+     * Kernel function: kernel(r, g, b) -> (r,g,b,rg,rb,gb,r^2,g^2,b^2,rgb,1)
+     * Ref: Hong, et al., "A study of digital camera colorimetric characterization
+     * based on polynomial modeling." Color Research & Application, 2001.
      */
     private fun kernelP(image: Tensor): Tensor {
-        val result =
-            mutableListOf<Float>() // could potentially use a FloatArray() for quicker results
+        val result = mutableListOf<Float>() // could potentially use a FloatArray() for quicker results
 
         // rearrange image to nx3 form i.e. an array of pixels
         val imageReshaped = rearrangeToRGBPixels(image)
@@ -125,10 +120,7 @@ class WhiteBalance(context: Context) {
 
         // image Tensor is usually of the shape 1 x 3 x row x col, so we use row*col to get the pixel count so that
         // the resulting tensor has shape (row*col)x11
-        return Tensor.fromBlob(
-            result.toFloatArray(),
-            longArrayOf(image.shape()[2] * image.shape()[3], 11)
-        )
+        return Tensor.fromBlob(result.toFloatArray(), longArrayOf(image.shape()[2] * image.shape()[3], 11))
     }
 
     // convert a 1D array into a 2D array as such: Array<DoubleArray> of size [row][col] (row is inferred)
@@ -168,16 +160,13 @@ class WhiteBalance(context: Context) {
     // assuming image has dimensions 1x3x640x480
     private fun applyMappingFunc(image: Tensor, mapping: RealMatrix): Tensor {
         val imageFeatures = kernelP(image)
-
-
+        Log.i("WhiteBalance", "KernelP: ${imageFeatures.shape().toList()}")
 
         // AX = B, here we're multiplying A (nx11) by X (11x3)
         // Note we need to use arrayTo2DArray as floatToDoubleArray() gives a vector, but the proper dimensions are required for mat multiplication
-        val input = Array2DRowRealMatrix(
-            arrayTo2DArray(floatToDoubleArray(imageFeatures.dataAsFloatArray), 11)
-        )
+        val input = Array2DRowRealMatrix(arrayTo2DArray(floatToDoubleArray(imageFeatures.dataAsFloatArray), 11))
 
-        Log.i("(Mapping) applyMappingFunc", "Input: ${listOf(input.rowDimension, input.columnDimension)}, Mapping: ${listOf(mapping.rowDimension, mapping.columnDimension)}")
+        Log.i("WhiteBalance", "(Mapping) applyMappingFunc; Input: ${listOf(input.rowDimension, input.columnDimension)}, Mapping: ${listOf(mapping.rowDimension, mapping.columnDimension)}")
         val predictions = input.multiply(mapping)
         // reshape image to 1x3x640x480 format
         val rList = mutableListOf<Double>()
@@ -201,7 +190,7 @@ class WhiteBalance(context: Context) {
         var idx = 0
 
         // add the red pixel values first, then the greens and finally the blues
-        listOf(rList, gList, bList).forEach{ it ->
+        listOf(rList, gList, bList).forEach{
             it.forEach {item ->
                 result[idx] = item.toFloat()
                 idx += 1
@@ -225,15 +214,12 @@ class WhiteBalance(context: Context) {
         return Tensor.fromBlob(result, image.shape())
     }
 
-    private fun outOfGamutClipping(image: Tensor): Tensor
-    {
+    private fun outOfGamutClipping(image: Tensor): Tensor {
         // why DoubleArray()? because this is a tensor_float64, not tensor_float32
-        //val imageData = image.dataAsDoubleArray
         val imageData = image.dataAsFloatArray
 
         imageData.indices.forEach {
             val item = imageData[it]
-            //imageData[it] = if (item > 1) 1.0 else if (item < 0) 0.0 else item
             imageData[it] = if (item > 1) 1F else if (item < 0) 0F else item
         }
 
