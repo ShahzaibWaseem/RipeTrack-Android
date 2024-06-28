@@ -242,18 +242,22 @@ class ReconstructionFragment: Fragment() {
 						Handler(Looper.getMainLooper()).postDelayed({
 							for (i in 0 until processingResults.size) {
 								val currFruitBox = fruitBoxes[i]
-
-								drawBoxOnView(currFruitBox, MainActivity.dottedPaint, canvas, view, bitmapOverlay)
-
 								val currResult = processingResults[i]
-								val text = "${currResult.first}\n${currResult.second}% Left"
+
+								val text = "${currResult.first} ${currResult.second}% Left"
 								val tBounds = Rect()
 								textPaint.getTextBounds(text, 0, text.length, tBounds)
 								val left = (if (tBounds.left < 0) currFruitBox.left - tBounds.left else currFruitBox.left + tBounds.left) - 2.5F
 								val top = (if (tBounds.top < 0) currFruitBox.top - tBounds.top else currFruitBox.top + tBounds.top) - 2.5F
-								canvas.drawText(text, left, top, textPaint)
 
 								drawBoxOnView(centralBoxes[i], highlightPaint, canvas, view, bitmapOverlay)
+								if (MainActivity.isUserBoxInitialized() && i == processingResults.size - 1) {
+									canvas.drawText(text, left, top-25, Paint(textPaint).apply { color = Color.argb(255, 126,255,0) })
+									continue
+								}
+
+								canvas.drawText(text, left, top, textPaint)
+								drawBoxOnView(currFruitBox, MainActivity.dottedPaint, canvas, view, bitmapOverlay)
 							}
 						}, 100)
 
@@ -263,8 +267,8 @@ class ReconstructionFragment: Fragment() {
 
 							Log.i("Click event", "Analysis? $analyze, $clickedX, $clickedY")
 							if (!analyze){
-								for (i in fruitBoxes.indices){
-									val currBox = fruitBoxes[i]
+								for (i in centralBoxes.indices){
+									val currBox = centralBoxes[i]
 									Log.i("Click Pair & Box", "${Pair(clickedX.roundToInt(), clickedY.roundToInt())}, $currBox")
 									if (pointWithinBox(Pair(clickedX.roundToInt(), clickedY.roundToInt()), currBox)){
 										boxChosen = true
@@ -272,6 +276,14 @@ class ReconstructionFragment: Fragment() {
 										Log.i("Box Picked", "${getBand(chosenHS, 0).width} ${chosenHS.size}")
 
 										classificationPair = processingResults[i]
+
+										centralBoxes.indices.forEach { j ->
+											drawBoxOnView(centralBoxes[j], highlightPaint, canvas, view, bitmapOverlay)
+										}
+
+										drawBoxOnView(centralBoxes[i], Paint(highlightPaint).apply { color = Color.argb(255, 126, 0, 255) }, canvas, view, bitmapOverlay)
+
+										fragmentReconstructionBinding.analyzeButton.visibility = View.VISIBLE
 
 										lifecycleScope.launch (Dispatchers.Main){
 											displayClassification()
@@ -287,6 +299,7 @@ class ReconstructionFragment: Fragment() {
 				if (analyze){
 					view.setOnTouchListener { v, event ->
 						if (!analyze) {
+							// if not in analysis mode, the functionality below shw be deactivated
 							return@setOnTouchListener false
 						}
 
@@ -372,11 +385,16 @@ class ReconstructionFragment: Fragment() {
 				}
 			}
 		}
-
 	}
 
 	private fun performInference(){
+		if (MainActivity.isUserBoxInitialized()) {
+			centralBoxes.add(MainActivity.userBox)
+			fruitBoxes.add(MainActivity.userBox)
+		}
+
 		centralBoxes.forEach {
+			Log.i("PerformInference", "$it")
 			val currPredictedHS = generateIndividualHypercube(it)
 			val result = classifyIndividualFruit(currPredictedHS)
 			val state = when (result.first) {

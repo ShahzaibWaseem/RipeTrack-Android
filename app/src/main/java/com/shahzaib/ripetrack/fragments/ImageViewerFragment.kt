@@ -53,6 +53,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.BufferedInputStream
 import java.io.File
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 typealias Box = MainActivity.Companion.Box
@@ -141,56 +142,30 @@ class ImageViewerFragment: Fragment() {
 				val bitmapOverlay = Bitmap.createBitmap(item.width, item.height, item.config)
 				val canvas = Canvas(bitmapOverlay)
 
-				/* Text Overlay */
-				// this might not work well if the object's top or left is 0 (at the edge)
-				val text = "EUR-x Days Remain"
-				val tBounds = Rect()
-				MainActivity.textPaint.getTextBounds(text, 0, text.length, tBounds)
-				//Log.i("Text Bounds", "$tBounds")
-
 				canvas.drawBitmap(item, Matrix(), null)
 
-				/* the code below was for previous phases where object detection happened in this fragment instead of ReconstructionFragment
-				the when block below replaces all of it
-				* */
-				when (position) {
-					0 -> MainActivity.tempRGBBitmap = bitmapOverlay
-					1 -> MainActivity.tempNIRBitmap = bitmapOverlay
-				}
-
-				/*
 				when (position) {
 					1 -> MainActivity.tempNIRBitmap = bitmapOverlay
 					0 -> {
+						MainActivity.tempRGBBitmap = item		// this will be overwritten if the user picks a spot
+
 						Log.i("Crop Coordinates (ViewPager)", "($leftCrop,$topCrop), ($rightCrop,$bottomCrop)")
 
-						/*
 						// draws rectangles based on the result of object detection
 						// note: needs to run after a 100-millisecond delay otherwise the bounding box will not be drawn
 						Handler(Looper.getMainLooper()).postDelayed({
 							fruitBoxes.forEach {
 								drawBoxOnView(it, MainActivity.dottedPaint, canvas, view, bitmapOverlay)
-
-								val left = (	if (tBounds.left < 0) it.left - tBounds.left else it.left + tBounds.left	) - 2.5F
-								val top = (		if (tBounds.top < 0) it.top - tBounds.top else it.top + tBounds.top		) - 2.5F
-								canvas.drawText(text, left, top, MainActivity.textPaint)
 							}
 						}, 100)
-						*/
 
 						view.setOnTouchListener { v, event ->
 							canvas.drawBitmap(item, Matrix(), null)
 
-							/*
 							fruitBoxes.forEach {
 								Log.i("BOX (if)", "Drawing a box $it")
 								drawBoxOnView(it, MainActivity.dottedPaint, canvas, view, bitmapOverlay)
-
-								val left = (if (tBounds.left < 0) it.left - tBounds.left else it.left + tBounds.left) - 2.5F
-								val top = (if (tBounds.top < 0) it.top - tBounds.top else it.top + tBounds.top) - 2.5F
-								canvas.drawText(text, left, top, MainActivity.textPaint)
 							}
-							*/
 
 							var clickedX = ((event!!.x / v!!.width) * bitmapsWidth).roundToInt()
 							var clickedY = ((event.y / v.height) * bitmapsHeight).roundToInt()
@@ -206,7 +181,6 @@ class ImageViewerFragment: Fragment() {
 							if (clickedY - Utils.boundingBoxHeight < 0)
 								clickedY = (0 + Utils.boundingBoxHeight).roundToInt()
 
-							/*
 							// take a bitmap of the RGB image without modifications
 							val originalRGB = Bitmap.createBitmap(bitmapsWidth, bitmapsHeight, item.config)
 							val tempCanvas = Canvas(originalRGB)
@@ -230,7 +204,7 @@ class ImageViewerFragment: Fragment() {
 
 									boxSelected = true
 								}
-							}*/
+							}
 
 							//if (!boxSelected) {
 
@@ -252,7 +226,6 @@ class ImageViewerFragment: Fragment() {
 
 							//}
 
-							/*
 							// box picked by the user
 							val pickedBox = Box(leftCrop, topCrop, rightCrop, bottomCrop)
 
@@ -264,12 +237,13 @@ class ImageViewerFragment: Fragment() {
 
 							// this is going to be used in reconstruction fragment
 							MainActivity.tempRGBBitmap = originalRGB
-							 */
+
+							MainActivity.userBox = pickedBox
+
 							false
 						}
 					}
 				}
-				*/
 
 				Glide.with(view).load(item).into(view)
 			}
@@ -358,10 +332,28 @@ class ImageViewerFragment: Fragment() {
 							// Find coordinates of the 64x64 bounding box in the middle of the detected box
 							val width = (currRect.right - currRect.left).toFloat()
 							val height = (currRect.bottom - currRect.top).toFloat() // note it's bottom - top because of how the coordinates are designed
-							val left = (currRect.left + (width/2) - Utils.boundingBoxWidth)
-							val top = currRect.top + (height/2) - Utils.boundingBoxHeight
-							val right = currRect.left + (width/2) + Utils.boundingBoxWidth
-							val bottom = currRect.top + (height/2) + Utils.boundingBoxHeight
+							var left = (currRect.left + (width/2) - Utils.boundingBoxWidth)
+							var top = currRect.top + (height/2) - Utils.boundingBoxHeight
+							var right = currRect.left + (width/2) + Utils.boundingBoxWidth
+							var bottom = currRect.top + (height/2) + Utils.boundingBoxHeight
+
+							// in case the box width/height is less than 64x64
+							if (left < 0F) {
+								left += abs(left)
+								right += abs(left)
+							}
+							if (top < 0F) {
+								top += abs(top)
+								bottom += abs(top)
+							}
+							if (right > inputRGBImg.width) {
+								right -= right-inputRGBImg.width
+								left -= right-inputRGBImg.width
+							}
+							if (bottom > inputRGBImg.height) {
+								bottom -= bottom-inputRGBImg.height
+								top -= bottom-inputRGBImg.height
+							}
 
 							val middleBox = Box(left, top, right, bottom)
 							centralBoxes.add(middleBox)
@@ -544,19 +536,19 @@ class ImageViewerFragment: Fragment() {
 		if (isRGB){
 			bitmap = Bitmap.createBitmap(decodedBitmap, 0, 0, decodedBitmap.width, decodedBitmap.height, null, false)
 
-			// Perform white balancing on the RGB image if (1) online mode or (2) offline mode and the selected RGB does not have white balancing
-			Log.i("WB Conditions (online mode, offline image with -D)", "$offlineMode, ${MainActivity.rgbAbsolutePath}")
-			if (!offlineMode || ( offlineMode && !MainActivity.rgbAbsolutePath.contains("-D"))){
-				Log.i("WB", "Process Began")
-				val whiteBalancingModel = WhiteBalance(requireContext())
-				val whiteBalancingThread = Thread {
-					bitmap = whiteBalancingModel.whiteBalance(bitmap)
-				}
-				whiteBalancingThread.start()
-				try { whiteBalancingThread.join() }
-				catch (exception: InterruptedException) { exception.printStackTrace() }
-				Log.i("WB", "Process Completed")
-			}
+//			// Perform white balancing on the RGB image if (1) online mode or (2) offline mode and the selected RGB does not have white balancing
+//			Log.i("WB Conditions (online mode, offline image with -D)", "$offlineMode, ${MainActivity.rgbAbsolutePath}")
+//			if (!offlineMode || ( offlineMode && !MainActivity.rgbAbsolutePath.contains("-D"))){
+//				Log.i("WB", "Process Began")
+//				val whiteBalancingModel = WhiteBalance(requireContext())
+//				val whiteBalancingThread = Thread {
+//					bitmap = whiteBalancingModel.whiteBalance(bitmap)
+//				}
+//				whiteBalancingThread.start()
+//				try { whiteBalancingThread.join() }
+//				catch (exception: InterruptedException) { exception.printStackTrace() }
+//				Log.i("WB", "Process Completed")
+//			}
 		}
 		else {
 			bitmap = if (decodedBitmap.width > decodedBitmap.height)

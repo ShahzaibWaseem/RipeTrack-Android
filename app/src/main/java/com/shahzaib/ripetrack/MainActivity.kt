@@ -25,6 +25,7 @@ class MainActivity: AppCompatActivity() {
 	}
 
 	companion object {
+		lateinit var userBox: Box
 		const val RIPETRACK_APPLICATION = 0
 		lateinit var fruitID: String
 		lateinit var originalRGBBitmap: Bitmap
@@ -51,6 +52,8 @@ class MainActivity: AppCompatActivity() {
 		lateinit var rgbAbsolutePath: String
 		lateinit var nirAbsolutePath: String
 
+		fun isUserBoxInitialized() = ::userBox.isInitialized
+
 		private val defaultPaint by lazy {
 			Paint().apply {
 				color = Color.argb(255, 253,250,114)
@@ -75,7 +78,7 @@ class MainActivity: AppCompatActivity() {
 		// for drawing text on the Bitmaps
 		val textPaint by lazy {
 			Paint(defaultPaint).apply {
-				strokeWidth = 1F
+				strokeWidth = 3F
 				style = Paint.Style.FILL
 				textSize = 20F
 				typeface = Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL)
