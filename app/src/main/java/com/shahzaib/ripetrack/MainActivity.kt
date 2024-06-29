@@ -25,7 +25,7 @@ class MainActivity: AppCompatActivity() {
 	}
 
 	companion object {
-		lateinit var userBox: Box
+		var userBox: Box? = null
 		const val RIPETRACK_APPLICATION = 0
 		lateinit var fruitID: String
 		lateinit var originalRGBBitmap: Bitmap
@@ -52,8 +52,6 @@ class MainActivity: AppCompatActivity() {
 		lateinit var rgbAbsolutePath: String
 		lateinit var nirAbsolutePath: String
 
-		fun isUserBoxInitialized() = ::userBox.isInitialized
-
 		private val defaultPaint by lazy {
 			Paint().apply {
 				color = Color.argb(255, 253,250,114)
@@ -64,7 +62,7 @@ class MainActivity: AppCompatActivity() {
 
 		val dottedPaint by lazy {
 			Paint(defaultPaint).apply {
-				strokeWidth = 1F
+				strokeWidth = 3F
 				pathEffect = DashPathEffect(floatArrayOf(10F, 4F), 0F)
 			}
 		}
@@ -78,21 +76,21 @@ class MainActivity: AppCompatActivity() {
 		// for drawing text on the Bitmaps
 		val textPaint by lazy {
 			Paint(defaultPaint).apply {
-				strokeWidth = 3F
+				strokeWidth = 5F
 				style = Paint.Style.FILL
-				textSize = 20F
-				typeface = Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL)
+				textSize = 25F
+				typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
 				isAntiAlias = true
 			}
 		}
 
 		// to hold 64x64 bounding boxes to be drawn for detected objects
-		data class Box(val left: Float, val top: Float, val right: Float, val bottom: Float ) {
+		data class Box(var left: Float, var top: Float, var right: Float, var bottom: Float ) {
 			// secondary constructor to use with Rectangles
 			constructor(coordRect: Rect): this(coordRect.left.toFloat(), coordRect.top.toFloat(), coordRect.right.toFloat(), coordRect.bottom.toFloat())
 		}
-		val fruitBoxes by lazy { mutableListOf<Box>() }
-		val centralBoxes by lazy { mutableListOf<Box>() }
+		var fruitBoxes = mutableListOf<Box>()
+		var centralBoxes = mutableListOf<Box>()
 
 		fun generateAlertBox(context: Context, title: String, text: String, onPositiveButtonFunction: () -> Unit) {
 			val alertDialogBuilder = MaterialAlertDialogBuilder(context, R.style.AlertDialogTheme)
