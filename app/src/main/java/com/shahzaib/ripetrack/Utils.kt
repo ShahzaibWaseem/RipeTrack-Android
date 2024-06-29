@@ -119,6 +119,18 @@ object Utils {
 			)
 		}
 
+		fun cropImage(bitmap: Bitmap, box: Box): Bitmap {
+			return Bitmap.createBitmap(
+				bitmap,
+				box.left.toInt(),
+				box.top.toInt(),
+				(box.right - box.left).toInt(),
+				(box.bottom - box.top).toInt(),
+				null,
+				false
+			)
+		}
+
 		fun fixedAlignment(imageRGB: Bitmap): Bitmap {
 			Log.i(
 				"Aligned RGB",
@@ -394,11 +406,9 @@ fun addCSVLog (context: Context) {
 fun drawBox(box: Box, paint: Paint, canvas: Canvas){
 	val strokeWidth = paint.strokeWidth
 	canvas.drawRect(box.left-strokeWidth, box.top-strokeWidth, box.right+strokeWidth, box.bottom+strokeWidth, paint)
-
 }
 fun drawBoxOnView(box: Box, paint: Paint, canvas: Canvas, view: ImageView, bitmapOverlay: Bitmap) {
 	drawBox(box, paint, canvas)
-
 	view.setImageBitmap(bitmapOverlay)
 }
 

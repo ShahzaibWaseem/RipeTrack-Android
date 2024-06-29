@@ -15,7 +15,7 @@
     <color name="sfu_black">#000000</color>
     <color name="background">#279854</color>
     <!--A slightly stronger yellow can be found here: https://www.color-hex.com/color-palette/25590-->
-    <color name="yellow_bg">#fcfcf5</color>
+    <color name="yellow_bg">#F0F0DB</color>
     <color name="strong_yellow_bg">#fdfa72</color>
     <color name="gray_bg">#919191</color>
     <color name="gray_dim">#7C7A7A</color>

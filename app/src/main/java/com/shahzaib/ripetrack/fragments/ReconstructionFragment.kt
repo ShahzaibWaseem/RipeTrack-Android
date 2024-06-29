@@ -91,6 +91,8 @@ class ReconstructionFragment: Fragment() {
 	private var boxChosen = false
 
 	private lateinit var chosenHS: FloatArray
+	private lateinit var chosenFruitBox: Box
+	private lateinit var chosenCentralBox: Box
 
 	private fun imageViewFactory() = ImageView(requireContext()).apply {
 		layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
@@ -250,8 +252,7 @@ class ReconstructionFragment: Fragment() {
 								val left = (if (tBounds.left < 0) currFruitBox.left - tBounds.left else currFruitBox.left + tBounds.left) - 2.5F
 								val top = (if (tBounds.top < 0) currFruitBox.top - tBounds.top else currFruitBox.top + tBounds.top) - 2.5F
 
-								drawBoxOnView(centralBoxes[i], highlightPaint, canvas, view, bitmapOverlay)
-								if (MainActivity.isUserBoxInitialized() && i == processingResults.size - 1) {
+								if (MainActivity.userBox != null && i == processingResults.size - 1) {
 									canvas.drawText(text, left, top-25, Paint(textPaint).apply { color = Color.argb(255, 126,255,0) })
 									continue
 								}
@@ -267,21 +268,36 @@ class ReconstructionFragment: Fragment() {
 
 							Log.i("Click event", "Analysis? $analyze, $clickedX, $clickedY")
 							if (!analyze){
+								// reset the image bitmap so that any previous purple highlights are cleared
+								view.setImageBitmap(bitmapOverlay)
+
+								// a bitmap & canvas based on bitmapOverlay, with all the fruit & central boxes drawn on it with classification labels
+								val boxSelectionOverlay = Bitmap.createBitmap(bitmapOverlay)
+								val boxSelectionCanvas = Canvas(boxSelectionOverlay)
+
 								for (i in centralBoxes.indices){
 									val currBox = centralBoxes[i]
 									Log.i("Click Pair & Box", "${Pair(clickedX.roundToInt(), clickedY.roundToInt())}, $currBox")
 									if (pointWithinBox(Pair(clickedX.roundToInt(), clickedY.roundToInt()), currBox)){
 										boxChosen = true
+
+										// initialize the variables for the chosen analysis region
 										chosenHS = hsCubes[i]
+										chosenFruitBox = fruitBoxes[i]
+										chosenCentralBox = centralBoxes[i]
+
+										drawBoxOnView(centralBoxes[i], highlightPaint, boxSelectionCanvas, view, boxSelectionOverlay)
+
 										Log.i("Box Picked", "${getBand(chosenHS, 0).width} ${chosenHS.size}")
 
 										classificationPair = processingResults[i]
 
-										centralBoxes.indices.forEach { j ->
-											drawBoxOnView(centralBoxes[j], highlightPaint, canvas, view, bitmapOverlay)
-										}
-
-										drawBoxOnView(centralBoxes[i], Paint(highlightPaint).apply { color = Color.argb(255, 126, 0, 255) }, canvas, view, bitmapOverlay)
+										drawBoxOnView(fruitBoxes[i], Paint(highlightPaint).apply {
+											color = Color.argb(90, 137, 109, 235)
+											style = Paint.Style.FILL
+											// below is so that the filling is INSIDE the fruit box and doesn't overlap it
+											strokeWidth = 1F
+										}, boxSelectionCanvas, view, boxSelectionOverlay)
 
 										fragmentReconstructionBinding.analyzeButton.visibility = View.VISIBLE
 
@@ -290,6 +306,9 @@ class ReconstructionFragment: Fragment() {
 										}
 									}
 								}
+
+								// apply the new bitmap, but we still have bitmapOverlay which we can use to clear the drawings here
+								view.setImageBitmap(boxSelectionOverlay)
 							}
 							false
 						}
@@ -299,13 +318,41 @@ class ReconstructionFragment: Fragment() {
 				if (analyze){
 					view.setOnTouchListener { v, event ->
 						if (!analyze) {
-							// if not in analysis mode, the functionality below shw be deactivated
+							// if not in analysis mode, the functionality below should be deactivated
 							return@setOnTouchListener false
 						}
+						var drawSignature = false
 
 						Log.i("TouchListener", "Pressed")
-						clickedX = (event!!.x / v!!.width) * bitmapsWidth
-						clickedY = (event.y / v.height) * bitmapsHeight
+						clickedX = (event!!.x / v!!.width)
+						clickedY = (event.y / v.height)
+
+						// RGB viewpager position
+						if (position == 0) {
+							// TODO: Bruv, fix bounding box overflow error, Innit? Oi mate
+							val centerPoint = Pair(item.width/2, item.height/2)
+
+							val left = centerPoint.first - Utils.boundingBoxWidth
+							val top = centerPoint.second - Utils.boundingBoxHeight
+							val right = left + patchWidth
+							val bottom = top + patchHeight
+
+							val relevantBox = Box(left, top, right, bottom)
+
+							val paint = Paint()
+							paint.color = color
+							paint.style = Paint.Style.STROKE
+							paint.strokeWidth = 2.5F
+							val rgbClickedX = (clickedX*item.width).roundToInt()
+							val rgbClickedY = (clickedY*item.height).roundToInt()
+							drawSignature = pointWithinBox(Pair(rgbClickedX, rgbClickedY), relevantBox)
+
+							if (drawSignature)
+								canvas.drawCircle(clickedX*item.width, clickedY*item.height, 5F, paint)
+						}
+
+						clickedX *= bitmapsWidth
+						clickedY *= bitmapsHeight
 
 						if (!itemTouched) {
 							savedClickedX = clickedX
@@ -319,10 +366,12 @@ class ReconstructionFragment: Fragment() {
 							paint.style = Paint.Style.STROKE
 							paint.strokeWidth = 2.5F
 
-							canvas.drawCircle(clickedX, clickedY, 5F, paint)
+							if (position != 0)
+								canvas.drawCircle(clickedX, clickedY, 5F, paint)
 							view.setImageBitmap(bitmapOverlay)
 							try {
-								getSignature(chosenHS, clickedY.roundToInt(), clickedX.roundToInt())
+								if (drawSignature || position != 0)
+									getSignature(chosenHS, clickedY.roundToInt(), clickedX.roundToInt())
 								MainActivity.actualLabel = ""
 								// addCSVLog(requireContext())
 							} catch (e: NullPointerException) {
@@ -388,9 +437,10 @@ class ReconstructionFragment: Fragment() {
 	}
 
 	private fun performInference(){
-		if (MainActivity.isUserBoxInitialized()) {
-			centralBoxes.add(MainActivity.userBox)
-			fruitBoxes.add(MainActivity.userBox)
+		if (MainActivity.userBox != null) {
+			// if the user has picked a box, add it to both centralBoxes and fruitBoxes for later use
+			centralBoxes.add(MainActivity.userBox!!)
+			fruitBoxes.add(MainActivity.userBox!!)
 		}
 
 		centralBoxes.forEach {
@@ -403,7 +453,6 @@ class ReconstructionFragment: Fragment() {
 				else -> "Expired"
 			}
 			Log.i("Output for box", "Box: $it ===> $state, ${100 - result.second * 10}% Remaining Lifetime")
-			//processingResults.add("$state, ${100 - result.second * 10}% Remaining Lifetime")
 			processingResults.add(Pair(state, 100 - result.second * 10))
 			hsCubes.add(currPredictedHS)
 		}
@@ -452,11 +501,18 @@ class ReconstructionFragment: Fragment() {
 				// make the reconstructed bands & their wavelengths visible
 				val selectedIndices = listOf(0, 12, 23, 34, 45, 56, 67)
 				val viewpagerThread = Thread {
-					if (::chosenHS.isInitialized)
+					if (::chosenHS.isInitialized && ::chosenFruitBox.isInitialized && ::chosenCentralBox.isInitialized) {
+						val tempCroppableRGBBitmap = MainActivity.tempRGBBitmap.copy(Bitmap.Config.ARGB_8888, true)
+
+						drawBox(chosenCentralBox, highlightPaint, Canvas(tempCroppableRGBBitmap))
+
+						addItemToViewPager(fragmentReconstructionBinding.viewpager, cropImage(tempCroppableRGBBitmap, chosenFruitBox), 0)
+						Log.i("Adding RGB Box", "Added")
 						for (i in selectedIndices){
 							bandsChosen.add(i)
-							addItemToViewPager(fragmentReconstructionBinding.viewpager, getBand(chosenHS, i), selectedIndices.indexOf(i))
+							addItemToViewPager(fragmentReconstructionBinding.viewpager, getBand(chosenHS, i), selectedIndices.indexOf(i)+1)
 						}
+					}
 				}
 
 				viewpagerThread.start()
@@ -471,8 +527,11 @@ class ReconstructionFragment: Fragment() {
 				fragmentReconstructionBinding.viewpager) { tab, position ->
 				Log.i("Position", "$position")
 				if (analyze){
-					tab.text = (round(ACTUAL_BAND_WAVELENGTHS[bandsChosen[position] * bandSpacing] / 100)
+					if (position != 0)
+						tab.text = (round(ACTUAL_BAND_WAVELENGTHS[bandsChosen[position-1] * bandSpacing] / 100)
 							* 100).toInt().toString()
+					else
+						tab.text = "RGB"
 				}
 				else {
 					when (position) {
