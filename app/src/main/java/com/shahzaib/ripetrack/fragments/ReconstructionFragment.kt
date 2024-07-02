@@ -321,43 +321,25 @@ class ReconstructionFragment: Fragment() {
 							// if not in analysis mode, the functionality below should be deactivated
 							return@setOnTouchListener false
 						}
-						var drawSignature = false
+
+						//var drawSignature = false
 
 						Log.i("TouchListener", "Pressed")
+
+						// need to scale clickedX and clickedY based on bitmap size (different for RGB vs other bands)
 						clickedX = (event!!.x / v!!.width)
 						clickedY = (event.y / v.height)
 
-						// RGB viewpager position
-						if (position == 0) {
-							// TODO: Bruv, fix bounding box overflow error, Innit? Oi mate
-							val centerPoint = Pair(item.width/2, item.height/2)
-
-							val left = centerPoint.first - Utils.boundingBoxWidth
-							val top = centerPoint.second - Utils.boundingBoxHeight
-							val right = left + patchWidth
-							val bottom = top + patchHeight
-
-							val relevantBox = Box(left, top, right, bottom)
-
-							val paint = Paint()
-							paint.color = color
-							paint.style = Paint.Style.STROKE
-							paint.strokeWidth = 2.5F
-							val rgbClickedX = (clickedX*item.width).roundToInt()
-							val rgbClickedY = (clickedY*item.height).roundToInt()
-							drawSignature = pointWithinBox(Pair(rgbClickedX, rgbClickedY), relevantBox)
-
-							if (drawSignature)
-								canvas.drawCircle(clickedX*item.width, clickedY*item.height, 5F, paint)
-						}
-
-						clickedX *= bitmapsWidth
-						clickedY *= bitmapsHeight
+						// these values will be initialized to reflect the band's size, see below
+						val drawnClickedX: Float
+						val drawnClickedY: Float
 
 						if (!itemTouched) {
 							savedClickedX = clickedX
 							savedClickedY = clickedY
 							itemTouched = true
+
+							// prepare color & paint for drawing points on the bitmap and signatures on the graphView
 							Log.i("Pixel Clicked", "X: ${clickedX.roundToInt()} ($bitmapsWidth), Y: ${clickedY.roundToInt()} ($bitmapsHeight)")
 							color = Color.argb(255, randomColor.nextInt(256), randomColor.nextInt(256), randomColor.nextInt(256))
 
@@ -366,20 +348,52 @@ class ReconstructionFragment: Fragment() {
 							paint.style = Paint.Style.STROKE
 							paint.strokeWidth = 2.5F
 
-							if (position != 0)
-								canvas.drawCircle(clickedX, clickedY, 5F, paint)
-							view.setImageBitmap(bitmapOverlay)
-							try {
-								if (drawSignature || position != 0)
-									getSignature(chosenHS, clickedY.roundToInt(), clickedX.roundToInt())
-								MainActivity.actualLabel = ""
-								// addCSVLog(requireContext())
-							} catch (e: NullPointerException) {
-								e.printStackTrace()
+							val isRGBTab = position == 0
+							var drawPointAndSignature = true
+
+							// RGB viewpager position
+							if (isRGBTab) {
+								val centerPoint = Pair(item.width/2, item.height/2)
+
+								val left = centerPoint.first - Utils.boundingBoxWidth
+								val top = centerPoint.second - Utils.boundingBoxHeight
+								val right = left + patchWidth
+								val bottom = top + patchHeight
+
+								val relevantBox = Box(left, top, right, bottom)
+
+								// drawing on a cropped part of the image
+								drawnClickedX = clickedX*item.width
+								drawnClickedY = clickedY*item.height
+
+								// if the point isn't within the green bounding box in the center of the fruit, don't draw point or get signature
+								if ( !pointWithinBox(Pair(drawnClickedX.toInt(), drawnClickedY.toInt()), relevantBox) ) drawPointAndSignature = false
+
+							} else
+							{
+								// we're drawing on the whole image
+								drawnClickedX = clickedX * bitmapsWidth
+								drawnClickedY = clickedY * bitmapsHeight
 							}
+
+							if (drawPointAndSignature)
+							{
+								// draw the circle tapped by the user and run it through signature analysis
+								canvas.drawCircle(drawnClickedX, drawnClickedY, 5F, paint)
+
+								// note: why are drawnClickedX and drawnClickedY not used? because we want the index of the pixel wrt the entire IMAGE,
+								// not just the cropped image of the fruit that is present in the RGB tab
+								getSignature(chosenHS, (clickedY * bitmapsHeight).roundToInt(), (clickedX * bitmapsWidth).roundToInt())
+
+								view.setImageBitmap(bitmapOverlay)
+								MainActivity.actualLabel = ""
+							}
+
 						}
+
 						if (itemTouched && savedClickedX != clickedX && savedClickedY != clickedY)
 							itemTouched = false
+
 						false
 					}
 

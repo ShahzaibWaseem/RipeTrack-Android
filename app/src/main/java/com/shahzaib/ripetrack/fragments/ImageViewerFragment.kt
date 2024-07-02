@@ -37,6 +37,8 @@ import com.shahzaib.ripetrack.MainActivity.Companion.croppableRGBBitmap
 import com.shahzaib.ripetrack.MainActivity.Companion.dottedPaint
 import com.shahzaib.ripetrack.MainActivity.Companion.fruitBoxes
 import com.shahzaib.ripetrack.MainActivity.Companion.generateAlertBox
+import com.shahzaib.ripetrack.MainActivity.Companion.highlightPaint
+import com.shahzaib.ripetrack.MainActivity.Companion.userBox
 import com.shahzaib.ripetrack.R
 import com.shahzaib.ripetrack.Utils
 import com.shahzaib.ripetrack.Utils.imageFormat
@@ -140,7 +142,7 @@ class ImageViewerFragment: Fragment() {
 				when (position) {
 					1 -> MainActivity.tempNIRBitmap = bitmapOverlay
 					0 -> {
-						MainActivity.tempRGBBitmap = item		// this will be overwritten if the user picks a spot
+						MainActivity.tempRGBBitmap = bitmapOverlay		// this will be overwritten if the user picks a spot
 
 						Log.i("Crop Coordinates (ViewPager)", "($leftCrop,$topCrop), ($rightCrop,$bottomCrop)")
 
@@ -178,20 +180,21 @@ class ImageViewerFragment: Fragment() {
 							val centralBoxesTemp = mutableListOf<Box>()
 							var drawGreen = true
 
-							// check if the user tapped within a fruit box
+							// check if the user tapped within the AVAILABLE fruit boxes
 							fruitBoxes.indices.forEach {
+								// keep these boxes if the user has not tapped inside them
 								if (!pointWithinBox(Pair(clickedX, clickedY), fruitBoxes[it])){
 									fruitBoxesTemp.add(fruitBoxes[it])
 									centralBoxesTemp.add(centralBoxes[it])
 								}
-								else
+								else {
+									userBox = null
 									drawGreen = false
+								}
 							}
 							fruitBoxes = fruitBoxesTemp
 							centralBoxes = centralBoxesTemp
 							fruitBoxes.forEach { drawBoxOnView(it, dottedPaint, canvas, view, bitmapOverlay) }
-
-							//if (!boxSelected) {
 
 							Log.i("Box Added", "X: $clickedX ($bitmapsWidth), Y: $clickedY ($bitmapsHeight)")
 
@@ -209,20 +212,19 @@ class ImageViewerFragment: Fragment() {
 								bottomCrop = clickedY + Utils.boundingBoxHeight
 							}
 
-							//}
-
 							if (drawGreen) {
 								// box picked by the user
 								val pickedBox = Box(leftCrop, topCrop, rightCrop, bottomCrop)
 
 								// show the box to the user
-								drawBoxOnView(pickedBox, MainActivity.highlightPaint, canvas, view, bitmapOverlay)
+								drawBoxOnView(pickedBox, highlightPaint, canvas, view, bitmapOverlay)
 
 								// also draw it on the copy RGB bitmap
-								drawBox(pickedBox, MainActivity.highlightPaint, tempCanvas)
+								drawBox(pickedBox, highlightPaint, tempCanvas)
 
-								MainActivity.userBox = pickedBox
+								userBox = pickedBox
 							}
+
 							fruitBoxes.forEach {
 								Log.i("BOX (if)", "Drawing a box $it")
 								drawBoxOnView(it, dottedPaint, canvas, view, bitmapOverlay)
