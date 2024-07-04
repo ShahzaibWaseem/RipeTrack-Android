@@ -46,9 +46,9 @@
     <string name="coming_soon_information_string">This application is Coming Soon!</string>
     <string name="application_selector_information_string">Choose a fruit to track its ripeness and remaining lifetime.\n\nUse \"Online Mode\" to capture and analyze image in real-time.\n\nUse \"Offline Mode\" to choose a pair of images for analysis.</string>
     <string name="capture_information_string">Tap center button to capture images.\n\nThe camera will not capture photo if the lighting condition is not adequate.</string>
-    <string name="image_viewer_information_string">If visible, an object detection model has drawn yellow boxes around fruits.\n\nThen, use <b>"Estimate Ripeness"</b> for ripeness analysis.</string>
-    <string name="image_viewer_text_string">Tap to add a custom region</string>
-    <string name="reconstruction_analysis_information_string">Pick a region and then tap on the \"Analyze\" button for signature analysis.\n\nDuring analysis, <em>tap and hold</em> to show a new signature and delete all other persistent signature analysis.</string>
+    <string name="image_viewer_information_string">If visible, an object detection model has drawn yellow boxes around fruits.\n\nUse <b>"Estimate Ripeness"</b> to analyze the boxes drawn on the image.</string>
+    <string name="image_viewer_text_string">Tap and hold to deselect a box. Tap again to reselect.</string>
+    <string name="reconstruction_analysis_information_string">A box is selected by default. Tap to highlight a different region and then tap on the \"Analyze\" button for signature analysis.\n\nDuring analysis, <em>tap and hold</em> to show a new signature and delete all other persistent signature analysis.</string>
     <string name="reconstruction_analysis_information_simple_string">Swipe through the reconstructed Hypercube bands.\n\nIn the simple mode, the application just checks the signature of the middle pixel.</string>
 
     <string name="ripeness_unripe">Unripe</string>

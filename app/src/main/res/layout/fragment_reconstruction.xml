@@ -235,7 +235,6 @@
         android:backgroundTint="@color/background"
         android:text="@string/analyze_button_text"
         android:textSize="26sp"
-        android:visibility="gone"
         app:layout_constraintEnd_toStartOf="@id/guideline4"
         app:layout_constraintTop_toBottomOf="@id/guideline5" />
 

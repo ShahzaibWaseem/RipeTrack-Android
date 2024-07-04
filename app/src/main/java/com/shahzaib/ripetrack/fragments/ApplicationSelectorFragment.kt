@@ -124,7 +124,9 @@ class ApplicationSelectorFragment: Fragment() {
 			Log.i("Radio Button", "$selectedApplication, $selectedOption")
 			editor.apply()
 			MainActivity.actualLabel = selectedApplication
-			if (selectedOption == getString(R.string.data_capturing_mode_string))
+
+
+			if (selectedOption == getString(R.string.data_capturing_mode_string)) {
 				lifecycleScope.launch {
 					withStarted {
 						navController.safeNavigate(
@@ -134,7 +136,9 @@ class ApplicationSelectorFragment: Fragment() {
 						)
 					}
 				}
+			}
 			else
+			{
 				lifecycleScope.launch {
 					withStarted {
 						navController.safeNavigate(
@@ -144,6 +148,7 @@ class ApplicationSelectorFragment: Fragment() {
 						)
 					}
 				}
+			}
 			true
 		}
 	}

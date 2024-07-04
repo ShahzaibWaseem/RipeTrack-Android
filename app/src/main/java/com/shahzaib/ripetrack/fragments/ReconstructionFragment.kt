@@ -32,6 +32,7 @@ import com.shahzaib.ripetrack.*
 import com.shahzaib.ripetrack.MainActivity.Companion.centralBoxes
 import com.shahzaib.ripetrack.MainActivity.Companion.croppableNIRBitmap
 import com.shahzaib.ripetrack.MainActivity.Companion.croppableRGBBitmap
+import com.shahzaib.ripetrack.MainActivity.Companion.dottedPaint
 import com.shahzaib.ripetrack.MainActivity.Companion.fruitBoxes
 import com.shahzaib.ripetrack.MainActivity.Companion.generateAlertBox
 import com.shahzaib.ripetrack.MainActivity.Companion.highlightPaint
@@ -74,7 +75,7 @@ class ReconstructionFragment: Fragment() {
 	private lateinit var ripeTrackApplication: String
 	private lateinit var classificationFile: String
 	private lateinit var reconstructionFile: String
-	private var classificationFiles = arrayOf("RipeTrack_classification_mobile_pa_oneplus.pt", "RipeTrack_classification_mobile_bmn_oneplus.pt")
+	private var classificationFiles = arrayOf("RipeTrack_classification_mobile_pa_google.pt", "RipeTrack_classification_mobile_bmn_google.pt")
 	private var reconstructionFiles = arrayOf("RipeTrack_reconstruction_mobile_pa_68.pt", "RipeTrack_reconstruction_mobile_bmn_68.pt")
 	private lateinit var ripeTrackControlOption: String
 	private var advancedControlOption by Delegates.notNull<Boolean>()
@@ -237,8 +238,20 @@ class ReconstructionFragment: Fragment() {
 				var savedClickedX = 0.0F
 				var savedClickedY = 0.0F
 
+				// default initialization (dummy values, will be changed in the handler below)
+				var boxSelectionOverlay: Bitmap
+				var boxSelectionCanvas: Canvas
+
 				when (Pair(position, analyze))	{
 					Pair(0, false) -> {
+
+						// (ASSUMING at least one object has been detected and passed to this fragment)
+						// initialize the (default) chosen box for it to be shown after the handler draws the dotted fruit boxes
+						chosenHS = hsCubes[0]
+						chosenFruitBox = fruitBoxes[0]
+						chosenCentralBox = centralBoxes[0]
+						classificationPair = processingResults[0]
+
 						// show bounding boxes and the inference output
 						// this task needs to be delayed or all the results won't be shown
 						Handler(Looper.getMainLooper()).postDelayed({
@@ -249,17 +262,28 @@ class ReconstructionFragment: Fragment() {
 								val text = "${currResult.first} ${currResult.second}% Left"
 								val tBounds = Rect()
 								textPaint.getTextBounds(text, 0, text.length, tBounds)
-								val left = (if (tBounds.left < 0) currFruitBox.left - tBounds.left else currFruitBox.left + tBounds.left) - 2.5F
-								val top = (if (tBounds.top < 0) currFruitBox.top - tBounds.top else currFruitBox.top + tBounds.top) - 2.5F
-
-								if (MainActivity.userBox != null && i == processingResults.size - 1) {
-									canvas.drawText(text, left, top-25, Paint(textPaint).apply { color = Color.argb(255, 126,255,0) })
-									continue
-								}
+								val left =
+									(if (tBounds.left < 0) currFruitBox.left - tBounds.left else currFruitBox.left + tBounds.left) - 2.5F
+								val top =
+									(if (tBounds.top < 0) currFruitBox.top - tBounds.top else currFruitBox.top + tBounds.top) - 2.5F
 
 								canvas.drawText(text, left, top, textPaint)
-								drawBoxOnView(currFruitBox, MainActivity.dottedPaint, canvas, view, bitmapOverlay)
+								drawBoxOnView(currFruitBox, dottedPaint, canvas, view, bitmapOverlay)
 							}
+
+							boxSelectionOverlay = Bitmap.createBitmap(bitmapOverlay)
+							boxSelectionCanvas = Canvas(boxSelectionOverlay)
+							drawBoxOnView(chosenFruitBox, Paint(highlightPaint).apply {
+								color = Color.argb(90, 137, 109, 235)
+								style = Paint.Style.FILL
+								// below is so that the filling is INSIDE the fruit box and doesn't overlap it
+								strokeWidth = 1F
+							}, boxSelectionCanvas, view, boxSelectionOverlay)
+							drawBoxOnView(chosenCentralBox, highlightPaint, boxSelectionCanvas, view, boxSelectionOverlay)
+							lifecycleScope.launch(Dispatchers.Main) {
+								displayClassification()
+							}
+
 						}, 100)
 
 						view.setOnTouchListener { v, event ->
@@ -268,17 +292,18 @@ class ReconstructionFragment: Fragment() {
 
 							Log.i("Click event", "Analysis? $analyze, $clickedX, $clickedY")
 							if (!analyze){
-								// reset the image bitmap so that any previous purple highlights are cleared
+
+								// reset this image bitmap so that previous highlights are cleared & new ones can be drawn
+								boxSelectionOverlay = Bitmap.createBitmap(bitmapOverlay)
+								boxSelectionCanvas = Canvas(boxSelectionOverlay)
+
+								// reset the image bitmap so that any previous purple highlights are not shown
 								view.setImageBitmap(bitmapOverlay)
 
-								// a bitmap & canvas based on bitmapOverlay, with all the fruit & central boxes drawn on it with classification labels
-								val boxSelectionOverlay = Bitmap.createBitmap(bitmapOverlay)
-								val boxSelectionCanvas = Canvas(boxSelectionOverlay)
-
-								for (i in centralBoxes.indices){
-									val currBox = centralBoxes[i]
+								for (i in fruitBoxes.indices){
+									val currBox = fruitBoxes[i]
 									Log.i("Click Pair & Box", "${Pair(clickedX.roundToInt(), clickedY.roundToInt())}, $currBox")
-									if (pointWithinBox(Pair(clickedX.roundToInt(), clickedY.roundToInt()), currBox)){
+									if (pointWithinBox(Pair(clickedX.roundToInt(), clickedY.roundToInt()), currBox)) {
 										boxChosen = true
 
 										// initialize the variables for the chosen analysis region
@@ -299,16 +324,19 @@ class ReconstructionFragment: Fragment() {
 											strokeWidth = 1F
 										}, boxSelectionCanvas, view, boxSelectionOverlay)
 
-										fragmentReconstructionBinding.analyzeButton.visibility = View.VISIBLE
+										//fragmentReconstructionBinding.analyzeButton.visibility = View.VISIBLE
 
 										lifecycleScope.launch (Dispatchers.Main){
 											displayClassification()
 										}
+
+										// this prevents multiple boxes from being highlighted i.e. if (clickedX, clickedY) was within the bounds of multiple boxes
+										break
 									}
 								}
 
 								// apply the new bitmap, but we still have bitmapOverlay which we can use to clear the drawings here
-								view.setImageBitmap(boxSelectionOverlay)
+								//view.setImageBitmap(boxSelectionOverlay)
 							}
 							false
 						}
@@ -355,10 +383,18 @@ class ReconstructionFragment: Fragment() {
 							if (isRGBTab) {
 								val centerPoint = Pair(item.width/2, item.height/2)
 
-								val left = centerPoint.first - Utils.boundingBoxWidth
-								val top = centerPoint.second - Utils.boundingBoxHeight
-								val right = left + patchWidth
-								val bottom = top + patchHeight
+								val paintWidth = MainActivity.defaultPaint.strokeWidth
+
+								var left = centerPoint.first - Utils.boundingBoxWidth
+								var top = centerPoint.second - Utils.boundingBoxHeight
+								var right = left + patchWidth
+								var bottom = top + patchHeight
+
+								// add/subtract paintWidth so that the user can not tap on the green frame but rather only inside the box
+								left += paintWidth
+								top += paintWidth
+								right -= paintWidth
+								bottom -= paintWidth
 
 								val relevantBox = Box(left, top, right, bottom)
 
@@ -451,11 +487,6 @@ class ReconstructionFragment: Fragment() {
 	}
 
 	private fun performInference(){
-		if (MainActivity.userBox != null) {
-			// if the user has picked a box, add it to both centralBoxes and fruitBoxes for later use
-			centralBoxes.add(MainActivity.userBox!!)
-			fruitBoxes.add(MainActivity.userBox!!)
-		}
 
 		centralBoxes.forEach {
 			Log.i("PerformInference", "$it")

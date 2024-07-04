@@ -388,6 +388,9 @@ class CameraFragment: Fragment() {
 				// Save the result to disk
 				val output = saveResult(result)
 				Log.i("CameraIDs RGB", "$cameraId $cameraIdRGB $cameraIdNIR")
+
+				MainActivity.nirAbsolutePath = output.absolutePath
+
 				lifecycleScope.launch(Dispatchers.Main) {
 					if (cameraId == cameraIdRGB){
 						Log.i("Camera ID NIR", cameraIdNIR)
@@ -397,9 +400,9 @@ class CameraFragment: Fragment() {
 							else -> navController.navigate(CameraFragmentDirections.actionCameraFragmentSelf(cameraIdNIR, imageFormat))
 						}
 					}
-					else
-						//navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(rgbAbsolutePath, output.absolutePath))
-						navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, output.absolutePath))
+					else {
+						navController.navigate(CameraFragmentDirections.actionCameraToJpegViewer(MainActivity.rgbAbsolutePath, MainActivity.nirAbsolutePath))
+					}
 				}
 			}
 		}

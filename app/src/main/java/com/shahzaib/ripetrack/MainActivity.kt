@@ -25,7 +25,6 @@ class MainActivity: AppCompatActivity() {
 	}
 
 	companion object {
-		var userBox: Box? = null
 		const val RIPETRACK_APPLICATION = 0
 		lateinit var fruitID: String
 		lateinit var originalRGBBitmap: Bitmap
@@ -52,7 +51,7 @@ class MainActivity: AppCompatActivity() {
 		lateinit var rgbAbsolutePath: String
 		lateinit var nirAbsolutePath: String
 
-		private val defaultPaint by lazy {
+		val defaultPaint by lazy {
 			Paint().apply {
 				color = Color.argb(255, 253,250,114)
 				strokeWidth = 5F
