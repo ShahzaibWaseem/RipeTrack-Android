@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.ImageFormat
 import android.graphics.Matrix
 import android.graphics.Paint
@@ -27,6 +28,7 @@ import com.shahzaib.ripetrack.Utils.imageFormat
 import com.shahzaib.ripetrack.Utils.processedImageDirectory
 import com.shahzaib.ripetrack.Utils.rawImageDirectory
 import com.shahzaib.ripetrack.Utils.torchHeight
+import com.shahzaib.ripetrack.Utils.torchWidth
 import java.io.BufferedWriter
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -49,7 +51,8 @@ object Utils {
 	const val appRootPath = "RipeTrack"
 	const val rawImageDirectory = "rawImages"
 	const val croppedImageDirectory = "croppedImages"
-	const val processedImageDirectory = "processedImages"
+//	const val processedImageDirectory = "processedImages"
+	const val processedImageDirectory = "wbImages"
 	const val hypercubeDirectory = "reconstructedHypercubes"
 	const val boundingBoxWidth = 32F
 	const val boundingBoxHeight = 32F
@@ -417,71 +420,36 @@ fun pointWithinBox(point: Pair<Int, Int>, box: Box): Boolean {
 	return pointFloat.first in box.left ..box.right && pointFloat.second in box.top .. box.bottom
 }
 
-/*
-class MathOps {
-	companion object {
-		fun dot (a: DoubleArray, b: DoubleArray): Double {
-			var dotProduct = 0.0
-			for(i in 0 until a.size) {
-				dotProduct += (a[ i ] * b[ i ])
-			}
-			return dotProduct
-		}
-
-		fun dotMatrixList(matrix: Array<DoubleArray>, list: DoubleArray): DoubleArray {
-			val dotList = DoubleArray(matrix[0].size)
-
-			for(i in matrix.indices) {
-				dotList[i] = dot(matrix[i], list)
-			}
-			return dotList
-		}
-
-		fun mmul(weights: Array<DoubleArray>, X: Array<DoubleArray>): Array<DoubleArray> {
-			val outWeights = Array(weights.size){ DoubleArray(weights[0].size) }
-
-			weights.indices.forEach {classes ->
-				val currentX = DoubleArray(weights[0].size)
-				weights[classes].indices.forEach {features->
-					currentX[features] = weights[classes][features]
-				}
-				outWeights[classes] = dotMatrixList(weights, X[classes])
-			}
-			return outWeights
-		}
-
-		fun subtract (a: DoubleArray, b: DoubleArray): DoubleArray {
-			val difference = DoubleArray(a.size)
-			for(i in 0 until a.size) {
-				difference[i] =  (a[ i ] - b[ i ])
-			}
-			return difference
-		}
-
-		fun multiplyScalar (a: DoubleArray, k: Double): DoubleArray {
-			val results = DoubleArray(a.size)
-			for (i in 0 until a.size) {
-				results[ i ] = a[ i ] * k
-			}
-			return results
-		}
-
-		fun multidimMean(x: Array<DoubleArray>): Array<Double> {
-			val mean = ArrayList<Double>()
-			for (i in 0 until x[0].size) {
-				var sum = 0.0
-				for (array in x) {
-					sum += array[i]
-				}
-				mean.add(sum / x.size)
-			}
-			return mean.toTypedArray()
-		}
-
-		fun mean(x: DoubleArray): Double
-		{
-
-		}
+fun bitmapToIntArray(bitmap: Bitmap): IntArray {
+	val width = bitmap.width
+	val height = bitmap.height
+	val intArrayPixels = IntArray(width * height)
+	val intArrayValues = IntArray(width * height * 3)
+	bitmap.getPixels(intArrayPixels, 0, width, 0, 0, width, height)
+	for (idx in intArrayPixels.indices) {
+		val color = intArrayPixels[idx]
+		intArrayValues[3 * idx] = Color.red(color)
+		intArrayValues[3 * idx + 1] = Color.green(color)
+		intArrayValues[3 * idx + 2] = Color.blue(color)
 	}
+	return intArrayValues
 }
- */
+
+// extract the r, g & b channels from array of pixels with shape [-1,3], turning it into shape [3, height*width]
+fun rearrangePixelsToColorChannels(array: FloatArray): FloatArray {
+	val channelSize = torchWidth * torchHeight
+
+	val rArray = FloatArray(channelSize)
+	val bArray = FloatArray(channelSize)
+	val gArray = FloatArray(channelSize)
+
+	for ((idx, i) in (array.indices step 3).withIndex()) {
+		rArray[idx] = array[i]
+		gArray[idx] = array[i + 1]
+		bArray[idx] = array[i + 2]
+	}
+
+	// put the channels together in R, G, B order
+	return rArray + gArray + bArray
+
+}

@@ -41,7 +41,9 @@ import com.shahzaib.ripetrack.MainActivity.Companion.generateAlertBox
 import com.shahzaib.ripetrack.R
 import com.shahzaib.ripetrack.Utils
 import com.shahzaib.ripetrack.Utils.imageFormat
+import com.shahzaib.ripetrack.WhiteBalance
 import com.shahzaib.ripetrack.addCSVLog
+import com.shahzaib.ripetrack.bitmapToIntArray
 import com.shahzaib.ripetrack.databinding.FragmentImageviewerBinding
 import com.shahzaib.ripetrack.drawBoxOnView
 import com.shahzaib.ripetrack.makeFolderInRoot
@@ -58,7 +60,7 @@ import kotlin.math.roundToInt
 typealias Box = MainActivity.Companion.Box
 
 class ImageViewerFragment: Fragment() {
-	private val correctionMatrix = Matrix().apply { postRotate(90F); }
+	private val correctionMatrix = Matrix().apply { postRotate(90F) }
 
 	/** AndroidX navigation arguments */
 	private val args: ImageViewerFragmentArgs by navArgs()
@@ -91,6 +93,11 @@ class ImageViewerFragment: Fragment() {
 
 	private val removedFruitBoxes by lazy { mutableListOf<Box>() }
 	private val removedCentralBoxes by lazy { mutableListOf<Box>() }
+
+	// used to decide for white balancing
+	private val offlineMode by lazy {
+		sharedPreferences.getBoolean("offline_mode", true)
+	}
 
 
 	private fun imageViewFactory() = ImageView(requireContext()).apply {
@@ -399,6 +406,7 @@ class ImageViewerFragment: Fragment() {
 			val rgbImage = File(args.filePath)
 			val directoryPath = rgbImage.absolutePath.split(System.getProperty("file.separator")!!)
 			val rgbImageFileName = directoryPath[directoryPath.size-1]
+
 			val nirImage = File(args.filePath2)
 			val nirDirectoryPath = nirImage.absolutePath.split(System.getProperty("file.separator")!!)
 			val nirImageFileName = nirDirectoryPath[nirDirectoryPath.size-1]
@@ -465,17 +473,7 @@ class ImageViewerFragment: Fragment() {
 	}
 
 	private fun saveMinMax(bitmap: Bitmap, isRGB: Boolean) {
-		val width = bitmap.width
-		val height = bitmap.height
-		val intArrayPixels = IntArray(width * height)
-		val intArrayValues = IntArray(width * height * 3)
-		bitmap.getPixels(intArrayPixels, 0, width, 0, 0, width, height)
-		for (idx in intArrayPixels.indices) {
-			val color = intArrayPixels[idx]
-			intArrayValues[3 * idx] = Color.red(color)
-			intArrayValues[3 * idx + 1] = Color.green(color)
-			intArrayValues[3 * idx + 2] = Color.blue(color)
-		}
+		val intArrayValues = bitmapToIntArray(bitmap)
 		val min = intArrayValues.min()
 		val max = intArrayValues.max()
 
@@ -497,19 +495,20 @@ class ImageViewerFragment: Fragment() {
 		if (isRGB){
 			bitmap = Bitmap.createBitmap(decodedBitmap, 0, 0, decodedBitmap.width, decodedBitmap.height, null, false)
 
-//			// Perform white balancing on the RGB image if (1) online mode or (2) offline mode and the selected RGB does not have white balancing
-//			Log.i("WB Conditions (online mode, offline image with -D)", "$offlineMode, ${MainActivity.rgbAbsolutePath}")
-//			if (!offlineMode || ( offlineMode && !MainActivity.rgbAbsolutePath.contains("-D"))){
-//				Log.i("WB", "Process Began")
-//				val whiteBalancingModel = WhiteBalance(requireContext())
-//				val whiteBalancingThread = Thread {
-//					bitmap = whiteBalancingModel.whiteBalance(bitmap)
-//				}
-//				whiteBalancingThread.start()
-//				try { whiteBalancingThread.join() }
-//				catch (exception: InterruptedException) { exception.printStackTrace() }
-//				Log.i("WB", "Process Completed")
-//			}
+			// Perform white balancing on the RGB image if (1) online mode or (2) offline mode and the selected RGB does not have white balancing
+			Log.i("WB Conditions (online mode, offline image with -D)", "$offlineMode, ${MainActivity.rgbAbsolutePath}")
+			if (!offlineMode || ( offlineMode && !MainActivity.rgbAbsolutePath.contains("-D"))){
+				Log.i("WB", "Process Began")
+
+				val whiteBalancingModel = WhiteBalance(requireContext())
+				val whiteBalancingThread = Thread {
+					bitmap = whiteBalancingModel.whiteBalance(bitmap)
+				}
+				whiteBalancingThread.start()
+				try { whiteBalancingThread.join() }
+				catch (exception: InterruptedException) { exception.printStackTrace() }
+				Log.i("WB", "Process Completed")
+			}
 		}
 		else {
 			bitmap = if (decodedBitmap.width > decodedBitmap.height)

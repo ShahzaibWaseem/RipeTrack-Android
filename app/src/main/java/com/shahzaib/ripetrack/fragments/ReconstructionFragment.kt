@@ -75,7 +75,7 @@ class ReconstructionFragment: Fragment() {
 	private lateinit var ripeTrackApplication: String
 	private lateinit var classificationFile: String
 	private lateinit var reconstructionFile: String
-	private var classificationFiles = arrayOf("RipeTrack_classification_mobile_pa_google.pt", "RipeTrack_classification_mobile_bmn_google.pt")
+	private var classificationFiles = arrayOf("RipeTrack_classification_mobile_pa_oneplus.pt", "RipeTrack_classification_mobile_bmn_oneplus.pt")
 	private var reconstructionFiles = arrayOf("RipeTrack_reconstruction_mobile_pa_68.pt", "RipeTrack_reconstruction_mobile_bmn_68.pt")
 	private lateinit var ripeTrackControlOption: String
 	private var advancedControlOption by Delegates.notNull<Boolean>()
