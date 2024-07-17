@@ -5,6 +5,7 @@ import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import org.apache.commons.math3.linear.*
 import org.pytorch.IValue
 import org.pytorch.Module
@@ -138,7 +139,8 @@ class WhiteBalance(private val context: Context) {
     private fun arrayTo2DArray(array: DoubleArray, col: Int): Array<DoubleArray> {
         return array.toList().chunked(col) { it.toDoubleArray() }.toTypedArray()
     }
-    private fun arrayTo2DArray(array: FloatArray, col: Int): Array<FloatArray> {
+
+    private fun arrayTo2DArray(array: FloatArray, col: Int = 11): Array<FloatArray> {
         return array.toList().chunked(col) { it.toFloatArray() }.toTypedArray()
     }
 
@@ -161,7 +163,6 @@ class WhiteBalance(private val context: Context) {
 
     private fun convert2DArrayToFloatArray(array: Array<FloatArray>): FloatArray {
         // assuming same # columns for all rows in 'array'
-
         val floatArray = FloatArray(array.size * array[0].size)
 
         var idx = 0
@@ -219,24 +220,36 @@ class WhiteBalance(private val context: Context) {
         val gD = (tempinvD - cct2inv) / (cct1inv - cct2inv)
 
         // perform linear interpolation to acquire image in Daylight setting
-        val iD = performLinearInterpolation(iT, iS, gD.toFloat())
 
-        return iD
+        return performLinearInterpolation(iT, iS, gD.toFloat())
     }
 
     // computes the image WB in Tungsten (2850K) & Shade (7500K) settings & performs color temp interpolation to output the final image
     private fun deepWB(image: Tensor, normalizedImage: Tensor): Tensor {
+        val moduleTag = "WB Module"
 
-        // get image in Tungsten & Shade WB setting
-        val inputs: IValue = IValue.from(normalizedImage)
-        outputAwb = modelAwb?.forward(inputs)?.toTensor()!!
-        outputT = modelT?.forward(inputs)?.toTensor()!!
-        outputS = modelS?.forward(inputs)?.toTensor()!!
+        // Use QR Decomposition for regression
+        if (MainActivity.qrDecompositionSetting) {
+            Log.i(moduleTag, "Using QR Decomposition")
+
+            // get image in Tungsten & Shade WB setting
+            val inputs: IValue = IValue.from(normalizedImage)
+            outputT = modelT?.forward(inputs)?.toTensor()!!
+            outputS = modelS?.forward(inputs)?.toTensor()!!
+
+            return colorTempInterpolate(
+                outOfGamutClipping(applyMappingFunc(image, getMappingFunc(image, outputT!!))),
+                outOfGamutClipping(applyMappingFunc(image, getMappingFunc(image, outputS!!)))
+            )
+        }
+
+        // Use trained model for regression
+        Log.i(moduleTag, "Using Quantized Models")
 
         // (1) compute polynomial features of the image
         // (2) important: convert the resulting tensor data into type uint8 (following the original Deep White Balance Editing Code)
         // (3) reshape it into an [n, 11] form, where n = # pixels
-        val image2d = arrayTo2DArray(convertTensorDataToUByte(kernelP(image)).dataAsFloatArray, 11)
+        val image2d = arrayTo2DArray(convertTensorDataToUByte(kernelP(image)).dataAsFloatArray)
 
         // set up an ORT Environment to run quantized linear regression models that
         // extract the mapping matrix M from the image to its polynomial features
@@ -253,9 +266,9 @@ class WhiteBalance(private val context: Context) {
         val outTFloatArray = rearrangePixelsToColorChannels(convert2DArrayToFloatArray(linearRegressionOutputT))
         val outSFloatArray = rearrangePixelsToColorChannels(convert2DArrayToFloatArray(linearRegressionOutputS))
 
-        // create a tensor out of the rearranged float arrrays & clip its out-of-gamut values
-        val gamutClippedS = outOfGamutClipping(Tensor.fromBlob(outSFloatArray, normalizedImage.shape()))
+        // create a tensor out of the rearranged float arrays & clip its out-of-gamut values
         val gamutClippedT = outOfGamutClipping(Tensor.fromBlob(outTFloatArray, normalizedImage.shape()))
+        val gamutClippedS = outOfGamutClipping(Tensor.fromBlob(outSFloatArray, normalizedImage.shape()))
 
         // interpolate color temperature from Tungsten & Shade to Daylight (5500K) WB setting
         return colorTempInterpolate(gamutClippedT, gamutClippedS)
@@ -281,17 +294,21 @@ class WhiteBalance(private val context: Context) {
             val g = floatArray[i+width*height]
             val b = floatArray[i+2*width*height]
 
-            // argb() and rgb() functions expect normalized color values within [0,1] range, here we give default 100% alpha value (opaque) --> refer to colorsToARGB comments
+            // argb() and rgb() functions expect normalized color values within [0,1] range,
+            // here we give default 100% alpha value (opaque) --> refer to colorsToARGB comments
             pixels[i] = colorsToARGB(r, g, b) // you might need to import for rgb()
         }
-
         bmp.setPixels(pixels, 0, width, 0, 0, width, height)
 
         return bmp
     }
 
+    private var mean = floatArrayOf(0.0f, 0.0f, 0.0f)
+    private var std = floatArrayOf(1.0f, 1.0f, 1.0f)
     fun whiteBalance(rgbBitmap: Bitmap): Bitmap {
         val rgbTensor = bitmapToTensor(rgbBitmap, normalize = false)
+         // val rgbTensor = if (MainActivity.qrDecompositionSetting) TensorImageUtils.bitmapToFloat32Tensor(rgbBitmap, mean, std)
+         //   else bitmapToTensor(rgbBitmap, normalize = false)
         val normalizedRGBTensor = bitmapToTensor(rgbBitmap, normalize = true)
 
         val outputs = deepWB(rgbTensor, normalizedRGBTensor)    // outputs has shape [1, 3, 640, 480]
@@ -303,30 +320,8 @@ class WhiteBalance(private val context: Context) {
         return DoubleArray(input.size) { input[it].toDouble() }
     }
 
-    /* the functions below are not used in this version */
-
-    // helper functions that extract the RGBA values from a floating-point pixel
-    private fun extractRGBA(pixel: Float): List<UByte> {
-        val intRep = pixel.toRawBits()  // get int representation of the float for bit extraction
-        val alpha = (intRep shr 24).toUByte()
-        val blue = (intRep shl 8 shr 24).toUByte()
-        val green = (intRep shl 16 shr 24).toUByte()
-        val red = (intRep shl 24 shr 24).toUByte()
-
-        return listOf(alpha, blue, green, red)
-    }
-    private fun extractRGBA(pixel: Int): List<Int> {
-        val alpha = (pixel shr 24 and 0xFF)
-        val red = (pixel shr 16 and 0xFF)
-        val green = (pixel shr 8 and 0xFF)
-        val blue = (pixel and 0xFF)
-
-        return listOf(alpha, blue, green, red)
-    }
-
     private fun getMappingFunc(image1: Tensor, image2: Tensor): RealMatrix {
-        // (not used) assuming input images are of the form [1, 3, row, col]
-
+        // assuming input images are of the form [1, 3, row, col]
         // rearrange image tensors to arrays of pixels
         val image2Rearranged = rearrangeToRGBPixels(image2)
 
@@ -340,7 +335,7 @@ class WhiteBalance(private val context: Context) {
     }
 
     private fun applyMappingFunc(image: Tensor, mapping: RealMatrix): Tensor {
-        // (not used) assuming image has dimensions 1x3x640x480
+        // assuming image has dimensions 1x3x640x480
         val imageFeatures = kernelP(image)
 
         // AX = B, here we're multiplying A (nx11) by X (11x3)
@@ -381,5 +376,4 @@ class WhiteBalance(private val context: Context) {
         // return a Tensor in the same shape as the original image
         return Tensor.fromBlob(result, image.shape())
     }
-
 }

@@ -51,6 +51,12 @@ class MainActivity: AppCompatActivity() {
 		lateinit var rgbAbsolutePath: String
 		lateinit var nirAbsolutePath: String
 
+		// for manually changing the white balance setting
+		var whiteBalanceSetting = false
+
+		// for manually changing WB usage of QR decomposition vs quantized regression models
+		var qrDecompositionSetting = false
+
 		val defaultPaint by lazy {
 			Paint().apply {
 				color = Color.argb(255, 253,250,114)
