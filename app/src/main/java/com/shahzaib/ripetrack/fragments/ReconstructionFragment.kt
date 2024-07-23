@@ -112,6 +112,7 @@ class ReconstructionFragment: Fragment() {
 	private val reconstructionDone = MutableLiveData(false)
 
 	private suspend fun displayClassification()	{
+
 		// delay the function to give a "growth" effect to the progress bar
 		delay(30L)
 
@@ -168,10 +169,12 @@ class ReconstructionFragment: Fragment() {
 	}
 
 	private fun performClassification(){
+
 		lifecycleScope.launch(Dispatchers.Main){
 			// (initialize or reset) progress value on both bar & progress text
 			progressBar.progress = 0
 			progressText.text = getString(R.string.remaining_lifetime_placeholder, progressBar.progress)
+
 		}
 	}
 
@@ -213,10 +216,6 @@ class ReconstructionFragment: Fragment() {
 			fragmentReconstructionBinding.analyzeButton
 		)
 
-		if (!advancedControlOption) {
-			fragmentReconstructionBinding.graphView.visibility = View.INVISIBLE
-		}
-
 		return fragmentReconstructionBinding.root
 	}
 
@@ -227,6 +226,7 @@ class ReconstructionFragment: Fragment() {
 		fragmentReconstructionBinding.viewpager.apply {
 			offscreenPageLimit=2
 			adapter = GenericListAdapter(bandsHS, itemViewFactory = { imageViewFactory() }){ view, item, position ->
+
 				view as ImageView
 				view.scaleType = ImageView.ScaleType.FIT_XY
 				bitmapsWidth = item.width
@@ -269,6 +269,7 @@ class ReconstructionFragment: Fragment() {
 
 								canvas.drawText(text, left, top, textPaint)
 								drawBoxOnView(currFruitBox, dottedPaint, canvas, view, bitmapOverlay)
+
 							}
 
 							boxSelectionOverlay = Bitmap.createBitmap(bitmapOverlay)
@@ -439,6 +440,7 @@ class ReconstructionFragment: Fragment() {
 						}
 
 						Log.i("LongClickListener", "Pressed")
+
 						bitmapOverlay = Bitmap.createBitmap(item.width, item.height, item.config)
 						canvas = Canvas(bitmapOverlay)
 						canvas.drawBitmap(item, Matrix(), null)
@@ -447,6 +449,7 @@ class ReconstructionFragment: Fragment() {
 						false
 					}
 				}
+
 				Glide.with(view).load(item).into(view)
 			}
 		}
@@ -477,6 +480,7 @@ class ReconstructionFragment: Fragment() {
 		if (::toggleVisibilityViews.isInitialized) {
 			toggleVisibilityViews.forEach {
 				if (it.visibility == View.VISIBLE){
+
 					it.visibility = View.INVISIBLE
 				}
 				else {
@@ -534,6 +538,7 @@ class ReconstructionFragment: Fragment() {
 			graphView.viewport.setMaxY(1.2)
 			graphView.gridLabelRenderer.setHumanRounding(true)
 
+
 			fragmentReconstructionBinding.analyzeButton.setOnClickListener {
 				analyze = !analyze
 
@@ -557,6 +562,7 @@ class ReconstructionFragment: Fragment() {
 							bandsChosen.add(i)
 							addItemToViewPager(fragmentReconstructionBinding.viewpager, getBand(chosenHS, i), selectedIndices.indexOf(i)+1)
 						}
+
 					}
 				}
 
@@ -579,6 +585,7 @@ class ReconstructionFragment: Fragment() {
 						tab.text = "RGB"
 				}
 				else {
+
 					when (position) {
 						0 -> tab.text = "RGB"
 						1 -> tab.text = "NIR"
@@ -588,6 +595,7 @@ class ReconstructionFragment: Fragment() {
 
 			fragmentReconstructionBinding.reloadButton.setOnClickListener {
 				if (analyze){
+
 					// go back to classification page
 					@Suppress("KotlinConstantConditions")
 					analyze = !analyze
@@ -605,6 +613,7 @@ class ReconstructionFragment: Fragment() {
 				}
 				else{
 					// navigate back to the ImageViewerFragment
+
 					lifecycleScope.launch(Dispatchers.Main) {
 						navController.navigate(ReconstructionFragmentDirections
 							.actionReconstructionFragmentToImageViewerFragment(
@@ -621,6 +630,7 @@ class ReconstructionFragment: Fragment() {
 	}
 
 	override fun onResume(){
+
 		super.onResume()
 		// use an observer so that onResume() doesn't run before the scheduled task in onStart() is complete (then predictedHS may be uninitialized)
 		reconstructionDone.observe(this) { initialized ->
@@ -636,13 +646,15 @@ class ReconstructionFragment: Fragment() {
 		}
 	}
 
-	private fun classifyIndividualFruit(targetHS: FloatArray): Pair<Int, Int>{
+	private fun classifyIndividualFruit(targetHS: FloatArray): Pair<Int, Int> {
 		val classificationModel = context?.let { Classification(it, classificationFile) }!!
 		return classificationModel.predict(targetHS, numberOfBands.toLong(), patchWidth.toLong(), patchHeight.toLong())
+
 	}
 
 	private fun getSignature(predictedHS: FloatArray, row: Int, col: Int): FloatArray {
 		val signature = FloatArray(numberOfBands)
+		var signatureString = ""
 		// Log.i("Touch Coordinates", "$row, $col")
 
 		// 'remaining' as in how many pixels to the edges of the current band
@@ -660,10 +672,13 @@ class ReconstructionFragment: Fragment() {
 
 			idx += remainingX + bitmapsWidth*remainingY + 1 // go to the first pixel of the next band
 			idx += bitmapsWidth*row + col					// go to pixel at the same row & col on the next band
+			signatureString += "${signature[i]}, "
 		}
+		Log.i("Signature", signatureString)
 
 		if (advancedControlOption) {
 			val graphView = fragmentReconstructionBinding.graphView
+
 			graphView.gridLabelRenderer.padding = 50
 			graphView.gridLabelRenderer.textSize = 60F
 			series.dataPointsRadius = 20F
@@ -684,6 +699,7 @@ class ReconstructionFragment: Fragment() {
 		bitmapsHeight = rgbBitmap.height
 
 		return reconstructionModel.predict(rgbBitmap, nirBitmap)
+
 	}
 
 	private fun getBand(predictedHS: FloatArray, bandNumber: Int, reverseScale: Boolean = false): Bitmap {

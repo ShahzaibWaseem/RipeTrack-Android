@@ -115,6 +115,7 @@ class ApplicationSelectorFragment: Fragment() {
 				fragmentApplicationSelectorBinding.radioGroup.checkedRadioButtonId
 			val selectedOption =
 				requireView().findViewById<RadioButton>(selectedRadio).text.toString()
+
 			val offlineMode = selectedOption == getString(R.string.offline_mode_string) // signifies online/offline mode
 
 			editor!!.putString("application", selectedApplication)
@@ -127,6 +128,7 @@ class ApplicationSelectorFragment: Fragment() {
 
 
 			if (selectedOption == getString(R.string.data_capturing_mode_string)) {
+
 				lifecycleScope.launch {
 					withStarted {
 						navController.safeNavigate(
@@ -139,6 +141,7 @@ class ApplicationSelectorFragment: Fragment() {
 			}
 			else
 			{
+
 				lifecycleScope.launch {
 					withStarted {
 						navController.safeNavigate(
@@ -149,6 +152,7 @@ class ApplicationSelectorFragment: Fragment() {
 					}
 				}
 			}
+
 			true
 		}
 	}

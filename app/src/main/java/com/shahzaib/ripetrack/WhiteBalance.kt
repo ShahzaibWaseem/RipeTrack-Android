@@ -13,6 +13,7 @@ import org.pytorch.Tensor
 import java.nio.FloatBuffer
 import kotlin.math.pow
 
+
 @Suppress("unused")
 class WhiteBalance(private val context: Context) {
     private var modelAwb: Module? = null
@@ -34,6 +35,8 @@ class WhiteBalance(private val context: Context) {
         val height = bitmap.height
         val pixelCount = width*height
         val pixels = IntArray(pixelCount)
+
+        Log.i("Width & Height", "$width, $height")
 
         // extract pixels from the bitmap into the 'pixels' array
         bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
@@ -65,11 +68,13 @@ class WhiteBalance(private val context: Context) {
     }
 
     // reshapes image Tensors of shape [1, 3, row, col] to [row*col, 3], which is the equivalent of np.reshape(image, [-1, 3]) in Python
+
     private fun rearrangeToRGBPixels(image: Tensor): Tensor {
         val tensorData = image.dataAsFloatArray
 
         // size is 3 (for r,g,b) * rows * cols e.g. 3 * 640 * 480
         val imageData = FloatArray(tensorData.size)
+
 
         val numPixels = (image.shape()[2] * image.shape()[3]).toInt()
 
@@ -178,6 +183,7 @@ class WhiteBalance(private val context: Context) {
 
     // clips out-of-gamut values inside a normalized tensor
     private fun outOfGamutClipping(image: Tensor): Tensor {
+
         val imageData = image.dataAsFloatArray
 
         imageData.indices.forEach {
@@ -185,7 +191,7 @@ class WhiteBalance(private val context: Context) {
             imageData[it] = if (item > 1F) 1F else if (item < 0F) 0F else item
         }
 
-        // recreate the tensor using the clipped data
+
         return Tensor.fromBlob(imageData, image.shape())
     }
 
@@ -312,6 +318,7 @@ class WhiteBalance(private val context: Context) {
         val normalizedRGBTensor = bitmapToTensor(rgbBitmap, normalize = true)
 
         val outputs = deepWB(rgbTensor, normalizedRGBTensor)    // outputs has shape [1, 3, 640, 480]
+
 
         return floatArrayToBitmap(outputs.dataAsFloatArray, outputs.shape()[3].toInt(), outputs.shape()[2].toInt())
     }

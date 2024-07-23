@@ -77,3 +77,4 @@ dependencies {
 	implementation 'org.jetbrains.kotlinx:kotlin-deeplearning-onnx:0.5.2'
 }
 
+

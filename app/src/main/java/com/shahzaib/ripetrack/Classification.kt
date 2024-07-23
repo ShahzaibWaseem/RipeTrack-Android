@@ -23,14 +23,12 @@ class Classification(context: Context, modelPath: String) {
         val hypercubeTensor = Tensor.fromBlob(hypercube, shape)
         val inputs: IValue = IValue.from(hypercubeTensor)
         val outputs = model?.forward(inputs)?.toTuple()!!
-        Log.i("Classification Output", "${outputs.size}")
+
+        Log.i("Classification.Predict", "Size: ${outputs.size}")
+
         val ripeness = outputs[0].toTensor().dataAsFloatArray.toList()
         val remainingLife = outputs[1].toTensor().dataAsFloatArray.toList()
-
-        /*for (f1 in ripeness)
-            Log.i("Ripeness value", "$f1")
-        for (f2 in remainingLife)
-            Log.i("Remaining Life value", "$f2")*/
+        Log.i("Classification.Predict", "$ripeness, $remainingLife")
 
         val ripenessArgmax = ripeness.argmax()
         val remainingLifeArgmax = remainingLife.argmax()

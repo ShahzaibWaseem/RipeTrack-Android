@@ -29,6 +29,7 @@ import com.shahzaib.ripetrack.Utils.processedImageDirectory
 import com.shahzaib.ripetrack.Utils.rawImageDirectory
 import com.shahzaib.ripetrack.Utils.torchHeight
 import com.shahzaib.ripetrack.Utils.torchWidth
+
 import java.io.BufferedWriter
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -111,15 +112,7 @@ object Utils {
 	}
 
 		fun cropImage(bitmap: Bitmap, left: Float, top: Float): Bitmap {
-			return Bitmap.createBitmap(
-				bitmap,
-				left.toInt(),
-				top.toInt(),
-				(boundingBoxWidth * 2).toInt(),
-				(boundingBoxHeight * 2).toInt(),
-				null,
-				false
-			)
+			return Bitmap.createBitmap(bitmap, left.toInt(), top.toInt(), (boundingBoxWidth * 2).toInt(), (boundingBoxHeight * 2).toInt(), null, false)
 		}
 
 		fun cropImage(bitmap: Bitmap, box: Box): Bitmap {
@@ -135,27 +128,10 @@ object Utils {
 		}
 
 		fun fixedAlignment(imageRGB: Bitmap): Bitmap {
-			Log.i(
-				"Aligned RGB",
-				"$aligningFactorX + $torchWidth = ${torchWidth + aligningFactorX} (${imageRGB.width})"
-			)
-			Log.i(
-				"Aligned RGB",
-				"$aligningFactorY + $torchHeight = ${torchHeight + aligningFactorY} (${imageRGB.height})"
-			)
-			val alignedImageRGB = Bitmap.createBitmap(
-				imageRGB,
-				aligningFactorX,
-				aligningFactorY,
-				torchWidth,
-				torchHeight,
-				null,
-				false
-			)
-			Log.i(
-				"Aligned RGB",
-				"Resulting Bitmap: W ${alignedImageRGB.width} H ${alignedImageRGB.height}"
-			)
+			Log.i("Aligned RGB", "$aligningFactorX + $torchWidth = ${torchWidth + aligningFactorX} (${imageRGB.width})")
+			Log.i("Aligned RGB","$aligningFactorY + $torchHeight = ${torchHeight + aligningFactorY} (${imageRGB.height})")
+			val alignedImageRGB = Bitmap.createBitmap(imageRGB,aligningFactorX, aligningFactorY, torchWidth, torchHeight,null, false)
+			Log.i("Aligned RGB", "Resulting Bitmap: W ${alignedImageRGB.width} H ${alignedImageRGB.height}")
 			return alignedImageRGB
 		}
 

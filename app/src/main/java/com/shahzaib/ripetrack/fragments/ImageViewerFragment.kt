@@ -94,10 +94,12 @@ class ImageViewerFragment: Fragment() {
 	private val removedFruitBoxes by lazy { mutableListOf<Box>() }
 	private val removedCentralBoxes by lazy { mutableListOf<Box>() }
 
+
 	// used to decide for white balancing
 	private val offlineMode by lazy {
 		sharedPreferences.getBoolean("offline_mode", true)
 	}
+
 
 
 	private fun imageViewFactory() = ImageView(requireContext()).apply {
@@ -106,6 +108,7 @@ class ImageViewerFragment: Fragment() {
 			ViewGroup.LayoutParams.MATCH_PARENT
 		)
 	}
+
 
 	private fun startViewPager(rgbImageBitmap: Bitmap, nirImageBitmap: Bitmap) {
 		val viewpagerThread = Thread {
@@ -121,6 +124,7 @@ class ImageViewerFragment: Fragment() {
 		try { viewpagerThread.join() }
 		catch (exception: InterruptedException) { exception.printStackTrace() }
 	}
+
 
 	@SuppressLint("ClickableViewAccessibility")
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -153,6 +157,7 @@ class ImageViewerFragment: Fragment() {
 				canvas.drawBitmap(item, Matrix(), null)
 
 				if (position == 0) {
+
 						Log.i("Crop Coordinates (ViewPager)", "($leftCrop,$topCrop), ($rightCrop,$bottomCrop)")
 
 						// draws rectangles based on the result of object detection
@@ -177,6 +182,7 @@ class ImageViewerFragment: Fragment() {
 							if (!touchCoolDown)
 							{
 								Log.i("ViewPager", "Clicked")
+
 
 								var clickedX = ((event!!.x / v!!.width) * bitmapsWidth).roundToInt()
 								var clickedY = ((event.y / v.height) * bitmapsHeight).roundToInt()
@@ -273,8 +279,7 @@ class ImageViewerFragment: Fragment() {
 		fragmentImageViewerBinding.Title.setOnClickListener {
 			lifecycleScope.launch(Dispatchers.Main) {
 				navController.navigate(
-					ImageViewerFragmentDirections
-						.actionImageViewerFragmentToApplicationTitle()
+					ImageViewerFragmentDirections.actionImageViewerFragmentToApplicationTitle()
 				)
 			}
 		}
@@ -282,8 +287,7 @@ class ImageViewerFragment: Fragment() {
 		fragmentImageViewerBinding.reloadButton.setOnClickListener {
 			lifecycleScope.launch(Dispatchers.Main) {
 				navController.navigate(
-					ImageViewerFragmentDirections
-						.actionImageViewerFragmentToCameraFragment(
+					ImageViewerFragmentDirections.actionImageViewerFragmentToCameraFragment(
 							MainActivity.cameraIDList.first, imageFormat)
 				)
 			}
@@ -331,15 +335,15 @@ class ImageViewerFragment: Fragment() {
 
 			// only perform detection for the RGB image as the coordinates will apply to the NIR as well
 			// + the NIR will be cropped on the same coordinates for reconstruction/classification
-			detector.process(inputRGBImg)
-				.addOnSuccessListener { detections ->
-					Log.i("Detected Objects!", "${detections.size}, $detections")
+			detector.process(inputRGBImg).addOnSuccessListener { detections ->
+				Log.i("Detected Objects!", "${detections.size}, $detections")
 
 					if (detections.size > 0) {
 						detections.forEach {
 							val currRect = it.boundingBox
 
-							fruitBoxes.add(Box(currRect))
+
+						fruitBoxes.add(Box(currRect))
 
 							// Find coordinates of the 64x64 bounding box in the middle of the detected box
 							val width = (currRect.right - currRect.left).toFloat()
@@ -376,30 +380,30 @@ class ImageViewerFragment: Fragment() {
 					else {
 						Toast.makeText(requireContext(), "No Objects Detected", LENGTH_LONG).show()
 
-						val left = rgbImageBitmap.width/2 - Utils.boundingBoxWidth
-						val top = rgbImageBitmap.height/2 - Utils.boundingBoxHeight
-						val right = rgbImageBitmap.width/2 + Utils.boundingBoxWidth
-						val bottom = rgbImageBitmap.height/2 + Utils.boundingBoxHeight
+						val left = rgbImageBitmap.width / 2 - Utils.boundingBoxWidth
+						val top = rgbImageBitmap.height / 2 - Utils.boundingBoxHeight
+						val right = rgbImageBitmap.width / 2 + Utils.boundingBoxWidth
+						val bottom = rgbImageBitmap.height / 2 + Utils.boundingBoxHeight
+
 
 						val middleBox = Box(left, top, right, bottom)
 						centralBoxes.add(middleBox)
 					}
-					startViewPager(rgbImageBitmap, nirImageBitmap)
-				}
-				.addOnFailureListener {e ->
-					Log.i("Detection Failed", e.message.toString())
-					Toast.makeText(requireContext(), "Object Detection Failed", LENGTH_LONG).show()
+				startViewPager(rgbImageBitmap, nirImageBitmap)
+			}.addOnFailureListener {e ->
+				Log.i("Detection Failed", e.message.toString())
+				Toast.makeText(requireContext(), "Object Detection Failed", LENGTH_LONG).show()
 
-					val left = rgbImageBitmap.width/2 - Utils.boundingBoxWidth
-					val top = rgbImageBitmap.height/2 - Utils.boundingBoxHeight
-					val right = rgbImageBitmap.width/2 + Utils.boundingBoxWidth
-					val bottom = rgbImageBitmap.height/2 + Utils.boundingBoxHeight
+				val left = rgbImageBitmap.width/2 - Utils.boundingBoxWidth
+				val top = rgbImageBitmap.height/2 - Utils.boundingBoxHeight
+				val right = rgbImageBitmap.width/2 + Utils.boundingBoxWidth
+				val bottom = rgbImageBitmap.height/2 + Utils.boundingBoxHeight
 
-					val middleBox = Box(left, top, right, bottom)
-					centralBoxes.add(middleBox)
+				val middleBox = Box(left, top, right, bottom)
+				centralBoxes.add(middleBox)
 
-					startViewPager(rgbImageBitmap, nirImageBitmap)
-				}
+				startViewPager(rgbImageBitmap, nirImageBitmap)
+			}
 
 			loadingDialogFragment.dismissDialog()
 
@@ -418,6 +422,7 @@ class ImageViewerFragment: Fragment() {
 
 			fragmentImageViewerBinding.button.setOnClickListener {
 				val cropTime = System.currentTimeMillis()
+
 
 				Log.i("Cropped Image", "Asked to crop")
 
@@ -474,6 +479,7 @@ class ImageViewerFragment: Fragment() {
 
 	private fun saveMinMax(bitmap: Bitmap, isRGB: Boolean) {
 		val intArrayValues = bitmapToIntArray(bitmap)
+
 		val min = intArrayValues.min()
 		val max = intArrayValues.max()
 

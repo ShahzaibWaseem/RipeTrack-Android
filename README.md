@@ -42,8 +42,8 @@ The datasets are in pairs of RGB and NIR images. Each dataset has the following 
 [fruit]
 │
 └── [num]_NIR.png
-	[num]_RGB.png
-	...
+    [num]_RGB.png
+    ...
 ```
 
 Steps to run the application in the offline mode:

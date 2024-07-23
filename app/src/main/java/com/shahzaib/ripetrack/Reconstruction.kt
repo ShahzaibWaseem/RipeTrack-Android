@@ -21,6 +21,7 @@ class Reconstruction(context: Context, modelPath: String) {
 	private fun getNormalizedTensor(bitmap: Bitmap, isRGB: Boolean): Tensor {
 		val width = bitmap.width
 		val height = bitmap.height
+		Log.i("Reconstruction.Normalization", "width: $width, height: $height")
 
 		val pixelCount = width*height
 		val pixels = IntArray(pixelCount)
@@ -43,10 +44,7 @@ class Reconstruction(context: Context, modelPath: String) {
 			outBuffer.put(pixelCount * 2 + i, blue)
 		}
 
-		val firstPixel: Triple<Int, Int, Int> = Triple(pixels[0] shr 16 and 0xFF, pixels[0] shr 8 and 0xFF, pixels[0] and 0xFF)
-		Log.i("Normalization", "Min: $min, Max: $max, Delta: $diff")
-		Log.i("Normalization", "First Pixel: ${firstPixel.first} ${firstPixel.second} ${firstPixel.third}")
-		Log.i("Normalization", "First Pixel Normalized: [${outBuffer.get(0)}, ${outBuffer.get(pixelCount)}, ${outBuffer.get(pixelCount*2)}]")
+		val firstPixel: Triple<Int, Int, Int> = Triple(pixels[2080] shr 16 and 0xFF, pixels[2080] shr 8 and 0xFF, pixels[2080] and 0xFF)
 		return Tensor.fromBlob(outBuffer, longArrayOf(1, 3, height.toLong(), width.toLong()))
 	}
 
@@ -81,6 +79,7 @@ class Reconstruction(context: Context, modelPath: String) {
 		val nirTensor: Tensor = getOneBand(getNormalizedTensor(nirBitmap, isRGB = false), 0)
 		Log.i("Normalization", "First Pixel Normalized: [${nirTensor.dataAsFloatArray[0]}, ${nirTensor.dataAsFloatArray[1]}, ${nirTensor.dataAsFloatArray[2]}]")
 
+
 		val imageTensor: Tensor = concatenate(rgbBitmapTensor, nirTensor, 4)
 		val inputs: IValue = IValue.from(imageTensor)
 
@@ -88,7 +87,6 @@ class Reconstruction(context: Context, modelPath: String) {
 		Log.i("Reconstruction Tensors", "RGB ${rgbBitmapTensor.shape().toList()} + NIR ${nirTensor.shape().toList()} = Concat ${imageTensor.shape().toList()} -> [Reconstruction] -> ${outputs.shape().toList()}")
 		val hypercubeFloat = outputs.dataAsFloatArray
 		Log.i("Float", "${hypercubeFloat[0]}")
-		//saveHypercube("Output.txt", outputs.dataAsFloatArray, Utils.hypercubeDirectory)
 		return outputs.dataAsFloatArray
 	}
 }
