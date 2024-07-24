@@ -2,7 +2,11 @@ package com.shahzaib.ripetrack
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.DashPathEffect
+import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.Typeface
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -25,6 +29,8 @@ class MainActivity: AppCompatActivity() {
 		lateinit var fruitID: String
 		lateinit var originalRGBBitmap: Bitmap
 		lateinit var originalNIRBitmap: Bitmap
+		lateinit var croppableRGBBitmap: Bitmap
+		lateinit var croppableNIRBitmap: Bitmap
 		lateinit var originalImageRGB: String
 		lateinit var originalImageNIR: String
 		var processedImageRGB = ""
@@ -34,11 +40,9 @@ class MainActivity: AppCompatActivity() {
 		var minMaxRGB = Pair(1000, -1000)
 		var minMaxNIR = Pair(1000, -1000)
 		var actualLabel: String = ""
-		var reconstructionTime: String = " s"
-		var classificationTime: String = " ms"
+		// var reconstructionTime: String = " s"
 		lateinit var tempRGBBitmap: Bitmap
 		lateinit var tempNIRBitmap: Bitmap
-		lateinit var tempRectangle: Rect
 		var cameraIDList: Pair<String, String> = Pair("", "")
 		var dataCapturing = false
 		var illuminationOption = "Halogen"
@@ -46,6 +50,52 @@ class MainActivity: AppCompatActivity() {
 
 		lateinit var rgbAbsolutePath: String
 		lateinit var nirAbsolutePath: String
+
+		// for manually changing the white balance setting
+		var whiteBalanceSetting = false
+
+		// for manually changing WB usage of QR decomposition vs quantized regression models
+		var qrDecompositionSetting = false
+
+		val defaultPaint by lazy {
+			Paint().apply {
+				color = Color.argb(255, 253,250,114)
+				strokeWidth = 5F
+				style = Paint.Style.STROKE
+			}
+		}
+
+		val dottedPaint by lazy {
+			Paint(defaultPaint).apply {
+				strokeWidth = 3F
+				pathEffect = DashPathEffect(floatArrayOf(10F, 4F), 0F)
+			}
+		}
+
+		val highlightPaint by lazy {
+			Paint(defaultPaint).apply {
+				color = Color.argb(255, 126,255,0)
+			}
+		}
+
+		// for drawing text on the Bitmaps
+		val textPaint by lazy {
+			Paint(defaultPaint).apply {
+				strokeWidth = 5F
+				style = Paint.Style.FILL
+				textSize = 25F
+				typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+				isAntiAlias = true
+			}
+		}
+
+		// to hold 64x64 bounding boxes to be drawn for detected objects
+		data class Box(var left: Float, var top: Float, var right: Float, var bottom: Float ) {
+			// secondary constructor to use with Rectangles
+			constructor(coordRect: Rect): this(coordRect.left.toFloat(), coordRect.top.toFloat(), coordRect.right.toFloat(), coordRect.bottom.toFloat())
+		}
+		var fruitBoxes = mutableListOf<Box>()
+		var centralBoxes = mutableListOf<Box>()
 
 		fun generateAlertBox(context: Context, title: String, text: String, onPositiveButtonFunction: () -> Unit) {
 			val alertDialogBuilder = MaterialAlertDialogBuilder(context, R.style.AlertDialogTheme)

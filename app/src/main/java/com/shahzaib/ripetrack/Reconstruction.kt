@@ -45,9 +45,6 @@ class Reconstruction(context: Context, modelPath: String) {
 		}
 
 		val firstPixel: Triple<Int, Int, Int> = Triple(pixels[2080] shr 16 and 0xFF, pixels[2080] shr 8 and 0xFF, pixels[2080] and 0xFF)
-		Log.i("Reconstruction.Normalization", "Min: $min, Max: $max, Delta: $diff")
-		Log.i("Reconstruction.Normalization", "Center Pixel: ${firstPixel.first} ${firstPixel.second} ${firstPixel.third}")
-		Log.i("Reconstruction.Normalization", "Center Pixel Normalized: [${outBuffer.get(2080)}, ${outBuffer.get(2080+pixelCount)}, ${outBuffer.get(2080+pixelCount*2)}]")
 		return Tensor.fromBlob(outBuffer, longArrayOf(1, 3, height.toLong(), width.toLong()))
 	}
 
@@ -80,7 +77,8 @@ class Reconstruction(context: Context, modelPath: String) {
 
 		val rgbBitmapTensor = getNormalizedTensor(rgbBitmap, isRGB = true)
 		val nirTensor: Tensor = getOneBand(getNormalizedTensor(nirBitmap, isRGB = false), 0)
-		Log.i("Reconstruction.Predict", "IR First Pixel Normalized: [${nirTensor.dataAsFloatArray[0]}, ${nirTensor.dataAsFloatArray[1]}, ${nirTensor.dataAsFloatArray[2]}]")
+		Log.i("Normalization", "First Pixel Normalized: [${nirTensor.dataAsFloatArray[0]}, ${nirTensor.dataAsFloatArray[1]}, ${nirTensor.dataAsFloatArray[2]}]")
+
 
 		val imageTensor: Tensor = concatenate(rgbBitmapTensor, nirTensor, 4)
 		val inputs: IValue = IValue.from(imageTensor)

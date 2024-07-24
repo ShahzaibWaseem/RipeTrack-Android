@@ -82,11 +82,9 @@ class ApplicationSelectorFragment: Fragment() {
 	@SuppressLint("ClickableViewAccessibility")
 	override fun onStart() {
 		super.onStart()
-		MainActivity.cameraIDList =
-			Utils.getCameraIDs(requireContext(), MainActivity.RIPETRACK_APPLICATION)
+		MainActivity.cameraIDList = Utils.getCameraIDs(requireContext(), MainActivity.RIPETRACK_APPLICATION)
 		val cameraIdNIR = MainActivity.cameraIDList.second
-		val sharedPreferences =
-			requireActivity().getSharedPreferences("ripetrack_preferences", Context.MODE_PRIVATE)
+		val sharedPreferences = requireActivity().getSharedPreferences("ripetrack_preferences", Context.MODE_PRIVATE)
 		val editor = sharedPreferences?.edit()
 
 		fragmentApplicationSelectorBinding.applicationPicker.value =
@@ -111,9 +109,13 @@ class ApplicationSelectorFragment: Fragment() {
 		}
 
 		fragmentApplicationSelectorBinding.runApplicationButton.setOnTouchListener { _, _ ->
-			val selectedApplication = applicationArray[fragmentApplicationSelectorBinding.applicationPicker.value]
-			val selectedRadio = fragmentApplicationSelectorBinding.radioGroup.checkedRadioButtonId
-			val selectedOption = requireView().findViewById<RadioButton>(selectedRadio).text.toString()
+			val selectedApplication =
+				applicationArray[fragmentApplicationSelectorBinding.applicationPicker.value]
+			val selectedRadio =
+				fragmentApplicationSelectorBinding.radioGroup.checkedRadioButtonId
+			val selectedOption =
+				requireView().findViewById<RadioButton>(selectedRadio).text.toString()
+
 			val offlineMode = selectedOption == getString(R.string.offline_mode_string) // signifies online/offline mode
 
 			editor!!.putString("application", selectedApplication)
@@ -123,7 +125,10 @@ class ApplicationSelectorFragment: Fragment() {
 			Log.i("Radio Button", "$selectedApplication, $selectedOption")
 			editor.apply()
 			MainActivity.actualLabel = selectedApplication
-			if (selectedOption == getString(R.string.data_capturing_mode_string))
+
+
+			if (selectedOption == getString(R.string.data_capturing_mode_string)) {
+
 				lifecycleScope.launch {
 					withStarted {
 						navController.safeNavigate(
@@ -133,7 +138,10 @@ class ApplicationSelectorFragment: Fragment() {
 						)
 					}
 				}
+			}
 			else
+			{
+
 				lifecycleScope.launch {
 					withStarted {
 						navController.safeNavigate(
@@ -143,6 +151,8 @@ class ApplicationSelectorFragment: Fragment() {
 						)
 					}
 				}
+			}
+
 			true
 		}
 	}

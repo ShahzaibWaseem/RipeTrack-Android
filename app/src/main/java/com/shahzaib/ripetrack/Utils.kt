@@ -4,8 +4,11 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.ImageFormat
 import android.graphics.Matrix
+import android.graphics.Paint
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
@@ -16,6 +19,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
+import android.widget.ImageView
 import androidx.core.net.toUri
 import com.opencsv.CSVWriter
 import com.shahzaib.ripetrack.Utils.appRootPath
@@ -23,6 +27,9 @@ import com.shahzaib.ripetrack.Utils.croppedImageDirectory
 import com.shahzaib.ripetrack.Utils.imageFormat
 import com.shahzaib.ripetrack.Utils.processedImageDirectory
 import com.shahzaib.ripetrack.Utils.rawImageDirectory
+import com.shahzaib.ripetrack.Utils.torchHeight
+import com.shahzaib.ripetrack.Utils.torchWidth
+
 import java.io.BufferedWriter
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -32,6 +39,8 @@ import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+
+typealias Box = MainActivity.Companion.Box
 
 object Utils {
 	const val previewHeight = 800
@@ -43,7 +52,8 @@ object Utils {
 	const val appRootPath = "RipeTrack"
 	const val rawImageDirectory = "rawImages"
 	const val croppedImageDirectory = "croppedImages"
-	const val processedImageDirectory = "processedImages"
+//	const val processedImageDirectory = "processedImages"
+	const val processedImageDirectory = "wbImages"
 	const val hypercubeDirectory = "reconstructedHypercubes"
 	const val boundingBoxWidth = 32F
 	const val boundingBoxHeight = 32F
@@ -103,6 +113,18 @@ object Utils {
 
 		fun cropImage(bitmap: Bitmap, left: Float, top: Float): Bitmap {
 			return Bitmap.createBitmap(bitmap, left.toInt(), top.toInt(), (boundingBoxWidth * 2).toInt(), (boundingBoxHeight * 2).toInt(), null, false)
+		}
+
+		fun cropImage(bitmap: Bitmap, box: Box): Bitmap {
+			return Bitmap.createBitmap(
+				bitmap,
+				box.left.toInt(),
+				box.top.toInt(),
+				(box.right - box.left).toInt(),
+				(box.bottom - box.top).toInt(),
+				null,
+				false
+			)
 		}
 
 		fun fixedAlignment(imageRGB: Bitmap): Bitmap {
@@ -319,7 +341,7 @@ fun readImage(inputFile: String): Bitmap {
 }
 
 fun compressImage(bmp: Bitmap): Bitmap {
-	var bitmap = bmp
+	var bitmap = resizeBitmap(bmp, torchHeight)
 	Log.i("Utils.copyFile", "${bitmap.height} ${bitmap.width}")
 	if (bitmap.width > bitmap.height) {     // rotate so the image is always up right (portrait)
 		bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, Matrix().apply { postRotate(90F); }, false)
@@ -359,4 +381,51 @@ fun addCSVLog (context: Context) {
 	}
 	else
 		makeFolderInRoot(appRootPath, context)
+}
+fun drawBox(box: Box, paint: Paint, canvas: Canvas){
+	val strokeWidth = paint.strokeWidth
+	canvas.drawRect(box.left-strokeWidth, box.top-strokeWidth, box.right+strokeWidth, box.bottom+strokeWidth, paint)
+}
+fun drawBoxOnView(box: Box, paint: Paint, canvas: Canvas, view: ImageView, bitmapOverlay: Bitmap) {
+	drawBox(box, paint, canvas)
+	view.setImageBitmap(bitmapOverlay)
+}
+
+fun pointWithinBox(point: Pair<Int, Int>, box: Box): Boolean {
+	val pointFloat = Pair(point.first.toFloat(), point.second.toFloat())
+	return pointFloat.first in box.left ..box.right && pointFloat.second in box.top .. box.bottom
+}
+
+fun bitmapToIntArray(bitmap: Bitmap): IntArray {
+	val width = bitmap.width
+	val height = bitmap.height
+	val intArrayPixels = IntArray(width * height)
+	val intArrayValues = IntArray(width * height * 3)
+	bitmap.getPixels(intArrayPixels, 0, width, 0, 0, width, height)
+	for (idx in intArrayPixels.indices) {
+		val color = intArrayPixels[idx]
+		intArrayValues[3 * idx] = Color.red(color)
+		intArrayValues[3 * idx + 1] = Color.green(color)
+		intArrayValues[3 * idx + 2] = Color.blue(color)
+	}
+	return intArrayValues
+}
+
+// extract the r, g & b channels from array of pixels with shape [-1,3], turning it into shape [3, height*width]
+fun rearrangePixelsToColorChannels(array: FloatArray): FloatArray {
+	val channelSize = torchWidth * torchHeight
+
+	val rArray = FloatArray(channelSize)
+	val bArray = FloatArray(channelSize)
+	val gArray = FloatArray(channelSize)
+
+	for ((idx, i) in (array.indices step 3).withIndex()) {
+		rArray[idx] = array[i]
+		gArray[idx] = array[i + 1]
+		bArray[idx] = array[i + 2]
+	}
+
+	// put the channels together in R, G, B order
+	return rArray + gArray + bArray
+
 }
