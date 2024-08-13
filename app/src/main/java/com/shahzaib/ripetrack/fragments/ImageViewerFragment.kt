@@ -35,9 +35,11 @@ import com.shahzaib.ripetrack.MainActivity
 import com.shahzaib.ripetrack.MainActivity.Companion.centralBoxes
 import com.shahzaib.ripetrack.MainActivity.Companion.croppableNIRBitmap
 import com.shahzaib.ripetrack.MainActivity.Companion.croppableRGBBitmap
+import com.shahzaib.ripetrack.MainActivity.Companion.customUserBox
 import com.shahzaib.ripetrack.MainActivity.Companion.dottedPaint
 import com.shahzaib.ripetrack.MainActivity.Companion.fruitBoxes
 import com.shahzaib.ripetrack.MainActivity.Companion.generateAlertBox
+import com.shahzaib.ripetrack.MainActivity.Companion.highlightPaint
 import com.shahzaib.ripetrack.R
 import com.shahzaib.ripetrack.Utils
 import com.shahzaib.ripetrack.Utils.imageFormat
@@ -45,7 +47,7 @@ import com.shahzaib.ripetrack.WhiteBalance
 import com.shahzaib.ripetrack.addCSVLog
 import com.shahzaib.ripetrack.bitmapToIntArray
 import com.shahzaib.ripetrack.databinding.FragmentImageviewerBinding
-import com.shahzaib.ripetrack.drawBoxOnView
+import com.shahzaib.ripetrack.drawBox
 import com.shahzaib.ripetrack.makeFolderInRoot
 import com.shahzaib.ripetrack.pointWithinBox
 import com.shahzaib.ripetrack.saveProcessedImages
@@ -94,13 +96,12 @@ class ImageViewerFragment: Fragment() {
 	private val removedFruitBoxes by lazy { mutableListOf<Box>() }
 	private val removedCentralBoxes by lazy { mutableListOf<Box>() }
 
-
 	// used to decide for white balancing
 	private val offlineMode by lazy {
 		sharedPreferences.getBoolean("offline_mode", true)
 	}
 
-
+//	private var addCustomUserBox = false
 
 	private fun imageViewFactory() = ImageView(requireContext()).apply {
 		layoutParams = ViewGroup.LayoutParams(
@@ -125,6 +126,34 @@ class ImageViewerFragment: Fragment() {
 		catch (exception: InterruptedException) { exception.printStackTrace() }
 	}
 
+	private fun tempDisableTouchEvents(view: View)
+	{
+		lifecycleScope.launch(Dispatchers.Main)
+		{
+			view.isEnabled = false
+			delay(600L)
+			view.isEnabled = true
+		}
+	}
+
+	private fun drawAllBoxes(targetCanvas: Canvas)
+	{
+		for (i in fruitBoxes.indices)
+		{
+			val currFruitBox = fruitBoxes[i]
+			val currCentralBox = centralBoxes[i]
+			if (removedFruitBoxes.contains(currFruitBox))
+			{
+				drawBox(currFruitBox, Paint(dottedPaint).apply { color = Color.GRAY }, targetCanvas)
+				drawBox(currCentralBox, Paint(highlightPaint).apply { color = Color.GRAY }, targetCanvas)
+			}
+			else
+			{
+				drawBox(currFruitBox, dottedPaint, targetCanvas)
+				drawBox(currCentralBox, highlightPaint, targetCanvas)
+			}
+		}
+	}
 
 	@SuppressLint("ClickableViewAccessibility")
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -156,108 +185,240 @@ class ImageViewerFragment: Fragment() {
 
 				canvas.drawBitmap(item, Matrix(), null)
 
-				if (position == 0) {
+					if (position == 0) {
 
 						Log.i("Crop Coordinates (ViewPager)", "($leftCrop,$topCrop), ($rightCrop,$bottomCrop)")
+
+						lateinit var displayOverlay: Bitmap
+						lateinit var displayCanvas: Canvas
 
 						// draws rectangles based on the result of object detection
 						// note: needs to run after a 100-millisecond delay otherwise the bounding box will not be drawn
 						Handler(Looper.getMainLooper()).postDelayed({
-							fruitBoxes.forEach {
-								if (removedFruitBoxes.contains(it))
+
+							// draw the fruit boxes on bitmapOverlay -- it will be kept as a reference in case the central boxes change
+							// and need to be re-drawn
+							for (i in fruitBoxes.indices)
+							{
+								val currFruitBox = fruitBoxes[i]
+								if (removedFruitBoxes.contains(currFruitBox))
 								{
-									drawBoxOnView(it, Paint(dottedPaint).apply { color = Color.GRAY }, canvas, view, bitmapOverlay)
+									drawBox(currFruitBox, Paint(dottedPaint).apply { color = Color.GRAY }, canvas)
 								}
 								else
 								{
-									drawBoxOnView(it, dottedPaint, canvas, view, bitmapOverlay)
+									drawBox(currFruitBox, dottedPaint, canvas)
 								}
 							}
+
+							// copy bitmapOverlay with fruit boxes drawn to displayOverlay
+							displayOverlay = Bitmap.createBitmap(bitmapOverlay)
+							displayCanvas = Canvas(displayOverlay)
+
+							// add the central boxes to displayOverlay
+							for (i in fruitBoxes.indices)
+							{
+								val currFruitBox = fruitBoxes[i]
+								val currCentralBox = centralBoxes[i]
+								if (removedFruitBoxes.contains(currFruitBox))
+								{
+									drawBox(currCentralBox, Paint(highlightPaint).apply { color = Color.GRAY }, displayCanvas)
+								}
+								else
+								{
+									drawBox(currCentralBox, highlightPaint, displayCanvas)
+								}
+							}
+
+							// set the image bitmap for the RGB image view
+							view.setImageBitmap(displayOverlay)
+
 						}, 100)
 
 						view.setOnTouchListener { v, event ->
 
-							var touchCoolDown = false
+							//Log.i("Touch Event", "Normal Tap")
 
-							if (!touchCoolDown)
-							{
-								Log.i("ViewPager", "Clicked")
+							var clickedX = ((event!!.x / v!!.width) * bitmapsWidth).roundToInt()
+							var clickedY = ((event.y / v.height) * bitmapsHeight).roundToInt()
 
+							// Make sure the bounding box doesn't go outside the bounds of the image
+							if (clickedX + Utils.boundingBoxWidth > bitmapsWidth)
+								clickedX = (item.width - Utils.boundingBoxWidth).roundToInt()
+							if (clickedY + Utils.boundingBoxHeight > bitmapsHeight)
+								clickedY = (item.height - Utils.boundingBoxHeight).roundToInt()
 
-								var clickedX = ((event!!.x / v!!.width) * bitmapsWidth).roundToInt()
-								var clickedY = ((event.y / v.height) * bitmapsHeight).roundToInt()
+							if (clickedX - Utils.boundingBoxWidth < 0)
+								clickedX = (0 + Utils.boundingBoxWidth).roundToInt()
+							if (clickedY - Utils.boundingBoxHeight < 0)
+								clickedY = (0 + Utils.boundingBoxHeight).roundToInt()
 
-								// Make sure the bounding box doesn't go outside the bounds of the image
-								if (clickedX + Utils.boundingBoxWidth > bitmapsWidth)
-									clickedX = (item.width - Utils.boundingBoxWidth).roundToInt()
-								if (clickedY + Utils.boundingBoxHeight > bitmapsHeight)
-									clickedY = (item.height - Utils.boundingBoxHeight).roundToInt()
+//							if (!addCustomUserBox) {
 
-								if (clickedX - Utils.boundingBoxWidth < 0)
-									clickedX = (0 + Utils.boundingBoxWidth).roundToInt()
-								if (clickedY - Utils.boundingBoxHeight < 0)
-									clickedY = (0 + Utils.boundingBoxHeight).roundToInt()
+								var touchCoolDown = false
 
+								if (!touchCoolDown)
+								{
+									v.setOnLongClickListener {
 
-								v.setOnLongClickListener {
+										Log.i("Touch Event", "Long Click")
 
-									touchCoolDown = true
-
-									// important: the code below disables the view for a short period of time to prevent
-									// click events from being registered and adding the box back immediately
-									lifecycleScope.launch(Dispatchers.Main)
-									{
-										v.isEnabled = false
-										delay(600L)
-										v.isEnabled = true
+										touchCoolDown = true
+										// important: the code below disables the view for a short period of time to prevent
+										// click events from being registered and adding the box back immediately
+										// this is because a long tap is registered as multiple consecutive click events
+										tempDisableTouchEvents(v)
 										touchCoolDown = false
+
+										// check if the user tapped within the AVAILABLE fruit boxes
+										// and add removed boxes to the list
+										fruitBoxes.indices.forEach {
+											if (pointWithinBox(Pair(clickedX, clickedY), fruitBoxes[it])){
+												removedFruitBoxes.add(fruitBoxes[it])
+												removedCentralBoxes.add(centralBoxes[it])
+											}
+										}
+
+										// redraw the boxes so that the removed ones are visually distinguishable
+										drawAllBoxes(displayCanvas)
+										view.setImageBitmap(displayOverlay)
+
+	//									Log.i("Box Added", "X: $clickedX ($bitmapsWidth), Y: $clickedY ($bitmapsHeight)")
+
+										if (!firstTap) {
+											leftCrop = item.width/2 - Utils.boundingBoxWidth
+											topCrop = item.height/2 - Utils.boundingBoxHeight
+											rightCrop = item.width/2 + Utils.boundingBoxWidth
+											bottomCrop = item.height/2 + Utils.boundingBoxHeight
+											firstTap = true
+										}
+										else {
+											leftCrop = clickedX - Utils.boundingBoxWidth
+											topCrop = clickedY - Utils.boundingBoxHeight
+											rightCrop = clickedX + Utils.boundingBoxWidth
+											bottomCrop = clickedY + Utils.boundingBoxHeight
+										}
+
+										false
 									}
 
-									Log.i("ViewPager", "Long Clicked")
+									// assume user tapped outside all fruit boxes
+									var newCustomBox = true
 
-									// check if the user tapped within the AVAILABLE fruit boxes
-									fruitBoxes.indices.forEach {
-										if (pointWithinBox(Pair(clickedX, clickedY), fruitBoxes[it])){
-											removedFruitBoxes.add(fruitBoxes[it])
-											removedCentralBoxes.add(centralBoxes[it])
+									// check if the user has tapped on a gray box to bring it back
+									// add back the boxes that have been tapped on (& make them yellow again) for reconstruction & classification
+									// also re-draw them to visually distinguish them from the removed boxes
+									for (i in fruitBoxes.indices) {
+
+										Log.i("Touch Event", "Post Long Click")
+
+										val currFruitBox = fruitBoxes[i]
+
+										if (pointWithinBox(Pair(clickedX, clickedY), currFruitBox)) {
+
+											// user tapped within a fruit box
+											newCustomBox = false
+
+											if (removedFruitBoxes.contains(currFruitBox))
+											{
+												removedFruitBoxes.remove(fruitBoxes[i])
+												removedCentralBoxes.remove(centralBoxes[i])
+
+												touchCoolDown = true
+												// this is added so that no touch events are registered for a few seconds
+												// if they are, there might be a scenario where the removed box is added back AND the position of the central box changes
+												// to where the user tapped, even though their only intention was to 'revive' the box
+												tempDisableTouchEvents(v)
+												touchCoolDown = false
+											}
+											else
+											{
+												// user has tapped within an 'active' box, but wants to adjust the location of the central box
+												// start with the coordinates of the box wrt clicked point
+												val tempNewCentralBox = Box(clickedX - Utils.boundingBoxWidth, clickedY - Utils.boundingBoxHeight, clickedX + Utils.boundingBoxWidth, clickedY + Utils.boundingBoxHeight)
+
+												// adjust box coordinates to make sure it stays within the fruit box boundaries
+												if (tempNewCentralBox.left < currFruitBox.left)
+												{
+													tempNewCentralBox.right += currFruitBox.left - tempNewCentralBox.left
+													tempNewCentralBox.left = currFruitBox.left
+												}
+												if (tempNewCentralBox.right > currFruitBox.right)
+												{
+													tempNewCentralBox.left -= tempNewCentralBox.right - currFruitBox.right
+													tempNewCentralBox.right = currFruitBox.right
+												}
+												if (tempNewCentralBox.bottom > currFruitBox.bottom)
+												{
+													tempNewCentralBox.top -= tempNewCentralBox.bottom - currFruitBox.bottom
+													tempNewCentralBox.bottom = currFruitBox.bottom
+												}
+												if (tempNewCentralBox.top < currFruitBox.top)
+												{
+													tempNewCentralBox.bottom += currFruitBox.top - tempNewCentralBox.top
+													tempNewCentralBox.top = currFruitBox.top
+												}
+
+												// central box should be WITHIN the strokes of the fruit boxes' dotted lines
+												val paintStrokeWidth = highlightPaint.strokeWidth
+												tempNewCentralBox.left += paintStrokeWidth
+												tempNewCentralBox.top += paintStrokeWidth
+												tempNewCentralBox.right -= paintStrokeWidth
+												tempNewCentralBox.bottom -= paintStrokeWidth
+
+												centralBoxes[i]	= tempNewCentralBox
+
+											}
+
 										}
 									}
 
-									fruitBoxes.forEach {
-										if (removedFruitBoxes.contains(it)) drawBoxOnView(it, Paint(dottedPaint).apply { color = Color.GRAY }, canvas, view, bitmapOverlay)
-										else drawBoxOnView(it, dottedPaint, canvas, view, bitmapOverlay)
-									}
+									// reset the current display bitmap and canvas for re-drawing everything
+									displayOverlay = Bitmap.createBitmap(item.width, item.height, item.config)
+									displayCanvas = Canvas(displayOverlay)
+									displayCanvas.drawBitmap(item, Matrix(), null)
 
-									Log.i("Box Added", "X: $clickedX ($bitmapsWidth), Y: $clickedY ($bitmapsHeight)")
+									drawAllBoxes(displayCanvas)
 
-									if (!firstTap) {
-										leftCrop = item.width/2 - Utils.boundingBoxWidth
-										topCrop = item.height/2 - Utils.boundingBoxHeight
-										rightCrop = item.width/2 + Utils.boundingBoxWidth
-										bottomCrop = item.height/2 + Utils.boundingBoxHeight
-										firstTap = true
-									}
-									else {
-										leftCrop = clickedX - Utils.boundingBoxWidth
-										topCrop = clickedY - Utils.boundingBoxHeight
-										rightCrop = clickedX + Utils.boundingBoxWidth
-										bottomCrop = clickedY + Utils.boundingBoxHeight
-									}
-
-									false
-								}
-
-								// check if the user has tapped on a gray box to bring it back
-								// add back the boxes that have been tapped on (& make them yellow again) for reconstruction & classification
-								for (i in fruitBoxes.indices) {
-									if (pointWithinBox(Pair(clickedX, clickedY), fruitBoxes[i]))
+									if (newCustomBox)
 									{
-										drawBoxOnView(fruitBoxes[i], dottedPaint, canvas, view, bitmapOverlay)
-										removedFruitBoxes.remove(fruitBoxes[i])
-										removedCentralBoxes.remove(centralBoxes[i])
+										val left = clickedX.toFloat()
+										val top = clickedY.toFloat()
+										val right = left + 64F
+										val bottom = top + 64F
+										customUserBox = Box(left, top, right, bottom)
 									}
+									customUserBox?.let {
+										drawBox(it, Paint(highlightPaint).apply { color = Color.MAGENTA }, displayCanvas)
+									}
+
+									view.setImageBitmap(displayOverlay)
 								}
-							}
+//							}
+//							else
+//							{
+//								// have clickedX and clickedY from the event listener (take them out of the if block)
+//								// use pointWithinBox and draw it via either a new bitmapOverlay or the current one, remember if u tap again a new one should be drawn and the old one ignored
+//
+//								val left = clickedX.toFloat()
+//								val top = clickedY.toFloat()
+//								val right = left + 64F
+//								val bottom = top + 64F
+//								customUserBox = Box(left, top, right, bottom)
+//
+//								displayOverlay = Bitmap.createBitmap(item.width, item.height, item.config)
+//
+//								displayCanvas = Canvas(displayOverlay)
+//
+//								displayCanvas.drawBitmap(item, Matrix(), null)
+//
+//								drawAllBoxes(displayCanvas)
+//								drawBox(customUserBox!!, Paint(highlightPaint).apply { color = Color.MAGENTA }, displayCanvas)
+//
+//								view.setImageBitmap(displayOverlay)
+//
+//							}
+
 
 							false
 						}
@@ -449,6 +610,11 @@ class ImageViewerFragment: Fragment() {
 				}
 
 			}
+
+//			fragmentImageViewerBinding.addCustomBoxSwitch.setOnCheckedChangeListener { button, checked ->
+//				addCustomUserBox = checked
+//			}
+
 		}
 	}
 

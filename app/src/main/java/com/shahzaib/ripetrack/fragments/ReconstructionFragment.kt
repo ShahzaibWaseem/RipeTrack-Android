@@ -32,6 +32,8 @@ import com.shahzaib.ripetrack.*
 import com.shahzaib.ripetrack.MainActivity.Companion.centralBoxes
 import com.shahzaib.ripetrack.MainActivity.Companion.croppableNIRBitmap
 import com.shahzaib.ripetrack.MainActivity.Companion.croppableRGBBitmap
+import com.shahzaib.ripetrack.MainActivity.Companion.customUserBox
+import com.shahzaib.ripetrack.MainActivity.Companion.defaultPaint
 import com.shahzaib.ripetrack.MainActivity.Companion.dottedPaint
 import com.shahzaib.ripetrack.MainActivity.Companion.fruitBoxes
 import com.shahzaib.ripetrack.MainActivity.Companion.generateAlertBox
@@ -219,6 +221,25 @@ class ReconstructionFragment: Fragment() {
 		return fragmentReconstructionBinding.root
 	}
 
+	private fun getCentralBoxForRGBTab(): Box
+	{
+		// make a copy of chosenCentralBox
+		val rescaledCentralBox = Box(chosenCentralBox.left, chosenCentralBox.top, chosenCentralBox.right, chosenCentralBox.bottom)
+
+		val paintStrokeWidth = defaultPaint.strokeWidth
+
+		// currently the chosenCentralBox coordinates are wrt the whole image, but we want to
+		// get the coordinates of the central box only in relation to the fruit box i.e. the dimensions of the RGB image in the RGB Tab
+		// e.g. the whole image is 640 x 480, but the fruit box might only be 140 x 200, the coordinates for the central box
+		// need to be adjusted so that they are wrt the 140x200 image
+		rescaledCentralBox.left = rescaledCentralBox.left - chosenFruitBox.left + paintStrokeWidth
+		rescaledCentralBox.right = rescaledCentralBox.right - chosenFruitBox.left - paintStrokeWidth
+		rescaledCentralBox.top = rescaledCentralBox.top - chosenFruitBox.top + paintStrokeWidth
+		rescaledCentralBox.bottom = rescaledCentralBox.bottom - chosenFruitBox.top - paintStrokeWidth
+
+		return rescaledCentralBox
+	}
+
 	@SuppressLint("ClickableViewAccessibility")
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
@@ -252,7 +273,6 @@ class ReconstructionFragment: Fragment() {
 						chosenCentralBox = centralBoxes[0]
 						classificationPair = processingResults[0]
 
-						// show bounding boxes and the inference output
 						// this task needs to be delayed or all the results won't be shown
 						Handler(Looper.getMainLooper()).postDelayed({
 							for (i in 0 until processingResults.size) {
@@ -268,8 +288,8 @@ class ReconstructionFragment: Fragment() {
 									(if (tBounds.top < 0) currFruitBox.top - tBounds.top else currFruitBox.top + tBounds.top) - 2.5F
 
 								canvas.drawText(text, left, top, textPaint)
-								drawBoxOnView(currFruitBox, dottedPaint, canvas, view, bitmapOverlay)
 
+								drawBoxOnView(currFruitBox, dottedPaint, canvas, view, bitmapOverlay)
 							}
 
 							boxSelectionOverlay = Bitmap.createBitmap(bitmapOverlay)
@@ -377,34 +397,20 @@ class ReconstructionFragment: Fragment() {
 							paint.style = Paint.Style.STROKE
 							paint.strokeWidth = 2.5F
 
-							val isRGBTab = position == 0
+							val isRGBTab = (position == 0)
 							var drawPointAndSignature = true
 
 							// RGB viewpager position
 							if (isRGBTab) {
-								val centerPoint = Pair(item.width/2, item.height/2)
-
-								val paintWidth = MainActivity.defaultPaint.strokeWidth
-
-								var left = centerPoint.first - Utils.boundingBoxWidth
-								var top = centerPoint.second - Utils.boundingBoxHeight
-								var right = left + patchWidth
-								var bottom = top + patchHeight
-
-								// add/subtract paintWidth so that the user can not tap on the green frame but rather only inside the box
-								left += paintWidth
-								top += paintWidth
-								right -= paintWidth
-								bottom -= paintWidth
-
-								val relevantBox = Box(left, top, right, bottom)
 
 								// drawing on a cropped part of the image
 								drawnClickedX = clickedX*item.width
 								drawnClickedY = clickedY*item.height
 
+								val rescaledCentralBox = getCentralBoxForRGBTab()
+
 								// if the point isn't within the green bounding box in the center of the fruit, don't draw point or get signature
-								if ( !pointWithinBox(Pair(drawnClickedX.toInt(), drawnClickedY.toInt()), relevantBox) ) drawPointAndSignature = false
+								if ( !pointWithinBox(Pair(drawnClickedX.toInt(), drawnClickedY.toInt()), rescaledCentralBox) ) drawPointAndSignature = false
 
 							} else
 							{
@@ -514,6 +520,13 @@ class ReconstructionFragment: Fragment() {
 
 		fragmentReconstructionBinding.information.setOnClickListener {
 			generateAlertBox(requireContext(), "", getString(R.string.reconstruction_analysis_information_string)) {}
+		}
+
+		// this makes it such that the user box gets the same treatment as the other boxes, with the
+		// exception that it doesn't have a dotted bounding box around it
+		if (customUserBox != null) {
+			fruitBoxes.add(customUserBox!!)
+			centralBoxes.add(customUserBox!!)
 		}
 
 		Timer().schedule(1000) {
