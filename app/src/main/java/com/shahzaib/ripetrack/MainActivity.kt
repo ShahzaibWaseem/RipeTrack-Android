@@ -97,6 +97,8 @@ class MainActivity: AppCompatActivity() {
 		var fruitBoxes = mutableListOf<Box>()
 		var centralBoxes = mutableListOf<Box>()
 
+		var customUserBox: Box? = null
+
 		fun generateAlertBox(context: Context, title: String, text: String, onPositiveButtonFunction: () -> Unit) {
 			val alertDialogBuilder = MaterialAlertDialogBuilder(context, R.style.AlertDialogTheme)
 			alertDialogBuilder.setMessage(text)
