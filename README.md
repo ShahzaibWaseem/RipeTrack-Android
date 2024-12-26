@@ -61,10 +61,10 @@ The application screenshots below are captured using a smartphone without an NIR
 
 |                                                                            |                                                                                    |                                                                                  |
 |:--------------------------------------------------------------------------:|:----------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------:|
-| <img src="images/appSelectorOffline.png" alt="Main Page" width="200" /> |        <img src="images/imageLoaderOffline.png" alt="Gallery Opening Intent" width="200" />         |         <img src="images/imageViewerOffline.png" alt="Image Viewer" width="200" />          |
-|                               Gallery Opening Intent                                |                               Selecting Offline Mode                               |                              Image Viewer                              |
-|     <img src="images/classificationOffline.png" alt="Classification Results" width="200" />     | <img src="images/reconstructionOffline.png" alt="Reconstruction" width="200" /> |                                                                        |
-|                              Classification Results                              |                                   Reconstruction                                   |                                                                                  |
+| <img src="images/appSelectorOffline.png" alt="Main Page" width="200" /> |        <img src="images/imageLoaderOffline.png" alt="Gallery Opening Intent" width="200" />         |         <img src="images/imageSelectorOffline.png" alt="Image Viewer" width="200" />          |
+|                                Selecting Offline Mode                               |                               Gallery Opening Intent                               |                              Image Viewer                              |
+|     <img src="images/reconstructionOffline.png" alt="Reconstructed Hypercube" width="200" />     | <img src="images/signatureOffline.png" alt="Signature Analysis" width="200" /> |                                                                        |
+|                              Reconstructed Hypercube                              |                                   Signature Analysis                                   |                                                                                  |
 
 ### Demo for Offline Mode
 Here is a [Demo](https://drive.google.com/file/d/1PMBsjny-JkjTvnJGSAHagy6MHpETPYaw/view?usp=sharing "Offline Mode Demo Video 41.2 MBs") of offline mode in effect.
@@ -84,13 +84,13 @@ Here are the screenshots from the android application (captured using Google Pix
 
 |                                                                            |                                                                                    |                                                                                  |
 |:--------------------------------------------------------------------------:|:----------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------:|
-| <img src="images/appSelectorOffline.png" alt="Main Page" width="200" /> |        <img src="images/imageLoaderOffline.png" alt="Gallery Opening Intent" width="200" />         |         <img src="images/imageViewerOffline.png" alt="Image Viewer" width="200" />          |
-|                               Gallery Opening Intent                                |                               Selecting Offline Mode                               |                              Image Viewer                              |
-|     <img src="images/classificationOffline.png" alt="Classification Results" width="200" />     | <img src="images/reconstructionOffline.png" alt="Reconstruction" width="200" /> |                                                                        |
-|                              Classification Results                              |                                   Reconstruction                                   |                                                                                  |
+| <img src="images/appSelectorOnline.png" alt="Main Page" width="200" /> |        <img src="images/cameraOnline.png" alt="Camera Opening Intent" width="200" />         |         <img src="images/imageSelectorOnline.png" alt="Image Viewer" width="200" />          |
+|                                Selecting Online Mode                               |                               Camera Intent                               |                              Image Viewer                              |
+|     <img src="images/reconstructionOnline.png" alt="Reconstructed Hypercube" width="200" />     | <img src="images/signatureOnline.png" alt="Signature Analysis" width="200" /> |                                                                        |
+|                              Reconstructed Hypercube                              |                                   Signature Analysis                                   |                                                                                  |
 
 ### Demo for Online Mode
-<!--Here is a [Demo]( "Online Mode Demo Video 102.1 MBs") of online mode in effect.-->
+Here is a [Demo](https://drive.google.com/file/d/1zgBLrasB9knit_9obdXIHeVWXIN7dYE2/view?usp=drive_link "Online Mode Demo Video 18.3 MBs") of online mode in effect.
 
 ## Build the application from the source code
 Download Android Studio on your workstation (see Installation Instructions on [Android Developer website](https://developer.android.com/studio)). After Installing Android Studio, clone the repository onto your workstation. Gradle is a tool that comes pre-installed with Android Studio and is responsible for Dependency management. In the repository, there are also gradle files that tell gradle which dependencies to install on your workstation. The major dependencies which we tested and deployed are as follows:
