@@ -67,7 +67,7 @@ The application screenshots below are captured using a smartphone without an NIR
 |                              Classification Results                              |                                   Reconstruction                                   |                                                                                  |
 
 ### Demo for Offline Mode
-Here is a [Demo](https://drive.google.com/file/d/1gjH0c0ph7X7GUFCk5sPtMJZGC9UCDTI9/view?usp=drive_link "Offline Mode Demo Video 134 MBs") of offline mode in effect.
+Here is a [Demo](https://drive.google.com/file/d/1PMBsjny-JkjTvnJGSAHagy6MHpETPYaw/view?usp=sharing "Offline Mode Demo Video 41.2 MBs") of offline mode in effect.
 
 ## Test the Application in Online Mode
 This mode requires a phone that allows accessing the NIR camera. Most phones with NIR cameras have them on the front because their primary use has so far been face identification. To assist the user in capturing fruit images using front-facing cameras, we added a countdown timer (3 sec) that makes the app issues a beeping sound after it captures the images. The Online mode also makes sure that the scene is well lit before the user can capture any picture.
