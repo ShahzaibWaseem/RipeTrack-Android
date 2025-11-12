@@ -27,7 +27,7 @@ Steps for installing the application on your phone are as follows:
 You can also [build the application from source code](#build-the-application-from-the-source-code).
 
 ## Test the Application in Offline Mode
-Download one or more of the following Mobile Image [datasets](https://drive.google.com/drive/folders/1oBmib1meInQ5zZzC0itiRDGs5IKJRZPb?usp=drive_link "Dataset URL") to test the application:
+Download one or more of the following Mobile Image [datasets](https://drive.google.com/drive/folders/1QVA6n3bECqI6QILv6R1uJ0U5GiFiVAPT?usp=drive_link "Dataset URL") to test the application:
 
 - Pear Bosc
 - Pear Bartlett
